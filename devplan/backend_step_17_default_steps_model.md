@@ -4,8 +4,10 @@
 Define a structure for storing default recipe steps, categorized by recipe type ('ice cream' or 'sorbet'). This could be a simple Mongoose schema/model or potentially managed via a configuration file if updates are infrequent. Choose the Mongoose model approach for consistency.
 
 ## Files to Read
-*   None (Creating a new file).
-
+*   `src/models/Ingredient.ts` (Example Mongoose model/schema/interface pattern in this project)
+*   `src/models/Recipe.ts` (Another example Mongoose model/schema/interface pattern, including enums, refs)
+*   `tsconfig.json` (Provides context on TypeScript settings like strict mode)
+*   `package.json` (To see mongoose is installed)
 ## Constraints Reminder
 *   Use only arrow functions (=>). No `function`, `class`, or `this`.
 *   Write all code exclusively within the provided tool.

@@ -4,10 +4,12 @@
 Create the `RecipeTab` component responsible for displaying the details of a single recipe. This component will receive a `recipeId` prop. Use `@tanstack/react-query`'s `useQuery` hook to fetch the full recipe details from the backend API (`GET /api/recipes/:id`). Display basic recipe information (name, type, category) and placeholders for ingredient list, step list, and scaling control. Handle loading and error states for the query.
 
 ## Files to Read
-*   `frontend/src/components/tabs/TabContent.tsx` (To integrate the `RecipeTab` component)
-*   `frontend/src/types/tabs.ts` (To reference the `Tab` interface)
-*   Backend route definition for reference: `GET /api/recipes/:id`
-
+*   `frontend/src/components/tabs/TabContent.tsx` (To integrate the `RecipeTab` component, modified step 6, step 9)
+*   `frontend/src/types/tabs.ts` (To reference the `Tab` interface, created step 5)
+*   `frontend/src/api/recipes.ts` (To add `fetchRecipeById`, created step 8)
+*   `frontend/src/main.tsx` (To see QueryClient setup from step 7)
+*   `frontend/src/components/search/SearchTab.tsx` (Example component using useQuery, from step 8)
+*   `frontend/src/App.tsx` (Where tab state lives, modified step 9)
 ## Constraints Reminder
 *   Use only arrow functions (=>) for all JavaScript/TypeScript code. No `function`, `class`, or `this`.
 *   Write all code exclusively within the provided tool.

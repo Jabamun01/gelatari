@@ -4,9 +4,10 @@
 Define the Express router for recipe-related API endpoints. Map the HTTP methods and URL paths (e.g., GET `/api/recipes`, POST `/api/recipes`, GET `/api/recipes/:id`) to the corresponding recipe controller handler functions. Mount this router in the main `src/server.ts` file under the `/api` base path.
 
 ## Files to Read
-*   `src/controllers/recipeController.ts` (To import handler functions)
-*   `src/server.ts` (To mount the router)
-
+*   `src/controllers/recipeController.ts` (To import handler functions created in step 15)
+*   `src/server.ts` (To mount the router and see existing middleware/routing setup, like ingredient routes mount)
+*   `src/routes/ingredientRoutes.ts` (Example of existing router setup and structure)
+*   `src/controllers/ingredientController.ts` (Context for how ingredient handlers were defined)
 ## Constraints Reminder
 *   Use only arrow functions (=>). No `function`, `class`, or `this`.
 *   Write all code exclusively within the provided tool.

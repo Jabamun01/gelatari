@@ -6,8 +6,7 @@ Initialize a new React frontend project within a subdirectory named `frontend` i
 **Note:** This step primarily involves CLI commands executed within the `frontend` subdirectory.
 
 ## Files to Read
-*   None (This is the initial setup step for the frontend).
-
+*   None (This is the initial setup step for the frontend within the frontend directory).
 ## Constraints Reminder
 *   Use only arrow functions (=>) for all JavaScript/TypeScript code. No `function`, `class`, or `this`.
 *   Write all code exclusively within the provided tool (when applicable in later steps).

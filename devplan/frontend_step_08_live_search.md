@@ -4,10 +4,11 @@
 Implement the live search feature within the `SearchTab` component. Use `@tanstack/react-query`'s `useQuery` hook to fetch recipe results from the backend API (`/api/recipes`) as the user types into the search input. Debounce the input to avoid excessive API calls. Display the names of the matching recipes in a list below the search bar. Handle loading and error states.
 
 ## Files to Read
-*   `frontend/src/components/search/SearchTab.tsx` (To modify)
-*   `frontend/src/App.tsx` (To potentially pass down tab opening function later)
-*   Backend route definition for reference: `GET /api/recipes?type=...&searchTerm=...`
-
+*   `frontend/src/components/search/SearchTab.tsx` (To modify, created in step 6)
+*   `frontend/src/App.tsx` (Provides context on overall structure, state management location)
+*   `frontend/package.json` (To confirm @tanstack/react-query is installed)
+*   `frontend/src/main.tsx` (To see QueryClient setup from step 7)
+*   `frontend/src/styles/global.ts` (For styling results)
 ## Constraints Reminder
 *   Use only arrow functions (=>) for all JavaScript/TypeScript code. No `function`, `class`, or `this`.
 *   Write all code exclusively within the provided tool.

@@ -4,8 +4,10 @@
 Create the controller layer for handling HTTP requests to fetch default recipe steps. This controller will parse the category from the request parameters and use the `defaultStepsService` to retrieve the corresponding steps.
 
 ## Files to Read
-*   `src/services/defaultStepsService.ts` (To import service function)
-
+*   `src/services/defaultStepsService.ts` (To import the service function being used, created in step 18)
+*   `src/controllers/ingredientController.ts` (Example controller structure, request/response handling, param handling)
+*   `src/controllers/recipeController.ts` (Example controller structure including query/param handling and validation)
+*   `src/models/DefaultSteps.ts` (Provides context on the data structure being handled)
 ## Constraints Reminder
 *   Use only arrow functions (=>). No `function`, `class`, or `this`.
 *   Write all code exclusively within the provided tool.

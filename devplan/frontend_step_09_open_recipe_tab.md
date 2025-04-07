@@ -4,12 +4,12 @@
 Implement the functionality to open a new recipe tab when a user clicks on a recipe name in the search results list within the `SearchTab`. This involves passing a handler function down from the main `App` component (where the tab state is managed) to the `SearchTab`. This handler will add a new tab object to the state and set it as the active tab.
 
 ## Files to Read
-*   `frontend/src/App.tsx` (To define and pass down the handler)
+*   `frontend/src/App.tsx` (To define and pass down the handler, manage tab state)
 *   `frontend/src/components/tabs/TabContent.tsx` (To relay the handler)
-*   `frontend/src/components/search/SearchTab.tsx` (To receive and use the handler)
-*   `frontend/src/types/tabs.ts` (To reference the `Tab` interface)
-*   `frontend/src/api/recipes.ts` (To reference the `RecipeSearchResult` type)
-
+*   `frontend/src/components/search/SearchTab.tsx` (To receive and use the handler, created step 6, modified step 8)
+*   `frontend/src/types/tabs.ts` (To reference the `Tab` interface, created step 5)
+*   `frontend/src/api/recipes.ts` (To reference the `RecipeSearchResult` type, created step 8)
+*   `frontend/src/components/tabs/TabBar.tsx` (To see how tabs are rendered, created step 5)
 ## Constraints Reminder
 *   Use only arrow functions (=>) for all JavaScript/TypeScript code. No `function`, `class`, or `this`.
 *   Write all code exclusively within the provided tool.

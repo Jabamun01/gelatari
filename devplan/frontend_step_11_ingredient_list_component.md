@@ -4,10 +4,10 @@
 Create the `IngredientList` component responsible for displaying the list of ingredients for a recipe. This component will receive the ingredients array (from the fetched `RecipeDetails`) and the current scaling factor (initially 1, controlled by a parent component later) as props. It should display the ingredient name, the scaled amount (formatted as X.Ykg or Zg), and visually highlight allergens.
 
 ## Files to Read
-*   `frontend/src/components/recipe/RecipeTab.tsx` (To integrate the `IngredientList`)
-*   `frontend/src/types/recipe.ts` (To reference `RecipeIngredient` type)
-*   `frontend/src/styles/global.ts` (To use CSS variables, especially `--allergen-highlight-color`)
-
+*   `frontend/src/components/recipe/RecipeTab.tsx` (To integrate the `IngredientList`, created step 10)
+*   `frontend/src/types/recipe.ts` (To reference `RecipeIngredient` type, created step 10)
+*   `frontend/src/styles/global.ts` (To use CSS variables, especially `--allergen-highlight-color`, created step 4)
+*   `frontend/src/components/search/SearchTab.tsx` (Example of component structure, Linaria usage)
 ## Constraints Reminder
 *   Use only arrow functions (=>) for all JavaScript/TypeScript code. No `function`, `class`, or `this`.
 *   Write all code exclusively within the provided tool.

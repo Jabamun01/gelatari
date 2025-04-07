@@ -4,9 +4,9 @@
 Integrate `@tanstack/react-query` into the application by creating a `QueryClient` instance and wrapping the root `App` component with the `QueryClientProvider`. This makes the query client available throughout the component tree.
 
 ## Files to Read
-*   `frontend/src/main.tsx` (To modify)
-*   `frontend/src/App.tsx` (To see the component being wrapped)
-
+*   `frontend/src/main.tsx` (To modify, adding the provider)
+*   `frontend/src/App.tsx` (The component being wrapped)
+*   `frontend/package.json` (To confirm @tanstack/react-query is installed from step 2)
 ## Constraints Reminder
 *   Use only arrow functions (=>) for all JavaScript/TypeScript code. No `function`, `class`, or `this`.
 *   Write all code exclusively within the provided tool.

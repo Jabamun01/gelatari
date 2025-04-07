@@ -4,9 +4,11 @@
 Create the `ScalingControl` component that allows the user to adjust the recipe's scale factor. This component should include a slider input with defined snap points (5kg, 10kg, 30kg relative to the 1kg base yield) and potentially a manual number input field for precise scaling. It will receive the current scale factor and a function to update it from its parent (`RecipeTab`).
 
 ## Files to Read
-*   `frontend/src/components/recipe/RecipeTab.tsx` (To integrate the `ScalingControl` and manage state)
-*   `frontend/src/styles/global.ts` (For styling)
-
+*   `frontend/src/components/recipe/RecipeTab.tsx` (To integrate the `ScalingControl` and manage state, modified step 11, 12)
+*   `frontend/src/styles/global.ts` (For styling, created step 4)
+*   `frontend/src/utils/formatting.ts` (If `formatAmount` was extracted previously, otherwise read from `IngredientList.tsx`)
+*   `frontend/src/components/recipe/IngredientList.tsx` (Shows interaction with scaleFactor state, created step 11)
+*   `frontend/src/types/recipe.ts` (To know about `baseYieldGrams`, created step 10)
 ## Constraints Reminder
 *   Use only arrow functions (=>) for all JavaScript/TypeScript code. No `function`, `class`, or `this`.
 *   Write all code exclusively within the provided tool.

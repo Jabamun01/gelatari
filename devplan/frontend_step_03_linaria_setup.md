@@ -4,9 +4,8 @@
 Configure the Vite build process to correctly handle Linaria for CSS-in-JS styling. This involves modifying the `frontend/vite.config.ts` file to include the Linaria Vite plugin.
 
 ## Files to Read
-*   `frontend/vite.config.ts` (To modify)
-*   `frontend/package.json` (To confirm `@linaria/vite` is installed)
-
+*   `frontend/vite.config.ts` (To modify, created in step 1)
+*   `frontend/package.json` (To confirm `@linaria/vite` is installed from step 2)
 ## Constraints Reminder
 *   Use only arrow functions (=>) for all JavaScript/TypeScript code. No `function`, `class`, or `this`.
 *   Write all code exclusively within the provided tool.

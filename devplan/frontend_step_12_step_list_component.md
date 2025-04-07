@@ -4,10 +4,10 @@
 Create the `StepList` component responsible for displaying the sequence of recipe steps. This component receives the steps array (strings) from the fetched `RecipeDetails` as a prop. It should display the steps as an ordered list.
 
 ## Files to Read
-*   `frontend/src/components/recipe/RecipeTab.tsx` (To integrate the `StepList`)
-*   `frontend/src/types/recipe.ts` (To reference `RecipeDetails` type, specifically the `steps` array)
-*   `frontend/src/styles/global.ts` (For styling consistency)
-
+*   `frontend/src/components/recipe/RecipeTab.tsx` (To integrate the `StepList`, created step 10, modified step 11)
+*   `frontend/src/types/recipe.ts` (To reference `RecipeDetails` type, specifically the `steps` array, created step 10)
+*   `frontend/src/styles/global.ts` (For styling consistency, created step 4)
+*   `frontend/src/components/recipe/IngredientList.tsx` (Example of list rendering component, created step 11)
 ## Constraints Reminder
 *   Use only arrow functions (=>) for all JavaScript/TypeScript code. No `function`, `class`, or `this`.
 *   Write all code exclusively within the provided tool.

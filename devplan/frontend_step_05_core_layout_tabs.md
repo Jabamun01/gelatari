@@ -4,9 +4,10 @@
 Modify the main `App.tsx` component to establish the core application layout, consisting of a container for the tab bar and another for the active tab's content. Implement a basic `TabManager` (using `useState` initially, can be refactored to Context/Reducer later if complexity grows) to manage the state of open tabs. Create initial `TabBar` and `TabContent` components. The application should start with a single, non-closable "Search" tab.
 
 ## Files to Read
-*   `frontend/src/App.tsx` (To modify)
-*   `frontend/src/styles/global.ts` (To use defined CSS variables)
-
+*   `frontend/src/App.tsx` (To modify, created by Vite in step 1)
+*   `frontend/src/styles/global.ts` (To use defined CSS variables, created in step 4)
+*   `frontend/src/main.tsx` (Entry point context)
+*   `frontend/package.json` (To see React is installed)
 ## Constraints Reminder
 *   Use only arrow functions (=>) for all JavaScript/TypeScript code. No `function`, `class`, or `this`.
 *   Write all code exclusively within the provided tool.

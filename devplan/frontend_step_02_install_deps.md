@@ -6,8 +6,7 @@ Install the core dependencies required for the frontend application using PNPM w
 **Note:** This step involves CLI commands executed within the `frontend` subdirectory.
 
 ## Files to Read
-*   `frontend/package.json` (To see existing dependencies)
-
+*   `frontend/package.json` (To see existing dependencies added by Vite init in step 1)
 ## Constraints Reminder
 *   Use only arrow functions (=>) for all JavaScript/TypeScript code. No `function`, `class`, or `this`.
 *   Write all code exclusively within the provided tool (when applicable in later steps).

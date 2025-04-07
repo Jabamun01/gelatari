@@ -6,12 +6,12 @@ Implement the functionality to open linked recipes (components) when clicked wit
 **Assumption:** For now, assume linked recipes are referenced within the `steps` array using a specific convention like `"Use 500g of [Linked Recipe Name]"`. The logic will need to find the corresponding `recipeId` and `amountGrams` from the `linkedRecipes` array passed down from `RecipeTab`. A more robust solution might involve structuring step data better in the backend/frontend types.
 
 ## Files to Read
-*   `frontend/src/components/recipe/StepList.tsx` (To modify rendering and add click handlers)
-*   `frontend/src/components/recipe/RecipeTab.tsx` (To pass down `linkedRecipes` data and `handleOpenRecipeTab`)
-*   `frontend/src/App.tsx` (To modify `handleOpenRecipeTab` to accept scale factor)
-*   `frontend/src/types/tabs.ts` (To add `initialScaleFactor` to `Tab` interface)
-*   `frontend/src/types/recipe.ts` (To reference `RecipeDetails` and `LinkedRecipeInfo`)
-
+*   `frontend/src/components/recipe/StepList.tsx` (To modify rendering and add click handlers, created step 12)
+*   `frontend/src/components/recipe/RecipeTab.tsx` (To pass down `linkedRecipes` data and `handleOpenRecipeTab`, modified steps 11-13)
+*   `frontend/src/App.tsx` (To modify `handleOpenRecipeTab` to accept scale factor, modified step 9)
+*   `frontend/src/types/tabs.ts` (To add `initialScaleFactor` to `Tab` interface, created step 5, modified step 9)
+*   `frontend/src/types/recipe.ts` (To reference `RecipeDetails` and `LinkedRecipeInfo`, created step 10)
+*   `frontend/src/components/tabs/TabContent.tsx` (For context on how tabs are rendered)
 ## Constraints Reminder
 *   Use only arrow functions (=>) for all JavaScript/TypeScript code. No `function`, `class`, or `this`.
 *   Write all code exclusively within the provided tool.

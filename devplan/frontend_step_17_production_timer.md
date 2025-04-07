@@ -4,9 +4,14 @@
 Create a simple `Timer` component with start, stop, and reset functionality. Integrate this component into the `RecipeTab` so that it is only visible and usable when Production Mode is active. The timer's state (elapsed time, running status) should be managed locally within the `RecipeTab` and tied to the specific tab instance.
 
 ## Files to Read
-*   `frontend/src/components/recipe/RecipeTab.tsx` (To manage timer state and integrate the component)
-*   `frontend/src/styles/global.ts` (For styling)
-
+*   `frontend/src/components/recipe/RecipeTab.tsx` (The parent component managing state, integrating Timer, providing hook context, modified step 15, 16)
+*   `frontend/src/styles/global.ts` (For styling consistency and CSS variables, created step 4)
+*   `frontend/src/components/recipe/StepList.tsx` (Example of a simple presentational component structure and Linaria usage, created step 12)
+*   `frontend/src/components/recipe/ScalingControl.tsx` (Example component with props, local display logic, and interaction via parent handlers, created step 13)
+*   `frontend/src/components/recipe/IngredientList.tsx` (Example component with more complex rendering logic and props, modified step 16)
+*   `frontend/src/utils/formatting.ts` (If a utility file for formatting exists or is expected to be created/used)
+*   `frontend/tsconfig.json` (Provides context on TS settings, created step 1)
+*   `frontend/package.json` (Shows React installed)
 ## Constraints Reminder
 *   Use only arrow functions (=>) for all JavaScript/TypeScript code. No `function`, `class`, or `this`.
 *   Write all code exclusively within the provided tool.

@@ -4,8 +4,10 @@
 Create the service layer logic for retrieving default recipe steps based on the category ('ice cream' or 'sorbet'). This service will interact with the `DefaultSteps` model.
 
 ## Files to Read
-*   `src/models/DefaultSteps.ts` (To import the model and interface)
-
+*   `src/models/DefaultSteps.ts` (To import the model and interface being used, created in step 17)
+*   `src/services/ingredientService.ts` (Example service structure, CRUD operations, error handling)
+*   `src/services/recipeService.ts` (Another example service structure, including population logic and filtering)
+*   `src/models/Recipe.ts` (Context for complex model interactions)
 ## Constraints Reminder
 *   Use only arrow functions (=>). No `function`, `class`, or `this`.
 *   Write all code exclusively within the provided tool.

@@ -4,9 +4,9 @@
 Add a toggle button or switch to the `RecipeTab` component to enable/disable "Production Mode" for the currently viewed recipe. Manage the state of this toggle locally within the `RecipeTab` component using `useState`.
 
 ## Files to Read
-*   `frontend/src/components/recipe/RecipeTab.tsx` (To modify)
-*   `frontend/src/styles/global.ts` (For styling)
-
+*   `frontend/src/components/recipe/RecipeTab.tsx` (To modify, add state and button, modified steps 11-14)
+*   `frontend/src/styles/global.ts` (For styling, created step 4)
+*   `frontend/src/components/recipe/ScalingControl.tsx` (Example of another control element within RecipeTab, created step 13)
 ## Constraints Reminder
 *   Use only arrow functions (=>) for all JavaScript/TypeScript code. No `function`, `class`, or `this`.
 *   Write all code exclusively within the provided tool.

@@ -4,11 +4,12 @@
 Modify the `IngredientList` component (or create a specialized `ProductionIngredientList`) to support tracking the amount of each ingredient added when Production Mode is active in the parent `RecipeTab`. Display the target scaled amount and provide an input/button to record the amount added. Store this "added amount" state within the `RecipeTab`.
 
 ## Files to Read
-*   `frontend/src/components/recipe/RecipeTab.tsx` (To manage tracking state and pass props)
-*   `frontend/src/components/recipe/IngredientList.tsx` (To modify or use as base)
-*   `frontend/src/types/recipe.ts` (To reference `RecipeIngredient`)
-*   `frontend/src/styles/global.ts` (For styling)
-
+*   `frontend/src/components/recipe/RecipeTab.tsx` (The parent component managing state and rendering IngredientList, modified step 15)
+*   `frontend/src/components/recipe/IngredientList.tsx` (The component being modified or used as base, created step 11)
+*   `frontend/src/types/recipe.ts` (To reference `RecipeIngredient` and potentially `RecipeDetails` types, created step 10)
+*   `frontend/src/styles/global.ts` (To use CSS variables for styling, created step 4)
+*   `frontend/src/utils/formatting.ts` (If `formatAmount` was extracted previously)
+*   `frontend/src/components/recipe/ScalingControl.tsx` (Shows how parent state interacts with child display, created step 13)
 ## Constraints Reminder
 *   Use only arrow functions (=>) for all JavaScript/TypeScript code. No `function`, `class`, or `this`.
 *   Write all code exclusively within the provided tool.

@@ -4,9 +4,10 @@
 Define the Express router for the default steps API endpoint. Map the HTTP GET method and URL path (including a category parameter) to the corresponding controller handler function. Mount this router in the main `src/server.ts` file.
 
 ## Files to Read
-*   `src/controllers/defaultStepsController.ts` (To import handler function)
-*   `src/server.ts` (To mount the router)
-
+*   `src/controllers/defaultStepsController.ts` (To import the handler function being mapped, created in step 19)
+*   `src/server.ts` (To mount the new router and see existing application setup and other routes)
+*   `src/routes/ingredientRoutes.ts` (Example router setup pattern)
+*   `src/routes/recipeRoutes.ts` (Another example router setup pattern, created in step 16)
 ## Constraints Reminder
 *   Use only arrow functions (=>). No `function`, `class`, or `this`.
 *   Write all code exclusively within the provided tool.

@@ -4,8 +4,10 @@
 Create a global stylesheet (e.g., `frontend/src/styles/global.ts` or directly in `frontend/src/main.tsx`) using Linaria's `css` tag or similar mechanism. Define base HTML/body styles and essential CSS variables for the application's theme (colors, fonts, spacing units). Apply these global styles in the main application entry point (`main.tsx`).
 
 ## Files to Read
-*   `frontend/src/main.tsx` (To apply global styles)
-
+*   `frontend/src/main.tsx` (To apply global styles, created by Vite in step 1)
+*   `frontend/package.json` (To confirm Linaria is installed)
+*   `frontend/src/index.css` (Default Vite CSS file, likely to be replaced or modified)
+*   `frontend/src/App.tsx` (Basic structure created by Vite)
 ## Constraints Reminder
 *   Use only arrow functions (=>) for all JavaScript/TypeScript code. No `function`, `class`, or `this`.
 *   Write all code exclusively within the provided tool.

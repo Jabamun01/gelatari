@@ -4,9 +4,11 @@
 Create the controller layer for handling HTTP requests related to recipes. This involves creating functions that parse request data (body, params, query), call the appropriate `recipeService` functions, handle query parameters for filtering and searching, and formulate the HTTP response. Include basic input validation.
 
 ## Files to Read
-*   `src/services/recipeService.ts` (To import service functions)
-*   `src/models/Recipe.ts` (For type information, e.g., `IRecipe`)
-
+*   `src/services/recipeService.ts` (To import the service functions being used)
+*   `src/models/Recipe.ts` (For type information, e.g., `IRecipe`, `IRecipeIngredient`)
+*   `src/controllers/ingredientController.ts` (Example controller structure, req/res handling, validation patterns used so far)
+*   `src/models/Ingredient.ts` (Referenced by Recipe model, good for context)
+*   `package.json` (To see installed dependencies like Express)
 ## Constraints Reminder
 *   Use only arrow functions (=>). No `function`, `class`, or `this`.
 *   Write all code exclusively within the provided tool.

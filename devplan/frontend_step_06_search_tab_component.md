@@ -4,10 +4,11 @@
 Create the actual `SearchTab` component that will be rendered within the `TabContent` area when the "Search" tab is active. This component should include the basic structure: a large search input field and a toggle/checkbox element to switch the search scope (between "ice cream recipes" and "all recipes"). Styling should be applied using Linaria and CSS variables for a clean, usable appearance.
 
 ## Files to Read
-*   `frontend/src/components/tabs/TabContent.tsx` (To integrate the `SearchTab` component)
-*   `frontend/src/styles/global.ts` (To use CSS variables for styling)
-*   `frontend/src/types/tabs.ts` (Potentially, though not strictly needed for this component structure)
-
+*   `frontend/src/components/tabs/TabContent.tsx` (To integrate the `SearchTab` component, created in step 5)
+*   `frontend/src/styles/global.ts` (To use CSS variables for styling, created in step 4)
+*   `frontend/src/types/tabs.ts` (To reference Tab types, created in step 5)
+*   `frontend/src/components/tabs/TabBar.tsx` (For context on how tabs are handled, created in step 5)
+*   `frontend/src/App.tsx` (Overall app structure context)
 ## Constraints Reminder
 *   Use only arrow functions (=>) for all JavaScript/TypeScript code. No `function`, `class`, or `this`.
 *   Write all code exclusively within the provided tool.
