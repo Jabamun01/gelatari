@@ -1,11 +1,27 @@
-import { useState, useEffect, useMemo } from 'react'; // Added useMemo
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'; // Added useMutation, useQueryClient
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { styled } from '@linaria/react';
-import { fetchRecipeById, getAllRecipes, RecipeSearchResult, createRecipe, updateRecipe } from '../../api/recipes'; // Added createRecipe, updateRecipe
-import { getAllIngredients } from '../../api/ingredients'; // Added getAllIngredients
-import { fetchDefaultSteps } from '../../api/defaultSteps'; // Added default steps fetch
-import { RecipeDetails, RecipeIngredient, LinkedRecipeInfo, CreateRecipeDto, UpdateRecipeDto } from '../../types/recipe'; // Added DTOs
+import Papa from 'papaparse';
+import { fetchRecipeById, fetchRecipes, RecipeSearchResult, createRecipe, updateRecipe } from '../../api/recipes';
+// Import specific API functions needed for resolving
+import { getAllIngredients, addAliasToIngredient, createIngredient as createIngredientApi } from '../../api/ingredients';
+import { fetchDefaultSteps } from '../../api/defaultSteps';
+import { RecipeDetails, RecipeIngredient, LinkedRecipeInfo, CreateRecipeDto, UpdateRecipeDto } from '../../types/recipe';
+import { Ingredient, CreateIngredientDto as CreateIngredientApiDto } from '../../types/ingredient'; // Import DTO type
+import { SearchableSelector, SelectableItem } from '../common/SearchableSelector';
+import { Modal } from '../common/Modal'; // Import the Modal component
 
+// Type for parsed CSV data
+interface ParsedCsvIngredient {
+  name: string;
+  amountGrams: number;
+  originalRow: number; // Keep track of original row for error messages
+}
+
+// Type for unmatched ingredients needing user action
+interface UnmatchedIngredient extends ParsedCsvIngredient {
+  reason: string; // e.g., "Not found in database"
+}
 // Define the props interface
 interface RecipeEditorTabProps {
   recipeId?: string; // ID if editing an existing recipe
@@ -68,20 +84,7 @@ const FormSelect = styled.select`
   cursor: pointer;
 `;
 
-const BaseYieldContainer = styled.div`
-   display: flex;
-   align-items: center;
-   gap: var(--space-sm); /* Use new spacing */
-
-   & > ${FormInput}[type="number"] {
-      width: 100px;
-      flex-shrink: 0; /* Prevent shrinking */
-   }
-   & > span { /* Style the 'g' label */
-       color: var(--text-color-light);
-       font-size: var(--font-size-sm);
-   }
-`;
+// BaseYieldContainer removed as it's no longer used in this component
 
 const ButtonContainer = styled.div`
   display: flex;
@@ -204,37 +207,7 @@ const AddComponentForm = styled.div`
   background-color: var(--surface-color-light); /* Slightly different background */
 `;
 
-const AddComponentControls = styled.div`
-  display: flex;
-  flex-direction: column;
-  flex-grow: 1;
-  min-width: 200px;
-`;
-
-const AmountInputGroup = styled.div`
-  display: flex;
-  flex-direction: column;
-  width: 120px;
-  flex-shrink: 0;
-
-  /* Target the input within this specific group's BaseYieldContainer */
-  & > ${BaseYieldContainer} > ${FormInput}[type="number"] {
-      width: 70px;
-      padding: var(--space-sm) var(--space-sm);
-      box-shadow: none; /* Remove shadow */
-   }
-`;
-
-// Use the PrimaryButton variant defined earlier
-const AddButton = styled(PrimaryButton)`
-  white-space: nowrap;
-  /* Ensure consistent height with inputs */
-  height: calc(var(--font-size-base) * var(--line-height-base) + var(--space-sm) * 2 + var(--border-width) * 2);
-`;
-
 // Styles for the Steps section
-// List for steps in the editor
-// List for steps in the editor
 const StepList = styled.ol`
   list-style: none;
   padding: 0;
@@ -272,7 +245,6 @@ const StepListItem = styled.li`
 `;
 
 // Inherits global textarea styles
-// Inherits global textarea styles
 const StepTextArea = styled.textarea`
   flex-grow: 1;
   min-height: 80px; /* Make taller */
@@ -285,6 +257,7 @@ const StepButtonContainer = styled.div`
   flex-wrap: wrap; /* Allow wrapping */
   gap: var(--space-md);
   margin-top: var(--space-lg);
+  align-items: center; /* Align items vertically */
 `;
 
 
@@ -305,8 +278,18 @@ export const RecipeEditorTab = ({ recipeId, onClose, onOpenRecipeTab }: RecipeEd
   const queryClient = useQueryClient(); // Get query client instance
 
   // State to hold the form data
-  const [recipeData, setRecipeData] = useState<Omit<RecipeDetails, '_id' | 'baseYieldGrams'>>(initialRecipeState); // Adjusted type
+  const [recipeData, setRecipeData] = useState<Omit<RecipeDetails, '_id' | 'baseYieldGrams'>>(initialRecipeState);
+  // --- State for the "Add Component" search ---
+  // --- State for CSV Import ---
+  const [selectedCsvFile, setSelectedCsvFile] = useState<File | null>(null);
+  const [isParsingCsv, setIsParsingCsv] = useState(false);
+  const [unmatchedIngredients, setUnmatchedIngredients] = useState<UnmatchedIngredient[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isResolveModalOpen, setIsResolveModalOpen] = useState(false);
+  const [resolvingIngredientIndex, setResolvingIngredientIndex] = useState<number | null>(null); // Index of the item in unmatchedIngredients being resolved
 
+  // --- State for the "Add Component" search ---
+  // (Existing state remains)
   // Fetch existing recipe data if editing
   const { data: existingRecipe, isLoading: isLoadingExisting, isError, error } = useQuery({
     queryKey: ['recipe', recipeId],
@@ -333,40 +316,61 @@ export const RecipeEditorTab = ({ recipeId, onClose, onOpenRecipeTab }: RecipeEd
         steps: existingRecipe.steps ?? [], // Ensure steps are initialized from fetched data or default
         linkedRecipes: existingRecipe.linkedRecipes ?? [],
       });
-    } else if (!isEditing) {
+    } else { // This covers the !isEditing case
       setRecipeData(initialRecipeState);
+      // Reset CSV state when creating a new recipe or switching editor tabs
+      setSelectedCsvFile(null);
+      setUnmatchedIngredients([]);
+      if (fileInputRef.current) {
+          fileInputRef.current.value = ''; // Clear file input visually
+      }
     }
   }, [isEditing, existingRecipe, recipeId]);
+  // --- Fetch components (ingredients & recipes) based on search term ---
+  const minSearchLength = 2;
+  // The query key base passed to SearchableSelector. The debounced term is added internally by the component.
+  const componentQueryKeyBase = ['componentSearch', recipeId];
 
-  // --- Fetch available ingredients and recipes for the "Add Component" dropdown ---
-  // Fetch *all* ingredients for the dropdown by requesting page 1 with a very large limit.
-  // Use `select` to extract the data array from the paginated response.
-  const { data: availableIngredients = [], isLoading: isLoadingIngredients } = useQuery({
-    queryKey: ['ingredients', 'all'], // Add 'all' to differentiate from paginated queries
-    queryFn: () => getAllIngredients(1, 9999), // Fetch page 1, limit 9999
-    staleTime: 10 * 60 * 1000,
-    select: (paginatedData) => paginatedData.data, // Extract the array from the response
-  });
+  const fetchComponents = useCallback(async (term: string): Promise<SelectableItem[]> => {
+    if (term.length < minSearchLength) {
+      return [];
+    }
+    console.log(`Fetching components for term: "${term}"`);
+    try {
+      // Fetch both in parallel
+      const [ingredientsResponse, recipesResponse] = await Promise.all([
+        getAllIngredients(1, 20, term), // Fetch page 1, limit 20, with name filter
+        fetchRecipes(term) // Fetch recipes matching the term
+      ]);
 
-  const { data: availableRecipes = [], isLoading: isLoadingRecipes } = useQuery<RecipeSearchResult[]>({
-    queryKey: ['recipes'],
-    queryFn: getAllRecipes,
-    staleTime: 10 * 60 * 1000,
-  });
+      const ingredients = ingredientsResponse.data.map((ing: Ingredient): SelectableItem => ({
+        id: `ing_${ing._id}`,
+        name: ing.name,
+        type: 'ingredient',
+        isAllergen: ing.isAllergen,
+      }));
 
-  // --- State for the "Add Component" form ---
-  const [selectedComponentId, setSelectedComponentId] = useState<string>('');
-  const [componentAmount, setComponentAmount] = useState<string>('');
+      const recipes = recipesResponse
+        .filter((rec: RecipeSearchResult) => rec._id !== recipeId) // Exclude current recipe if editing
+        .map((rec: RecipeSearchResult): SelectableItem => ({
+          id: `rec_${rec._id}`,
+          name: rec.name,
+          type: 'recipe',
+        }));
 
-  // --- Memoized combined list for the dropdown ---
-  const availableComponents = useMemo(() => {
-    const ingredients = availableIngredients.map(ing => ({ id: `ing_${ing._id}`, name: ing.name, type: 'ingredient' as const }));
-    const recipes = availableRecipes
-      .filter((rec: RecipeSearchResult) => rec._id !== recipeId)
-      .map((rec: RecipeSearchResult) => ({ id: `rec_${rec._id}`, name: rec.name, type: 'recipe' as const }));
-    return { ingredients, recipes };
-  }, [availableIngredients, availableRecipes, recipeId]);
+      // Combine and potentially sort or limit results further if needed
+      return [...ingredients, ...recipes];
 
+    } catch (error) {
+      console.error("Failed to fetch components:", error);
+      // Return empty array or throw error based on how you want useQuery to handle it
+      return [];
+      // throw error; // Or re-throw if you want useQuery's error state to be set
+    }
+  }, [recipeId]); // recipeId is a dependency if it's used in filtering
+
+  // Note: useQuery is now handled within SearchableSelector,
+  // but we keep fetchComponents defined here for clarity and potential reuse.
 
   // --- Event Handlers ---
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -385,44 +389,40 @@ export const RecipeEditorTab = ({ recipeId, onClose, onOpenRecipeTab }: RecipeEd
     }));
   };
 
-  const handleAddRecipeComponent = () => {
-    const amountGrams = parseInt(componentAmount, 10);
-    if (!selectedComponentId || !componentAmount || isNaN(amountGrams) || amountGrams <= 0) {
-      alert('Please select a component and enter a valid positive amount.');
-      return;
-    }
+  // This function now acts as the 'onAdd' callback for SearchableSelector
+  const handleAddComponent = (item: SelectableItem, amountGrams: number) => {
+    console.log("Adding component:", item, "Amount:", amountGrams);
+    // Amount validation is now done inside SearchableSelector before calling this
 
-    const [type, id] = selectedComponentId.split('_');
+    const { id: prefixedId, name, type, isAllergen } = item; // Use item directly from parameter
+    const id = prefixedId.substring(4); // Remove 'ing_' or 'rec_' prefix
 
-    if (type === 'ing') {
-      const ingredientToAdd = availableIngredients.find(ing => ing._id === id);
-      if (!ingredientToAdd) return;
-      if (recipeData.ingredients?.some(item => item.ingredient._id === id)) {
-         alert(`${ingredientToAdd.name} is already in the recipe.`);
+    if (type === 'ingredient') {
+      // Check if already added
+      if (recipeData.ingredients?.some(ingItem => ingItem.ingredient._id === id)) {
+         alert(`${name} is already in the recipe.`);
          return;
       }
       const newRecipeIngredient: RecipeIngredient = {
-        ingredient: { _id: id, name: ingredientToAdd.name, isAllergen: ingredientToAdd.isAllergen },
-        amountGrams: amountGrams,
+        ingredient: { _id: id, name: name, isAllergen: isAllergen ?? false }, // Use data from selected item
+        amountGrams: amountGrams, // Use amount from parameter
       };
       setRecipeData(prev => ({ ...prev, ingredients: [...(prev.ingredients || []), newRecipeIngredient] }));
 
-    } else if (type === 'rec') {
-      const recipeToAdd = availableRecipes.find((rec: RecipeSearchResult) => rec._id === id);
-      if (!recipeToAdd) return;
-      if (recipeData.linkedRecipes?.some(item => item.recipe._id === id)) {
-         alert(`${recipeToAdd.name} is already linked in the recipe.`);
+    } else if (type === 'recipe') {
+      // Check if already added
+      if (recipeData.linkedRecipes?.some(recItem => recItem.recipe._id === id)) {
+         alert(`${name} is already linked in the recipe.`);
          return;
       }
       const newLinkedRecipe: LinkedRecipeInfo = {
-        recipe: { _id: id, name: recipeToAdd.name },
-        amountGrams: amountGrams,
+        recipe: { _id: id, name: name }, // Use data from selected item
+        amountGrams: amountGrams, // Use amount from parameter
       };
       setRecipeData(prev => ({ ...prev, linkedRecipes: [...(prev.linkedRecipes || []), newLinkedRecipe] }));
     }
 
-    setSelectedComponentId('');
-    setComponentAmount('');
+    // Resetting state is handled inside SearchableSelector after calling onAdd
   };
 
   const handleRemoveRecipeComponent = (componentIdToRemove: string, componentType: 'ingredient' | 'recipe') => {
@@ -470,8 +470,218 @@ export const RecipeEditorTab = ({ recipeId, onClose, onOpenRecipeTab }: RecipeEd
           console.error("Failed to fetch default steps:", error);
           alert(`Failed to load default steps for ${category}. Check console for details.`); // Use better UI in future
       }
-  };
+    };
+  
+    // --- CSV Import Handlers ---
+    const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+      if (event.target.files && event.target.files.length > 0) {
+        setSelectedCsvFile(event.target.files[0]);
+        setUnmatchedIngredients([]); // Clear previous unmatched if a new file is selected
+      } else {
+        setSelectedCsvFile(null);
+      }
+    };
+  
+    const handleImportCsv = async () => {
+      if (!selectedCsvFile) {
+        alert('Please select a CSV file first.');
+        return;
+      }
+  
+      setIsParsingCsv(true);
+      setUnmatchedIngredients([]); // Clear previous results
+  
+      // Fetch *all* ingredients from the database for matching
+      // TODO: Optimize this - potentially fetch only needed ones or use a better endpoint
+      let allDbIngredients: Ingredient[] = [];
+      try {
+          // Fetch all pages if pagination exists, or adjust API call if possible
+          // For now, assume getAllIngredients can fetch all if limit is high enough (e.g., 1000)
+          // This is NOT scalable and needs backend improvement for production.
+          const response = await getAllIngredients(1, 1000); // Fetch up to 1000 ingredients
+          allDbIngredients = response.data;
+          console.log(`Fetched ${allDbIngredients.length} ingredients for matching.`);
+      } catch (error) {
+          console.error("Failed to fetch ingredients for matching:", error);
+          alert(`Failed to fetch database ingredients for matching. ${error instanceof Error ? error.message : ''}`);
+          setIsParsingCsv(false);
+          return;
+      }
+  
+      Papa.parse<string[]>(selectedCsvFile, {
+        header: false, // We'll use indices
+        skipEmptyLines: true,
+        complete: (results) => {
+          console.log('CSV Parsing complete:', results);
+          const parsedData: ParsedCsvIngredient[] = [];
+          const errors: string[] = [];
+          const unmatched: UnmatchedIngredient[] = [];
+          const ingredientsToAdd: RecipeIngredient[] = [];
+  
+          // Start from row 1 to skip header (index 0)
+          for (let i = 1; i < results.data.length; i++) {
+              const row = results.data[i];
+              const originalRow = i + 1; // User-facing row number
+  
+              // Basic validation: Check if row has at least 2 columns
+              if (row.length < 2) {
+                  // Ignore potential total rows or malformed rows silently for now
+                  // console.warn(`Skipping row ${originalRow}: Expected at least 2 columns, found ${row.length}`);
+                  continue;
+              }
+  
+              const name = row[0]?.trim();
+              const amountStr = row[1]?.trim();
+  // Skip if name is empty or looks like a total row (case-insensitive check)
+  const upperCaseName = name?.toUpperCase();
+  if (!name || upperCaseName === 'TOTAL (G)' || upperCaseName === 'TOTAL %') {
+      continue;
+                  continue;
+              }
+  
+              const amountGrams = parseFloat(amountStr);
+  
+              // Validate amount
+              if (isNaN(amountGrams) || amountGrams <= 0) {
+                  errors.push(`Row ${originalRow}: Invalid or zero amount for ingredient "${name}" (${amountStr}).`);
+                  continue; // Skip this ingredient
+              }
+  
+              const parsedIngredient: ParsedCsvIngredient = { name, amountGrams, originalRow };
+              parsedData.push(parsedIngredient);
+  
+              // --- Attempt to match ---
+              const lowerCaseName = name.toLowerCase();
+              const matchedDbIngredient = allDbIngredients.find(dbIng =>
+                  dbIng.name.toLowerCase() === lowerCaseName ||
+                  dbIng.aliases?.some(alias => alias.toLowerCase() === lowerCaseName)
+              );
+  
+              if (matchedDbIngredient) {
+                  // Check if already added to *this recipe* (prevent duplicates from CSV itself)
+                  const alreadyInRecipe = recipeData.ingredients?.some(ing => ing.ingredient._id === matchedDbIngredient._id) ||
+                                          ingredientsToAdd.some(ing => ing.ingredient._id === matchedDbIngredient._id);
+  
+                  if (!alreadyInRecipe) {
+                      ingredientsToAdd.push({
+                          ingredient: {
+                              _id: matchedDbIngredient._id,
+                              name: matchedDbIngredient.name, // Use DB name
+                              isAllergen: matchedDbIngredient.isAllergen,
+                              // We don't need aliases here in the recipe ingredient itself
+                          },
+                          amountGrams: amountGrams,
+                      });
+                  } else {
+                      console.log(`Ingredient "${matchedDbIngredient.name}" (from CSV "${name}") already in recipe, skipping.`);
+                  }
+              } else {
+                  // Not found in DB by name or alias
+                  unmatched.push({ ...parsedIngredient, reason: 'Not found in database' });
+              }
+          }
+  
+          // --- Process results ---
+          if (errors.length > 0) {
+            alert(`CSV Parsing Errors:\n- ${errors.join('\n- ')}`);
+            // Continue processing matched/unmatched even if there are errors in other rows
+          }
+  
+          // Add matched ingredients to the form state
+          if (ingredientsToAdd.length > 0) {
+              setRecipeData(prev => ({
+                  ...prev,
+                  ingredients: [...(prev.ingredients || []), ...ingredientsToAdd]
+              }));
+              alert(`Added ${ingredientsToAdd.length} matched ingredients from the CSV.`);
+          }
+  
+          // Handle unmatched ingredients - Open modal if any exist
+          if (unmatched.length > 0) {
+            setUnmatchedIngredients(unmatched);
+            setResolvingIngredientIndex(0); // Start with the first one
+            setIsResolveModalOpen(true); // Open the modal
+          } else if (errors.length === 0 && ingredientsToAdd.length === 0 && parsedData.length > 0) {
+               alert('All ingredients from the CSV were already present in the recipe.');
+          } else if (errors.length === 0 && unmatched.length === 0 && ingredientsToAdd.length > 0) {
+              // Successfully added some, none unmatched, no errors
+               // Maybe clear file input?
+               setSelectedCsvFile(null);
+               if (fileInputRef.current) fileInputRef.current.value = '';
+          } else if (parsedData.length === 0 && errors.length === 0) {
+              alert('No valid ingredient rows found in the CSV file.');
+          }
+  
+          setIsParsingCsv(false);
+        },
+        error: (error) => {
+          console.error('CSV Parsing failed:', error);
+          alert(`Failed to parse CSV file: ${error.message}`);
+          setIsParsingCsv(false);
+        }
+      });
+    };
 
+    // --- Handlers for Resolving Unmatched Ingredients ---
+
+    const handleResolveSuccess = (resolvedIngredient: Ingredient, originalCsvAmount: number) => {
+        // Add the resolved/created ingredient to the recipe
+        const newRecipeIngredient: RecipeIngredient = {
+            ingredient: {
+                _id: resolvedIngredient._id,
+                name: resolvedIngredient.name,
+                isAllergen: resolvedIngredient.isAllergen,
+                // No need for aliases here
+            },
+            amountGrams: originalCsvAmount,
+        };
+        setRecipeData(prev => ({
+            ...prev,
+            ingredients: [...(prev.ingredients || []), newRecipeIngredient]
+        }));
+
+        // Remove from unmatched list and move to next or close modal
+        handleGoToNextUnmatched();
+    };
+
+    const handleGoToNextUnmatched = () => {
+        setUnmatchedIngredients(prev => {
+            const remaining = prev.filter((_, index) => index !== resolvingIngredientIndex);
+            if (remaining.length > 0) {
+                // Move to the next item (index 0 of the remaining list)
+                setResolvingIngredientIndex(0);
+            } else {
+                // No more items, close modal
+                setIsResolveModalOpen(false);
+                setResolvingIngredientIndex(null);
+                // Clear file input as import is fully complete
+                setSelectedCsvFile(null);
+                if (fileInputRef.current) fileInputRef.current.value = '';
+            }
+            return remaining; // Update the state with the filtered list
+        });
+    };
+
+    const handleSkipUnmatched = () => {
+        // Just move to the next item without resolving
+        const nextIndex = (resolvingIngredientIndex ?? -1) + 1;
+        if (nextIndex < unmatchedIngredients.length) {
+            setResolvingIngredientIndex(nextIndex);
+        } else {
+            // Skipped the last one, close modal
+            setIsResolveModalOpen(false);
+            setResolvingIngredientIndex(null);
+            // Optionally clear the remaining unmatched list if skipping means abandoning them
+            // setUnmatchedIngredients([]);
+        }
+    };
+
+    const handleCloseResolveModal = () => {
+        setIsResolveModalOpen(false);
+        setResolvingIngredientIndex(null);
+        // Decide if we should clear unmatchedIngredients when closing manually
+        // setUnmatchedIngredients([]);
+    };
   // --- Mutations ---
   const handleSaveSuccess = (savedRecipe: RecipeDetails) => {
       console.log('Save successful:', savedRecipe);
@@ -557,7 +767,8 @@ export const RecipeEditorTab = ({ recipeId, onClose, onOpenRecipeTab }: RecipeEd
   };
 
   // --- Render Logic ---
-  const isLoading = isLoadingExisting || createRecipeMutation.isPending || updateRecipeMutation.isPending;
+  const isSaving = createRecipeMutation.isPending || updateRecipeMutation.isPending;
+  const isLoading = isLoadingExisting || isSaving || isParsingCsv; // Combine loading states
 
   // Calculate current total yield for display (optional, but good UX)
   const currentTotalYield = useMemo(() => {
@@ -634,33 +845,62 @@ export const RecipeEditorTab = ({ recipeId, onClose, onOpenRecipeTab }: RecipeEd
           </FormGroup>
 
           <AddComponentForm>
-             {(isLoadingIngredients || isLoadingRecipes) ? ( <p>Loading components...</p> ) : (
-               <>
-                 <AddComponentControls>
-                   <FormLabel htmlFor="component-select">Add Component</FormLabel>
-                   <FormSelect id="component-select" value={selectedComponentId} onChange={(e) => setSelectedComponentId(e.target.value)} disabled={isLoading}>
-                     <option value="" disabled>-- Select Component --</option>
-                     <optgroup label="Ingredients">
-                       {availableComponents.ingredients.map(ing => (<option key={ing.id} value={ing.id}>{ing.name}</option>))}
-                     </optgroup>
-                     <optgroup label="Recipes">
-                       {availableComponents.recipes.map((rec) => (<option key={rec.id} value={rec.id}>{rec.name}</option>))}
-                     </optgroup>
-                   </FormSelect>
-                 </AddComponentControls>
-
-                 <AmountInputGroup>
-                   <FormLabel htmlFor="component-amount">Amount</FormLabel>
-                   <BaseYieldContainer> {/* Reusing BaseYieldContainer for input+label */}
-                      <FormInput type="number" id="component-amount" min="1" value={componentAmount} onChange={(e) => setComponentAmount(e.target.value)} placeholder="grams" disabled={isLoading} />
-                      <span>g</span>
-                   </BaseYieldContainer>
-                 </AmountInputGroup>
-
-                 <AddButton type="button" onClick={handleAddRecipeComponent} disabled={isLoading || !selectedComponentId || !componentAmount}>Add</AddButton>
-               </>
-             )}
+            {/* Use SearchableSelector - spans full width */}
+            <div style={{ width: '100%' }}> {/* Wrapper to allow label and ensure full width */}
+              <FormLabel>Add Component</FormLabel> {/* Keep label */}
+              <SearchableSelector<SelectableItem>
+                queryKeyBase={componentQueryKeyBase} // Use the updated base key
+                queryFn={fetchComponents}
+                onAdd={handleAddComponent} // Pass the correct handler to onAdd
+                placeholder="Search & Add ingredients or recipes..."
+                minSearchLength={minSearchLength}
+                disabled={isLoading}
+              />
+            </div>
+            {/* The separate AmountInputGroup and AddButton are removed as they are now inside SearchableSelector items */}
           </AddComponentForm>
+
+          {/* --- CSV Import Section --- */}
+          <FormGroup style={{ marginTop: 'var(--space-xl)', borderTop: 'var(--border-width) solid var(--border-color-light)', paddingTop: 'var(--space-xl)' }}>
+              <FormLabel htmlFor="csv-file-input">Import Ingredients from CSV</FormLabel>
+              <div style={{ display: 'flex', gap: 'var(--space-md)', alignItems: 'center' }}>
+                  <FormInput
+                      ref={fileInputRef}
+                      type="file"
+                      id="csv-file-input"
+                      accept=".csv"
+                      onChange={handleFileChange}
+                      disabled={isLoading}
+                      style={{ flexGrow: 1 }} // Allow input to take space
+                  />
+                  <SecondaryButton
+                      type="button"
+                      onClick={handleImportCsv}
+                      disabled={!selectedCsvFile || isLoading}
+                  >
+                      {isParsingCsv ? 'Parsing...' : 'Import File'}
+                  </SecondaryButton>
+              </div>
+              {selectedCsvFile && <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--text-color-light)', marginTop: 'var(--space-xs)' }}>Selected: {selectedCsvFile.name}</p>}
+          </FormGroup>
+
+          {/* --- Unmatched Ingredients Notice & Resolve Button --- */}
+          {unmatchedIngredients.length > 0 && !isResolveModalOpen && (
+              <div style={{ marginTop: 'var(--space-lg)', padding: 'var(--space-lg)', border: '1px solid var(--warning-color)', borderRadius: 'var(--border-radius)', backgroundColor: 'var(--warning-color-light)' }}>
+                  <h4 style={{ marginTop: 0, color: 'var(--warning-color-dark)' }}>Action Required: {unmatchedIngredients.length} Unmatched Ingredient{unmatchedIngredients.length > 1 ? 's' : ''}</h4>
+                  <p>Some ingredients from the CSV could not be automatically matched to your database.</p>
+                  <SecondaryButton
+                      type="button"
+                      onClick={() => {
+                          setResolvingIngredientIndex(0); // Start from the first one again
+                          setIsResolveModalOpen(true);
+                      }}
+                      disabled={isLoading}
+                  >
+                      Resolve Unmatched ({unmatchedIngredients.length})
+                  </SecondaryButton>
+              </div>
+          )}
         </div>
 
         {/* Steps Section */}
@@ -704,6 +944,242 @@ export const RecipeEditorTab = ({ recipeId, onClose, onOpenRecipeTab }: RecipeEd
           </PrimaryButton>
         </ButtonContainer>
       </form>
+
+      {/* --- Resolve Unmatched Ingredient Modal --- */}
+      {isResolveModalOpen && resolvingIngredientIndex !== null && unmatchedIngredients[resolvingIngredientIndex] && (
+          <ResolveUnmatchedIngredientModal
+              isOpen={isResolveModalOpen}
+              onClose={handleCloseResolveModal}
+              unmatchedItem={unmatchedIngredients[resolvingIngredientIndex]}
+              itemNumber={resolvingIngredientIndex + 1}
+              totalItems={unmatchedIngredients.length}
+              onResolveSuccess={handleResolveSuccess}
+              onSkip={handleSkipUnmatched}
+              existingIngredientsQueryKeyBase={componentQueryKeyBase} // Reuse for search
+              fetchExistingIngredientsFn={fetchComponents} // Reuse for search
+          />
+      )}
     </EditorContainer>
   );
 };
+
+// --- Sub-Component for Modal Content ---
+// (Defined here for brevity, could be moved to its own file)
+
+interface ResolveModalProps {
+    isOpen: boolean;
+    onClose: () => void;
+    unmatchedItem: UnmatchedIngredient;
+    itemNumber: number;
+    totalItems: number;
+    onResolveSuccess: (resolvedIngredient: Ingredient, originalCsvAmount: number) => void;
+    onSkip: () => void;
+    existingIngredientsQueryKeyBase: (string | undefined)[];
+    fetchExistingIngredientsFn: (term: string) => Promise<SelectableItem[]>;
+}
+
+const ResolveUnmatchedIngredientModal: React.FC<ResolveModalProps> = ({
+    isOpen,
+    onClose,
+    unmatchedItem,
+    itemNumber,
+    totalItems,
+    onResolveSuccess,
+    onSkip,
+    existingIngredientsQueryKeyBase,
+    fetchExistingIngredientsFn,
+}) => {
+    const queryClient = useQueryClient();
+    const [selectedDbIngredient, setSelectedDbIngredient] = useState<SelectableItem | null>(null);
+    const [newIngredientName, setNewIngredientName] = useState(unmatchedItem.name);
+    const [newIngredientIsAllergen, setNewIngredientIsAllergen] = useState(false);
+    const [isSubmittingAlias, setIsSubmittingAlias] = useState(false);
+    const [isSubmittingNew, setIsSubmittingNew] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+
+    // Reset local state when the unmatchedItem changes (moving to next item)
+    useEffect(() => {
+        setSelectedDbIngredient(null);
+        setNewIngredientName(unmatchedItem.name);
+        setNewIngredientIsAllergen(false);
+        setError(null);
+        setIsSubmittingAlias(false);
+        setIsSubmittingNew(false);
+    }, [unmatchedItem]);
+
+    // --- Alias Handling ---
+    const handleAddAlias = async () => {
+        if (!selectedDbIngredient) return;
+        setError(null);
+        setIsSubmittingAlias(true);
+        const dbIngredientId = selectedDbIngredient.id.substring(4); // Remove 'ing_' prefix
+
+        try {
+            const updatedIngredient = await addAliasToIngredient(dbIngredientId, unmatchedItem.name);
+            // Invalidate queries related to ingredients after adding alias
+            queryClient.invalidateQueries({ queryKey: ['ingredients'] });
+            queryClient.invalidateQueries({ queryKey: existingIngredientsQueryKeyBase }); // Invalidate search results
+            // Call the success handler passed from parent
+            onResolveSuccess(updatedIngredient, unmatchedItem.amountGrams);
+        } catch (err: unknown) { // Use unknown
+            console.error("Failed to add alias:", err);
+            // Type check before accessing properties
+            const message = err instanceof Error ? err.message : 'An unknown error occurred';
+            setError(`Failed to add alias: ${message}`);
+        } finally {
+            setIsSubmittingAlias(false);
+        }
+    };
+
+    // --- New Ingredient Handling ---
+    const handleCreateNew = async () => {
+        setError(null);
+        setIsSubmittingNew(true);
+        const trimmedNewName = newIngredientName.trim();
+        if (!trimmedNewName) {
+            setError("New ingredient name cannot be empty.");
+            setIsSubmittingNew(false);
+            return;
+        }
+
+        const createDto: CreateIngredientApiDto = {
+            name: trimmedNewName,
+            isAllergen: newIngredientIsAllergen,
+            // Add the original CSV name as an alias if it's different from the new name
+            aliases: trimmedNewName.toLowerCase() !== unmatchedItem.name.toLowerCase() ? [unmatchedItem.name] : [],
+        };
+
+        try {
+            const createdIngredient = await createIngredientApi(createDto);
+            // Invalidate queries related to ingredients after creation
+            queryClient.invalidateQueries({ queryKey: ['ingredients'] });
+            queryClient.invalidateQueries({ queryKey: existingIngredientsQueryKeyBase }); // Invalidate search results
+            // Call the success handler passed from parent
+            onResolveSuccess(createdIngredient, unmatchedItem.amountGrams);
+        } catch (err: unknown) { // Use unknown
+            console.error("Failed to create ingredient:", err);
+            // Type check before accessing properties
+            const message = err instanceof Error ? err.message : 'An unknown error occurred';
+            setError(`Failed to create ingredient: ${message}`);
+        } finally {
+            setIsSubmittingNew(false);
+        }
+    };
+
+    // Filter function for SearchableSelector to only show ingredients
+    const filterIngredientsOnly = useCallback(async (term: string): Promise<SelectableItem[]> => {
+        const results = await fetchExistingIngredientsFn(term);
+        return results.filter(item => item.type === 'ingredient');
+    }, [fetchExistingIngredientsFn]);
+
+
+    const isLoading = isSubmittingAlias || isSubmittingNew;
+
+    return (
+        <Modal
+            isOpen={isOpen}
+            onClose={onClose}
+            title={`Resolve Unmatched Ingredient (${itemNumber}/${totalItems})`}
+            footer={
+                <>
+                    <SecondaryButton onClick={onSkip} disabled={isLoading}>Skip</SecondaryButton>
+                    <SecondaryButton onClick={onClose} disabled={isLoading}>Cancel All</SecondaryButton>
+                    {/* Action buttons are within the sections */}
+                </>
+            }
+        >
+            <p>Ingredient from CSV (Row {unmatchedItem.originalRow}): <strong>{unmatchedItem.name}</strong> ({unmatchedItem.amountGrams}g)</p>
+            <p>This ingredient was not found in your database by name or alias.</p>
+
+            {error && <p style={{ color: 'var(--danger-color)', fontWeight: '500' }}>Error: {error}</p>}
+
+            {/* Option 1: Add as Alias */}
+            <ResolveSection>
+                <SectionSubHeading>Option 1: Add as Alias</SectionSubHeading>
+                <p>Link "<strong>{unmatchedItem.name}</strong>" to an existing ingredient in your database.</p>
+                <FormGroup>
+                    <FormLabel>Search Existing Ingredient</FormLabel>
+                    <SearchableSelector<SelectableItem>
+                        queryKeyBase={[...existingIngredientsQueryKeyBase, 'aliasSearch']} // Unique key for this search instance
+                        queryFn={filterIngredientsOnly} // Use the filtered fetch function
+                        onSelect={(item) => setSelectedDbIngredient(item)} // Just select, don't add amount
+                        placeholder="Search database ingredients..."
+                        minSearchLength={2}
+                        disabled={isLoading}
+                        showAddControls={false} // Use the correct prop name
+                    />
+                </FormGroup>
+                {selectedDbIngredient && (
+                    <div style={{ marginTop: 'var(--space-sm)', padding: 'var(--space-sm)', backgroundColor: 'var(--surface-color-light)', borderRadius: 'var(--border-radius)' }}>
+                        Selected: <strong>{selectedDbIngredient.name}</strong>
+                        <PrimaryButton
+                            onClick={handleAddAlias}
+                            disabled={isLoading}
+                            style={{ marginLeft: 'var(--space-md)' }}
+                        >
+                            {isSubmittingAlias ? 'Adding Alias...' : `Add "${unmatchedItem.name}" as Alias`}
+                        </PrimaryButton>
+                    </div>
+                )}
+            </ResolveSection>
+
+            {/* Option 2: Create New Ingredient */}
+            <ResolveSection>
+                <SectionSubHeading>Option 2: Create New Ingredient</SectionSubHeading>
+                <p>Add "<strong>{unmatchedItem.name}</strong>" as a new ingredient (or edit the name below).</p>
+                <FormGroup>
+                    <FormLabel htmlFor="new-ing-name">Ingredient Name</FormLabel>
+                    <FormInput
+                        id="new-ing-name"
+                        type="text"
+                        value={newIngredientName}
+                        onChange={(e) => setNewIngredientName(e.target.value)}
+                        disabled={isLoading}
+                    />
+                     {newIngredientName.toLowerCase() !== unmatchedItem.name.toLowerCase() && (
+                        <small style={{ color: 'var(--text-color-light)', marginTop: 'var(--space-xs)'}}>
+                            Original CSV name "{unmatchedItem.name}" will be added as an alias.
+                        </small>
+                    )}
+                </FormGroup>
+                <FormGroup>
+                     <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)', cursor: 'pointer' }}>
+                        <input
+                            type="checkbox"
+                            checked={newIngredientIsAllergen}
+                            onChange={(e) => setNewIngredientIsAllergen(e.target.checked)}
+                            disabled={isLoading}
+                        />
+                        Is Allergen
+                    </label>
+                </FormGroup>
+                 <PrimaryButton
+                    onClick={handleCreateNew}
+                    disabled={isLoading || !newIngredientName.trim()}
+                >
+                    {isSubmittingNew ? 'Creating...' : 'Create New Ingredient'}
+                </PrimaryButton>
+            </ResolveSection>
+
+        </Modal>
+    );
+};
+
+// Simple styled components for the modal sections
+const ResolveSection = styled.div`
+    margin-top: var(--space-xl);
+    padding-top: var(--space-lg);
+    border-top: 1px dashed var(--border-color-light);
+
+    &:first-of-type {
+        margin-top: var(--space-lg);
+        padding-top: 0;
+        border-top: none;
+    }
+`;
+
+const SectionSubHeading = styled.h4`
+    margin-top: 0;
+    margin-bottom: var(--space-md);
+    color: var(--primary-color); /* Use primary color for emphasis */
+`;

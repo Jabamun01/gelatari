@@ -18,21 +18,21 @@ const ingredientsApiUrl = `${backendBaseUrl}/api/ingredients`;
  * Fetches ingredients from the backend API with pagination.
  * @param page - The page number to fetch (default: 1).
  * @param limit - The number of items per page (default: 10).
- * @param name - Optional name to filter ingredients by.
+ * @param searchTerm - Optional term to filter ingredients by name or alias.
  * @returns A promise that resolves to a PaginatedIngredientsResponse object.
  */
 export const getAllIngredients = async (
     page: number = 1,
     limit: number = 10,
-    name?: string // Add optional name parameter
+    searchTerm?: string // Use searchTerm for filtering
 ): Promise<PaginatedIngredientsResponse> => {
   try {
     // Construct the URL with query parameters for pagination and filtering
     const url = new URL(ingredientsApiUrl);
     url.searchParams.append('page', page.toString());
     url.searchParams.append('limit', limit.toString());
-    if (name && name.trim() !== '') { // Add name filter if provided and not empty
-        url.searchParams.append('name', name.trim());
+    if (searchTerm && searchTerm.trim() !== '') { // Add searchTerm filter if provided
+        url.searchParams.append('searchTerm', searchTerm.trim());
     }
 
     const response = await fetch(url.toString());
@@ -112,6 +112,38 @@ export const updateIngredient = async (id: string, updates: UpdateIngredientDto)
     console.error(`Failed to update ingredient with ID ${id}:`, error);
     throw error;
   }
+};
+
+/**
+ * Adds an alias to an existing ingredient via the backend API.
+ * @param id The ID of the ingredient to update.
+ * @param alias The alias string to add.
+ * @returns A promise that resolves to the updated Ingredient object.
+ */
+export const addAliasToIngredient = async (id: string, alias: string): Promise<Ingredient> => {
+    const apiUrl = `${ingredientsApiUrl}/${id}/aliases`;
+    try {
+        const response = await fetch(apiUrl, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ alias }),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(
+                `Network response was not ok: ${response.status} ${response.statusText}. ${errorData.message || ''}`
+            );
+        }
+
+        const data: Ingredient = await response.json();
+        return data;
+    } catch (error) {
+        console.error(`Failed to add alias to ingredient with ID ${id}:`, error);
+        throw error;
+    }
 };
 
 /**

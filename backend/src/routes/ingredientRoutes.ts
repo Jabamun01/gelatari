@@ -5,6 +5,7 @@ import {
   getIngredientByIdHandler,
   updateIngredientHandler,
   deleteIngredientHandler,
+  addAliasToIngredientHandler,
 } from '../controllers/ingredientController';
 
 const router = Router();
@@ -15,5 +16,6 @@ router.get('/', getAllIngredientsHandler as RequestHandler);
 router.get('/:id', getIngredientByIdHandler as RequestHandler);
 router.put('/:id', updateIngredientHandler as RequestHandler); // Using PUT as specified, could also be PATCH
 router.delete('/:id', deleteIngredientHandler as RequestHandler);
+router.patch('/:id/aliases', addAliasToIngredientHandler as RequestHandler); // Route to add an alias
 
 export default router;
