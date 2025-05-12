@@ -139,7 +139,7 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, 
       <ModalContent onClick={(e) => e.stopPropagation()}>
         <ModalHeader>
           <ModalTitle>{title}</ModalTitle>
-          <CloseButton onClick={onClose} aria-label="Close modal">&times;</CloseButton>
+          <CloseButton onClick={onClose} aria-label="Tanca el modal">&times;</CloseButton>
         </ModalHeader>
         <ModalBody>
           {children}

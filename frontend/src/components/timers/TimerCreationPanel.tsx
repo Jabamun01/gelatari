@@ -246,14 +246,14 @@ export const TimerCreationPanel: React.FC<TimerCreationPanelProps> = ({
       setCurrentStep(2);
       setStatusMessage('');
     } else {
-      setStatusMessage('Invalid duration. Use MM:SS or SSS.');
+      setStatusMessage('Durada no vàlida. Utilitza MM:SS o SSS.');
     }
   };
 
 
   const handleColorSelect = (color: string) => {
     if (durationInSeconds <= 0) {
-        setStatusMessage('Duration must be greater than 0.');
+        setStatusMessage('La durada ha de ser superior a 0.');
         setCurrentStep(1); // Go back to fix duration
         return;
     }
@@ -290,7 +290,7 @@ export const TimerCreationPanel: React.FC<TimerCreationPanelProps> = ({
                 aria-label="Timer duration"
               />
               <Button className="primary" onClick={handleGoToStep2} disabled={parseDurationToSeconds(manualDurationInput) === null || parseDurationToSeconds(manualDurationInput)! <=0}>
-                Next
+                Següent
               </Button>
             </DurationInputContainer>
             <Slider

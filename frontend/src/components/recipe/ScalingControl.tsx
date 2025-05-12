@@ -11,24 +11,13 @@ interface ScalingControlProps {
 }
 
 // --- Styled Components ---
-// Add a heading
-const SectionHeading = styled.h4`
-  /* Inherits global h4 styles */
-  margin-bottom: var(--space-sm);
-  font-size: var(--font-size-base); /* Smaller heading */
-  color: var(--text-color-light);
-  font-weight: 500;
-`;
 
 const ControlContainer = styled.div`
   display: flex;
   flex-direction: column;
   gap: var(--space-md);
-  padding: var(--space-lg);
-  border: var(--border-width) solid var(--border-color);
-  border-radius: var(--border-radius);
-  background-color: var(--surface-color);
-  box-shadow: var(--shadow-sm);
+  /* Styles removed: padding, border, border-radius, background-color, box-shadow */
+  /* These are now handled by the parent ControlsWrapper in RecipeTab */
 `;
 
 const Label = styled.label`
@@ -113,10 +102,10 @@ const SliderInput = styled.input`
 
 // Inherit global input styles and customize
 const NumberInput = styled.input`
-  width: 80px;
+  width: 72px;
   padding: var(--space-xs) var(--space-sm);
   /* Inherits border, radius, focus from global */
-  text-align: right;
+  text-align: center;
   font-size: var(--font-size-sm);
   box-shadow: none; /* Remove shadow for small input */
 
@@ -172,12 +161,11 @@ export const ScalingControl = ({
   // Removed console.log
 
   return (
-    <div> {/* Wrap in div for heading */}
-      <SectionHeading>Scaling</SectionHeading>
+    <React.Fragment> {/* Use Fragment instead of div */}
       <ControlContainer>
-      <YieldDisplay>Yield: {formatAmount(scaledYield)}</YieldDisplay>
+      <YieldDisplay>Rendiment: {formatAmount(scaledYield)}</YieldDisplay>
       <InputRow>
-        <Label htmlFor="scaleSlider">Scale:</Label>
+        <Label htmlFor="scaleSlider">Escala:</Label>
         <SliderInput
           id="scaleSlider"
           type="range"
@@ -208,6 +196,6 @@ export const ScalingControl = ({
         {/* Add more marks if needed */}
       </datalist>
       </ControlContainer>
-    </div>
+    </React.Fragment>
   );
 };

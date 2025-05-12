@@ -55,7 +55,7 @@ const FloatingAddTimerButton = () => {
       <FloatingButton 
         onClick={handleOpenPanel}
         disabled={state.timers.length >= 3}
-        aria-label="Add new timer"
+        aria-label="Afegir temporitzador nou"
       >
         +
       </FloatingButton>

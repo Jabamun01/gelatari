@@ -137,7 +137,10 @@ export const globalStyles = css`
         background-color: var(--input-bg);
         box-shadow: var(--shadow-sm);
         transition: border-color 0.2s ease, box-shadow 0.2s ease;
-        width: 100%; /* Default to full width */
+        -moz-appearance: textfield;
+        -webkit-appearance: textfield;
+        appearance: textfield;
+        /* width: 100%; Default to full width */
     }
 
     input:focus,

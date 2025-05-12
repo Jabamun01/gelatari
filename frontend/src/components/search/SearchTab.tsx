@@ -154,7 +154,7 @@ export const SearchTab = ({ onOpenRecipeTab }: SearchTabProps) => { // Destructu
     <SearchContainer>
       <SearchInput
         type="search"
-        placeholder="Search recipes..."
+        placeholder="Cerca receptes..."
         value={searchTerm}
         onChange={handleSearchChange}
         aria-label="Search Recipes"
@@ -167,28 +167,28 @@ export const SearchTab = ({ onOpenRecipeTab }: SearchTabProps) => { // Destructu
           onChange={handleToggleChange}
         />
         <ToggleLabel htmlFor="search-scope-toggle">
-          {searchAll ? 'Searching All Recipes' : 'Searching Ice Cream/Sorbet Only'}
+          {searchAll ? 'Cercant totes les receptes' : 'Cercant només gelats/sorbets'}
         </ToggleLabel>
       </ToggleContainer>
 
       {/* Results Area */}
       {debouncedSearchTerm.length < minSearchLength && searchTerm.length > 0 && (
-         <StatusMessage>Please enter at least {minSearchLength} characters...</StatusMessage>
+         <StatusMessage>Si us plau, introdueix almenys {minSearchLength} caràcters...</StatusMessage>
       )}
 
       {isLoading && debouncedSearchTerm.length >= minSearchLength && (
-        <StatusMessage>Loading recipes...</StatusMessage>
+        <StatusMessage>Carregant receptes...</StatusMessage>
       )}
 
       {isError && debouncedSearchTerm.length >= minSearchLength && (
-        <StatusMessage>Error fetching recipes: {error?.message || 'Unknown error'}</StatusMessage>
+        <StatusMessage>Error en obtenir receptes: {error?.message || 'Error desconegut'}</StatusMessage>
       )}
 
       {!isLoading && !isError && debouncedSearchTerm.length >= minSearchLength && recipes && (
         <ResultsList>
           {recipes.length === 0 ? (
             <NoResultsItem key="no-results">
-              No recipes found matching "{debouncedSearchTerm}".
+              No s'han trobat receptes que coincideixin amb "{debouncedSearchTerm}".
             </NoResultsItem>
           ) : (
             recipes.map((recipe) => (

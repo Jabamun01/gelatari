@@ -25,14 +25,38 @@ interface RecipeTabProps {
 }
 
 const RecipeContainer = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-xl);
-  max-width: 900px; /* Limit width */
-  margin: var(--space-lg) auto; /* Add vertical margin and center */
+  /* --- Grid Layout (Tablet Landscape & Larger) --- */
+  @media (min-width: 1024px) {
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* Two equal columns */
+    grid-template-rows: auto auto 1fr auto; /* Header, Info, Ingredients (expand), Scaling */
+    grid-template-areas:
+      "header header"
+      "info   info"
+      "ingredients steps"
+      "scaling steps"; /* Scaling below ingredients, steps span */
+    gap: var(--space-lg) var(--space-xl); /* Row gap, Column gap */
+    padding: var(--space-lg);
+    /* Attempt to make it take available height - might need adjustment based on parent */
+    height: calc(100vh - 150px); /* Example: Adjust 150px based on actual header/tab heights */
+    overflow: hidden; /* Prevent container itself from scrolling */
+    max-width: none; /* Remove max-width for grid */
+    margin: 0; /* Remove margin for grid */
+  }
+
+  /* --- Flex Layout (Mobile & Smaller Tablets) --- */
+  @media (max-width: 1023px) {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-lg); /* Keep consistent gap */
+    padding: var(--space-md); /* Slightly less padding on mobile */
+    max-width: 900px; /* Restore max-width */
+    margin: var(--space-lg) auto; /* Restore centering */
+  }
 `;
 
 const LoadingMessage = styled.div`
+  grid-column: 1 / -1; /* Span full width in grid if loading */
   font-style: italic;
   color: var(--text-color-light); /* Use lighter text */
   padding: var(--space-xl) 0; /* Add padding for visual spacing */
@@ -40,6 +64,7 @@ const LoadingMessage = styled.div`
 `;
 
 const ErrorMessage = styled.div`
+  grid-column: 1 / -1; /* Span full width in grid if error */
   color: var(--danger-color); /* Use danger color */
   font-weight: 500; /* Slightly less bold */
   padding: var(--space-lg);
@@ -49,14 +74,15 @@ const ErrorMessage = styled.div`
   text-align: center;
 `;
 
-// Inherits h2 styles from global.ts
 const RecipeHeader = styled.h2`
-  margin-bottom: var(--space-sm);
+  grid-area: header; /* Assign grid area */
+  margin-bottom: 0; /* Remove bottom margin, grid gap handles spacing */
   color: var(--text-color-strong);
   display: flex;
-  align-items: baseline; /* Align text baseline */
+  align-items: center; /* Align items vertically */
+  justify-content: space-between; /* Space out title and controls */
   gap: var(--space-md);
-  flex-wrap: wrap;
+  flex-wrap: wrap; /* Allow wrapping on smaller screens within the header */
 `;
 
 const RecipeName = styled.span`
@@ -64,6 +90,7 @@ const RecipeName = styled.span`
 `;
 
 const RecipeInfo = styled.div`
+  grid-area: info; /* Assign grid area */
   font-size: var(--font-size-sm);
   color: var(--text-color-light);
   display: flex;
@@ -71,74 +98,137 @@ const RecipeInfo = styled.div`
   align-items: center;
   flex-wrap: wrap;
   gap: var(--space-md);
-  padding-bottom: var(--space-lg); /* Increase padding */
+  padding-bottom: var(--space-md); /* Reduce padding */
   border-bottom: var(--border-width) solid var(--border-color-light); /* Use variable */
-  margin-bottom: var(--space-lg); /* Add margin below separator */
+  margin-bottom: 0; /* Remove bottom margin, grid gap handles spacing */
 `;
 
-// --- Styled Components (Continued) ---
-const ControlsWrapper = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-lg);
-  margin-top: var(--space-xl); /* Increase top margin */
-  padding-top: var(--space-xl); /* Increase top padding */
-  border-top: var(--border-width) solid var(--border-color-light); /* Use variable */
+// Wrappers for list components to control grid placement and scrolling
+const IngredientsWrapper = styled.div`
+  grid-area: ingredients;
+  overflow-y: auto; /* Enable vertical scrolling */
+  min-height: 0; /* Allow shrinking in flex/grid context */
+  border: var(--border-width) solid var(--border-color-light); /* Optional: Add border */
+  border-radius: var(--border-radius);
+  padding: var(--space-md);
+  background-color: var(--surface-color-raised); /* Slightly different background */
+
+  @media (max-width: 1023px) {
+    overflow-y: visible; /* Disable scrolling on mobile */
+    border: none;
+    padding: 0;
+    background-color: transparent;
+  }
 `;
 
-// Style as a toggle button, inheriting base button styles
+const StepsWrapper = styled.div`
+  grid-area: steps;
+  overflow-y: auto; /* Enable vertical scrolling */
+  min-height: 0; /* Allow shrinking in flex/grid context */
+  border: var(--border-width) solid var(--border-color-light); /* Optional: Add border */
+  border-radius: var(--border-radius);
+  padding: var(--space-md);
+  background-color: var(--surface-color-raised); /* Slightly different background */
+
+  @media (max-width: 1023px) {
+    overflow-y: visible; /* Disable scrolling on mobile */
+    border: none;
+    padding: 0;
+    background-color: transparent;
+  }
+`;
+
+// Wrapper for scaling control placement
+const ScalingWrapper = styled.div`
+  grid-area: scaling;
+  /* Add margin-top if needed for spacing below ingredients */
+  /* margin-top: var(--space-md); */
+`;
+
+
+// ControlsWrapper removed as controls are now in the header
+
 // Style as a toggle button, using secondary color when active
+// Slightly smaller padding than Edit/Delete, consistent font/border-radius
 const ProductionModeToggle = styled.button<{ isActive: boolean }>`
-  /* Inherits base button styles */
-  border: var(--border-width) solid ${props => (props.isActive ? 'var(--secondary-color)' : 'var(--border-color)')};
-  background-color: ${props => (props.isActive ? 'var(--secondary-color)' : 'var(--surface-color)')}; /* Use surface color when inactive */
-  color: ${props => (props.isActive ? 'var(--text-on-secondary)' : 'var(--secondary-color)')}; /* Use secondary color text when inactive */
-  font-weight: 600;
-  align-self: flex-start;
-  min-width: 200px; /* Give it some width */
+  /* Base Styles */
+  padding: var(--space-xs) var(--space-sm); /* Smaller padding */
+  font-size: var(--font-size-sm);
+  font-weight: 500; /* Consistent weight */
+  border-radius: var(--border-radius);
+  cursor: pointer;
   text-align: center;
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+
+  /* Conditional Styles */
+  border: var(--border-width) solid ${props => (props.isActive ? 'var(--secondary-color)' : 'var(--border-color)')};
+  background-color: ${props => (props.isActive ? 'var(--secondary-color)' : 'var(--surface-color)')};
+  color: ${props => (props.isActive ? 'var(--text-on-secondary)' : 'var(--secondary-color)')};
 
   &:hover:not(:disabled) {
-    background-color: ${props => (props.isActive ? 'var(--secondary-color-dark)' : 'rgba(16, 185, 129, 0.1)')}; /* Light secondary on hover inactive */
-    border-color: ${props => (props.isActive ? 'var(--secondary-color-dark)' : 'var(--secondary-color)')};
+    background-color: ${props => (props.isActive ? 'var(--secondary-color-dark)' : 'var(--surface-color-hover)')}; /* Consistent hover background */
+    border-color: ${props => (props.isActive ? 'var(--secondary-color-dark)' : 'var(--border-color-hover)')}; /* Consistent hover border */
     color: ${props => (props.isActive ? 'var(--text-on-secondary)' : 'var(--secondary-color-dark)')};
   }
-`;
 
-// Style as a secondary/utility button
-// Style as a secondary/utility button
-const EditButton = styled.button`
-  /* Inherits base button styles */
-  padding: var(--space-xs) var(--space-sm);
-  background-color: var(--surface-color); /* Use surface color */
-  color: var(--text-color);
-  border: var(--border-width) solid var(--border-color);
-  font-size: var(--font-size-sm);
-  font-weight: 500;
-  box-shadow: none;
-
-  &:hover:not(:disabled) {
-    background-color: var(--background-color); /* Use background for hover */
-    border-color: var(--border-color);
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
   }
 `;
 
-// Style as a danger button
-// Style as a danger button
-const DeleteButton = styled.button`
-  /* Inherits base button styles */
-  padding: var(--space-xs) var(--space-sm);
-  background-color: transparent; /* Make background transparent */
-  color: var(--danger-color); /* Use danger color for text */
-  border-color: transparent; /* Make border transparent */
+// Style as a standard action button
+// Larger padding, consistent font/border-radius
+const EditButton = styled.button`
+  /* Base Styles */
+  padding: var(--space-sm) var(--space-md); /* Larger padding */
   font-size: var(--font-size-sm);
-  font-weight: 500;
-  box-shadow: none;
+  font-weight: 500; /* Consistent weight */
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+
+  /* Specific Styles */
+  background-color: var(--surface-color);
+  color: var(--text-color);
+  border: var(--border-width) solid var(--border-color);
 
   &:hover:not(:disabled) {
-    background-color: rgba(239, 68, 68, 0.1); /* Light red background on hover */
-    color: var(--danger-color-dark); /* Darken text on hover */
-    border-color: transparent;
+    background-color: var(--surface-color-hover); /* Consistent hover background */
+    border-color: var(--border-color-hover); /* Consistent hover border */
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+`;
+
+// Style as a danger action button
+// Larger padding, consistent font/border-radius, danger colors
+const DeleteButton = styled.button`
+  /* Base Styles */
+  padding: var(--space-sm) var(--space-md); /* Larger padding */
+  font-size: var(--font-size-sm);
+  font-weight: 500; /* Consistent weight */
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+
+  /* Specific Styles */
+  background-color: transparent;
+  color: var(--danger-color);
+  border: var(--border-width) solid transparent; /* Consistent border definition */
+
+  &:hover:not(:disabled) {
+    background-color: rgba(239, 68, 68, 0.1); /* Subtle danger background on hover */
+    color: var(--danger-color-dark);
+    border-color: transparent; /* Keep border transparent on hover */
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
   }
 `;
 
@@ -202,7 +292,7 @@ export const RecipeTab = ({
     // Check if recipe data exists before attempting delete (useQuery data)
     if (!recipe) return;
 
-    if (window.confirm(`Are you sure you want to delete the recipe "${recipe.name}"? This action cannot be undone.`)) {
+    if (window.confirm(`Estàs segur que vols eliminar la recepta "${recipe.name}"? Aquesta acció no es pot desfer.`)) {
       deleteRecipeMutation.mutate(recipeId); // recipeId is from props
     }
   };
@@ -215,13 +305,13 @@ export const RecipeTab = ({
   // Removed local toggleProductionMode handler (using prop onToggleProductionMode directly)
 
   if (isLoading) {
-    return <RecipeContainer><LoadingMessage>Loading recipe details...</LoadingMessage></RecipeContainer>;
+    return <RecipeContainer><LoadingMessage>Carregant detalls de la recepta...</LoadingMessage></RecipeContainer>;
   }
 
   if (isError) {
     return (
       <RecipeContainer>
-        <ErrorMessage>Error loading recipe: {error?.message || 'Unknown error'}</ErrorMessage>
+        <ErrorMessage>Error en carregar la recepta: {error?.message || 'Error desconegut'}</ErrorMessage>
       </RecipeContainer>
     );
   }
@@ -237,56 +327,67 @@ export const RecipeTab = ({
             onClick={() => onOpenEditor(recipeId, recipe.name)}
             disabled={deleteRecipeMutation.isPending} // Disable if delete is pending
           >
-            Edit
+            Editar
           </EditButton>
           {/* Delete Button */}
           <DeleteButton
             onClick={handleDeleteRecipe}
             disabled={!recipe || deleteRecipeMutation.isPending} // Disable if no data or delete pending
           >
-            {deleteRecipeMutation.isPending ? 'Deleting...' : 'Delete Recipe'}
+            {deleteRecipeMutation.isPending ? 'Eliminant...' : 'Eliminar recepta'}
           </DeleteButton>
-        </RecipeHeader>
-        <RecipeInfo>
-          <span> {/* Wrap text in span to allow flex alignment */}
-            Type: {recipe.type}
-            {recipe.category && ` | Category: ${recipe.category}`}
-          </span>
-        </RecipeInfo>
-
-        {/* Placeholders for future components */}
-        {/* Render IngredientList */}
-        <IngredientList
-          ingredients={recipe.ingredients}
-          linkedRecipes={recipe.linkedRecipes} // Pass linked recipes here
-          scaleFactor={scaleFactor}
-          onOpenRecipeTab={handleOpenRecipeTab} // Pass handler here
-          isProductionMode={isProductionMode} // Pass production mode status
-          trackedAmounts={trackedAmounts} // Pass down prop
-          onAmountTracked={onAmountTracked} // Pass down prop
-        />
-        {/* Render StepList */}
-        <StepList steps={recipe.steps} /> {/* Remove props no longer needed */}
-        {/* Wrapper for Controls */}
-        <ControlsWrapper>
-          <ScalingControl
-            scaleFactor={scaleFactor} // Use prop
-            onScaleChange={onScaleChange} // Use prop handler
-            baseYieldGrams={recipe.baseYieldGrams}
-            disabled={isProductionMode} // Disable when in production mode
-          />
+          {/* --- ScalingControl Moved Below Ingredients --- */}
           {/* Production Mode Toggle */}
           <ProductionModeToggle
             isActive={isProductionMode}
             onClick={onToggleProductionMode} // Use the handler passed via props
           >
-            {isProductionMode ? 'Production Mode: ON' : 'Production Mode: OFF'}
+            {isProductionMode ? 'Mode producció: ACTIU' : 'Mode producció: INACTIU'}
           </ProductionModeToggle>
-        </ControlsWrapper>
+        </RecipeHeader>
+        <RecipeInfo>
+          <span> {/* Wrap text in span to allow flex alignment */}
+            Tipus: {recipe.type}
+            {recipe.category && ` | Categoria: ${recipe.category}`}
+          </span>
+        </RecipeInfo>
+
+        {/* --- Ingredients Section --- */}
+        <IngredientsWrapper>
+          {/* Consider adding an <h3>Ingredients</h3> here if desired */}
+          <IngredientList
+            ingredients={recipe.ingredients}
+            linkedRecipes={recipe.linkedRecipes} // Pass linked recipes here
+            scaleFactor={scaleFactor}
+            onOpenRecipeTab={handleOpenRecipeTab} // Pass handler here
+            isProductionMode={isProductionMode} // Pass production mode status
+            trackedAmounts={trackedAmounts} // Pass down prop
+            onAmountTracked={onAmountTracked} // Pass down prop
+          />
+        </IngredientsWrapper>
+
+        {/* --- Steps Section --- */}
+        <StepsWrapper>
+          {/* Consider adding an <h3>Steps</h3> here if desired */}
+          <StepList steps={recipe.steps} /> {/* Remove props no longer needed */}
+        </StepsWrapper>
+
+        {/* --- Scaling Control Section (Moved from Header) --- */}
+        <ScalingWrapper>
+           <ScalingControl
+             scaleFactor={scaleFactor} // Use prop
+             onScaleChange={onScaleChange} // Use prop handler
+             baseYieldGrams={recipe.baseYieldGrams}
+             disabled={isProductionMode} // Disable when in production mode
+           />
+        </ScalingWrapper>
+
+        {/* --- Controls Section Removed (Moved to Header) --- */}
+        {/* <ControlsWrapper> ... </ControlsWrapper> */}
       </RecipeContainer>
     );
   }
 
   // Fallback case (should ideally not be reached if query handles states correctly)
-  return <RecipeContainer>No recipe data available.</RecipeContainer>;
+  return <RecipeContainer>No hi ha dades de la recepta disponibles.</RecipeContainer>;
 };

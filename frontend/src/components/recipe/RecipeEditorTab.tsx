@@ -779,28 +779,28 @@ export const RecipeEditorTab = ({ recipeId, onClose, onOpenRecipeTab }: RecipeEd
 
   return (
     <EditorContainer>
-      <h2 style={{ textAlign: 'center' }}>{isEditing ? `Edit Recipe: ${existingRecipe?.name ?? '...'}` : 'Create New Recipe'}</h2>
+      <h2 style={{ textAlign: 'center' }}>{isEditing ? `Edita Recepta: ${existingRecipe?.name ?? '...'}` : 'Nova Recepta'}</h2>
 
       <form onSubmit={(e) => e.preventDefault()}>
         {/* Basic Information Section */}
         <div>
-          <SectionHeading>Basic Information</SectionHeading>
+          <SectionHeading>Informació Bàsica</SectionHeading>
           <FormGroup>
-            <FormLabel htmlFor="recipe-name">Name</FormLabel>
+            <FormLabel htmlFor="recipe-name">Nom</FormLabel>
             <FormInput type="text" id="recipe-name" name="name" value={recipeData.name || ''} onChange={handleInputChange} required disabled={isLoading} />
           </FormGroup>
           <FormGroup>
-            <FormLabel htmlFor="recipe-type">Type</FormLabel>
+            <FormLabel htmlFor="recipe-type">Tipus</FormLabel>
             <FormSelect id="recipe-type" name="type" value={recipeData.type || 'ice cream recipe'} onChange={handleInputChange} disabled={isLoading}>
-              <option value="ice cream recipe">Ice Cream Recipe</option>
-              <option value="not ice cream recipe">Not Ice Cream Recipe</option>
+              <option value="ice cream recipe">Recepta de Gelat</option>
+              <option value="not ice cream recipe">No és Recepta de Gelat</option>
             </FormSelect>
           </FormGroup>
           {recipeData.type === 'ice cream recipe' && (
             <FormGroup>
-              <FormLabel htmlFor="recipe-category">Category</FormLabel>
+              <FormLabel htmlFor="recipe-category">Categoria</FormLabel>
               <FormSelect id="recipe-category" name="category" value={recipeData.category || 'ice cream'} onChange={handleInputChange} required disabled={isLoading}>
-                <option value="ice cream">Ice Cream</option>
+                <option value="ice cream">Gelat</option>
                 <option value="sorbet">Sorbet</option>
               </FormSelect>
             </FormGroup>
@@ -812,7 +812,7 @@ export const RecipeEditorTab = ({ recipeId, onClose, onOpenRecipeTab }: RecipeEd
           <SectionHeading>Components</SectionHeading>
           <ComponentList>
             {(recipeData.ingredients?.length === 0 && recipeData.linkedRecipes?.length === 0) && (
-              <ComponentListItem>No components added yet.</ComponentListItem>
+              <ComponentListItem>Encara no hi ha components.</ComponentListItem>
             )}
             {recipeData.ingredients?.map((item) => (
               <ComponentListItem key={`ing-${item.ingredient._id}`}>
@@ -820,35 +820,35 @@ export const RecipeEditorTab = ({ recipeId, onClose, onOpenRecipeTab }: RecipeEd
                   <ComponentName>{item.ingredient.name}</ComponentName>
                   <ComponentAmount>({item.amountGrams}g - Ingredient)</ComponentAmount>
                 </div>
-                <RemoveButton onClick={() => handleRemoveRecipeComponent(item.ingredient._id, 'ingredient')} disabled={isLoading}>Remove</RemoveButton>
+                <RemoveButton onClick={() => handleRemoveRecipeComponent(item.ingredient._id, 'ingredient')} disabled={isLoading}>Elimina</RemoveButton>
               </ComponentListItem>
             ))}
             {recipeData.linkedRecipes?.map((item) => (
               <ComponentListItem key={`rec-${item.recipe._id}`}>
                 <div>
                   <ComponentName>{item.recipe.name}</ComponentName>
-                  <ComponentAmount>({item.amountGrams}g - Recipe)</ComponentAmount>
+                  <ComponentAmount>({item.amountGrams}g - Recepta)</ComponentAmount>
                 </div>
-                <RemoveButton onClick={() => handleRemoveRecipeComponent(item.recipe._id, 'recipe')} disabled={isLoading}>Remove</RemoveButton>
+                <RemoveButton onClick={() => handleRemoveRecipeComponent(item.recipe._id, 'recipe')} disabled={isLoading}>Elimina</RemoveButton>
               </ComponentListItem>
             ))}
           </ComponentList>
 
           {/* Display Calculated Yield */}
           <FormGroup>
-              <FormLabel>Calculated Base Yield (Read-only)</FormLabel>
+              <FormLabel>Rendiment Base (Només lectura)</FormLabel>
               <p style={{ fontSize: 'var(--font-size-lg)', fontWeight: '500' }}>{currentTotalYield} g</p>
           </FormGroup>
 
           <AddComponentForm>
             {/* Use SearchableSelector - spans full width */}
             <div style={{ width: '100%' }}> {/* Wrapper to allow label and ensure full width */}
-              <FormLabel>Add Component</FormLabel> {/* Keep label */}
+              <FormLabel>Afegeix Component</FormLabel> {/* Keep label */}
               <SearchableSelector<SelectableItem>
                 queryKeyBase={componentQueryKeyBase} // Use the updated base key
                 queryFn={fetchComponents}
                 onAdd={handleAddComponent} // Pass the correct handler to onAdd
-                placeholder="Search & Add ingredients or recipes..."
+                placeholder="Cerca i afegeix ingredients o receptes..."
                 minSearchLength={minSearchLength}
                 disabled={isLoading}
               />
@@ -858,7 +858,7 @@ export const RecipeEditorTab = ({ recipeId, onClose, onOpenRecipeTab }: RecipeEd
 
           {/* --- CSV Import Section --- */}
           <FormGroup style={{ marginTop: 'var(--space-xl)', borderTop: 'var(--border-width) solid var(--border-color-light)', paddingTop: 'var(--space-xl)' }}>
-              <FormLabel htmlFor="csv-file-input">Import Ingredients from CSV</FormLabel>
+              <FormLabel htmlFor="csv-file-input">Importa Ingredients des de CSV</FormLabel>
               <div style={{ display: 'flex', gap: 'var(--space-md)', alignItems: 'center' }}>
                   <FormInput
                       ref={fileInputRef}
@@ -874,7 +874,7 @@ export const RecipeEditorTab = ({ recipeId, onClose, onOpenRecipeTab }: RecipeEd
                       onClick={handleImportCsv}
                       disabled={!selectedCsvFile || isLoading}
                   >
-                      {isParsingCsv ? 'Parsing...' : 'Import File'}
+                      {isParsingCsv ? 'Processant...' : 'Importa Fitxer'}
                   </SecondaryButton>
               </div>
               {selectedCsvFile && <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--text-color-light)', marginTop: 'var(--space-xs)' }}>Selected: {selectedCsvFile.name}</p>}
@@ -883,8 +883,8 @@ export const RecipeEditorTab = ({ recipeId, onClose, onOpenRecipeTab }: RecipeEd
           {/* --- Unmatched Ingredients Notice & Resolve Button --- */}
           {unmatchedIngredients.length > 0 && !isResolveModalOpen && (
               <div style={{ marginTop: 'var(--space-lg)', padding: 'var(--space-lg)', border: '1px solid var(--warning-color)', borderRadius: 'var(--border-radius)', backgroundColor: 'var(--warning-color-light)' }}>
-                  <h4 style={{ marginTop: 0, color: 'var(--warning-color-dark)' }}>Action Required: {unmatchedIngredients.length} Unmatched Ingredient{unmatchedIngredients.length > 1 ? 's' : ''}</h4>
-                  <p>Some ingredients from the CSV could not be automatically matched to your database.</p>
+                  <h4 style={{ marginTop: 0, color: 'var(--warning-color-dark)' }}>Acció Requerida: {unmatchedIngredients.length} Ingredient{unmatchedIngredients.length > 1 ? 's' : ''} no trobat{unmatchedIngredients.length > 1 ? 's' : ''}</h4>
+                  <p>Alguns ingredients del CSV no s'han pogut trobar automàticament a la base de dades.</p>
                   <SecondaryButton
                       type="button"
                       onClick={() => {
@@ -893,7 +893,7 @@ export const RecipeEditorTab = ({ recipeId, onClose, onOpenRecipeTab }: RecipeEd
                       }}
                       disabled={isLoading}
                   >
-                      Resolve Unmatched ({unmatchedIngredients.length})
+                      Resol No Trobats ({unmatchedIngredients.length})
                   </SecondaryButton>
               </div>
           )}
@@ -901,10 +901,10 @@ export const RecipeEditorTab = ({ recipeId, onClose, onOpenRecipeTab }: RecipeEd
 
         {/* Steps Section */}
         <div>
-          <SectionHeading>Steps</SectionHeading>
+          <SectionHeading>Passos</SectionHeading>
           <StepList>
             {(recipeData.steps?.length === 0) && (
-              <StepListItem>No steps added yet.</StepListItem> // Display message if no steps
+              <StepListItem>Encara no hi ha passos.</StepListItem> // Display message if no steps
             )}
             {recipeData.steps?.map((step, index) => (
               <StepListItem key={index}>
@@ -914,16 +914,16 @@ export const RecipeEditorTab = ({ recipeId, onClose, onOpenRecipeTab }: RecipeEd
                   rows={3} // Start with a reasonable height
                   disabled={isLoading}
                 />
-                <RemoveButton onClick={() => handleRemoveStep(index)} disabled={isLoading}>Remove</RemoveButton>
+                <RemoveButton onClick={() => handleRemoveStep(index)} disabled={isLoading}>Elimina</RemoveButton>
               </StepListItem>
             ))}
           </StepList>
           <StepButtonContainer>
-            <SecondaryButton type="button" onClick={handleAddStep} disabled={isLoading}>Add New Step</SecondaryButton>
+            <SecondaryButton type="button" onClick={handleAddStep} disabled={isLoading}>Afegeix Pas Nou</SecondaryButton>
             {recipeData.type === 'ice cream recipe' && (
               <>
-                <SecondaryButton type="button" onClick={() => handleAppendDefaultSteps('ice cream')} disabled={isLoading}>Add Ice Cream Defaults</SecondaryButton>
-                <SecondaryButton type="button" onClick={() => handleAppendDefaultSteps('sorbet')} disabled={isLoading}>Add Sorbet Defaults</SecondaryButton>
+                <SecondaryButton type="button" onClick={() => handleAppendDefaultSteps('ice cream')} disabled={isLoading}>Afegeix Passos per Defecte de Gelat</SecondaryButton>
+                <SecondaryButton type="button" onClick={() => handleAppendDefaultSteps('sorbet')} disabled={isLoading}>Afegeix Passos per Defecte de Sorbet</SecondaryButton>
               </>
             )}
           </StepButtonContainer>
@@ -934,9 +934,9 @@ export const RecipeEditorTab = ({ recipeId, onClose, onOpenRecipeTab }: RecipeEd
         {/* Action Buttons */}
         <ButtonContainer>
           {/* Use PrimaryButton for Save, SecondaryButton for Cancel */}
-          <SecondaryButton type="button" onClick={handleCancel} disabled={isLoading}>Cancel</SecondaryButton>
+          <SecondaryButton type="button" onClick={handleCancel} disabled={isLoading}>Cancel·la</SecondaryButton>
           <PrimaryButton type="button" onClick={handleSave} disabled={isLoading}>
-            {isLoading ? 'Saving...' : (isEditing ? 'Save Changes' : 'Create Recipe')}
+            {isLoading ? 'Desant...' : (isEditing ? 'Desa Canvis' : 'Crea Recepta')}
           </PrimaryButton>
         </ButtonContainer>
       </form>
@@ -1072,31 +1072,31 @@ const ResolveUnmatchedIngredientModal: React.FC<ResolveModalProps> = ({
         <Modal
             isOpen={isOpen}
             onClose={onClose}
-            title={`Resolve Unmatched Ingredient (${itemNumber}/${totalItems})`}
+            title={`Resol Ingredient No Trobat (${itemNumber}/${totalItems})`}
             footer={
                 <>
-                    <SecondaryButton onClick={onSkip} disabled={isLoading}>Skip</SecondaryButton>
-                    <SecondaryButton onClick={onClose} disabled={isLoading}>Cancel All</SecondaryButton>
+                    <SecondaryButton onClick={onSkip} disabled={isLoading}>Salta</SecondaryButton>
+                    <SecondaryButton onClick={onClose} disabled={isLoading}>Cancel·la Tot</SecondaryButton>
                     {/* Action buttons are within the sections */}
                 </>
             }
         >
-            <p>Ingredient from CSV (Row {unmatchedItem.originalRow}): <strong>{unmatchedItem.name}</strong> ({unmatchedItem.amountGrams}g)</p>
-            <p>This ingredient was not found in your database by name or alias.</p>
+            <p>Ingredient del CSV (Fila {unmatchedItem.originalRow}): <strong>{unmatchedItem.name}</strong> ({unmatchedItem.amountGrams}g)</p>
+            <p>Aquest ingredient no s'ha trobat a la base de dades per nom o àlies.</p>
 
             {error && <p style={{ color: 'var(--danger-color)', fontWeight: '500' }}>Error: {error}</p>}
 
             {/* Option 1: Add as Alias */}
             <ResolveSection>
-                <SectionSubHeading>Option 1: Add as Alias</SectionSubHeading>
-                <p>Link "<strong>{unmatchedItem.name}</strong>" to an existing ingredient in your database.</p>
+                <SectionSubHeading>Opció 1: Afegeix com a Àlies</SectionSubHeading>
+                <p>Vincula "<strong>{unmatchedItem.name}</strong>" a un ingredient existent a la base de dades.</p>
                 <FormGroup>
-                    <FormLabel>Search Existing Ingredient</FormLabel>
+                    <FormLabel>Cerca Ingredient Existent</FormLabel>
                     <SearchableSelector<SelectableItem>
                         queryKeyBase={[...existingIngredientsQueryKeyBase, 'aliasSearch']} // Unique key for this search instance
                         queryFn={filterIngredientsOnly} // Use the filtered fetch function
                         onSelect={(item) => setSelectedDbIngredient(item)} // Just select, don't add amount
-                        placeholder="Search database ingredients..."
+                        placeholder="Cerca ingredients a la base de dades..."
                         minSearchLength={2}
                         disabled={isLoading}
                         showAddControls={false} // Use the correct prop name
@@ -1104,13 +1104,13 @@ const ResolveUnmatchedIngredientModal: React.FC<ResolveModalProps> = ({
                 </FormGroup>
                 {selectedDbIngredient && (
                     <div style={{ marginTop: 'var(--space-sm)', padding: 'var(--space-sm)', backgroundColor: 'var(--surface-color-light)', borderRadius: 'var(--border-radius)' }}>
-                        Selected: <strong>{selectedDbIngredient.name}</strong>
+                        Seleccionat: <strong>{selectedDbIngredient.name}</strong>
                         <PrimaryButton
                             onClick={handleAddAlias}
                             disabled={isLoading}
                             style={{ marginLeft: 'var(--space-md)' }}
                         >
-                            {isSubmittingAlias ? 'Adding Alias...' : `Add "${unmatchedItem.name}" as Alias`}
+                            {isSubmittingAlias ? 'Afegint Àlies...' : `Afegeix "${unmatchedItem.name}" com a Àlies`}
                         </PrimaryButton>
                     </div>
                 )}
@@ -1118,10 +1118,10 @@ const ResolveUnmatchedIngredientModal: React.FC<ResolveModalProps> = ({
 
             {/* Option 2: Create New Ingredient */}
             <ResolveSection>
-                <SectionSubHeading>Option 2: Create New Ingredient</SectionSubHeading>
-                <p>Add "<strong>{unmatchedItem.name}</strong>" as a new ingredient (or edit the name below).</p>
+                <SectionSubHeading>Opció 2: Crea Ingredient Nou</SectionSubHeading>
+                <p>Afegeix "<strong>{unmatchedItem.name}</strong>" com a ingredient nou (o edita el nom a continuació).</p>
                 <FormGroup>
-                    <FormLabel htmlFor="new-ing-name">Ingredient Name</FormLabel>
+                    <FormLabel htmlFor="new-ing-name">Nom de l'Ingredient</FormLabel>
                     <FormInput
                         id="new-ing-name"
                         type="text"
@@ -1131,7 +1131,7 @@ const ResolveUnmatchedIngredientModal: React.FC<ResolveModalProps> = ({
                     />
                      {newIngredientName.toLowerCase() !== unmatchedItem.name.toLowerCase() && (
                         <small style={{ color: 'var(--text-color-light)', marginTop: 'var(--space-xs)'}}>
-                            Original CSV name "{unmatchedItem.name}" will be added as an alias.
+                            El nom original del CSV "{unmatchedItem.name}" s'afegirà com a àlies.
                         </small>
                     )}
                 </FormGroup>
@@ -1139,7 +1139,7 @@ const ResolveUnmatchedIngredientModal: React.FC<ResolveModalProps> = ({
                     onClick={handleCreateNew}
                     disabled={isLoading || !newIngredientName.trim()}
                 >
-                    {isSubmittingNew ? 'Creating...' : 'Create New Ingredient'}
+                    {isSubmittingNew ? 'Creant...' : 'Crea Ingredient Nou'}
                 </PrimaryButton>
             </ResolveSection>
 

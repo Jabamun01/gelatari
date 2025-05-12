@@ -46,7 +46,7 @@ export const TabContent = ({
 }: TabContentProps) => {
   // console.log('TabContent received activeTab:', activeTab); // Log the received activeTab prop - REMOVED
   if (!activeTab) {
-    return <ContentContainer>No active tab selected.</ContentContainer>; // Fallback
+    return <ContentContainer>No s'ha seleccionat cap pestanya.</ContentContainer>; // Fallback
   }
 
   const renderContent = () => {
@@ -94,7 +94,7 @@ export const TabContent = ({
         // Re-check activeTab here as well
         if (!activeTab) return null;
         // const _exhaustiveCheck: never = activeTab.type; // This check is no longer exhaustive due to 'recipeEditor'
-        return <div>Unknown tab type: {activeTab.type}</div>;
+        return <div>Tipus de pestanya desconegut: {activeTab.type}</div>;
       } // Add closing brace for default case
     } // Add closing brace for switch statement
   };

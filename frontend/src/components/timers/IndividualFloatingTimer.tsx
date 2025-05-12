@@ -164,7 +164,7 @@ export const IndividualFloatingTimer: React.FC<IndividualFloatingTimerProps> = (
         >
           <div className={timeDisplay} style={{ color: timer.color, fontSize: '1.6rem' }}>
             {timer.isFinished ? (
-              'Finished!'
+              'Acabat!'
             ) : (
               `${formatTime(timer.duration - timer.elapsedTime)}`
             )}

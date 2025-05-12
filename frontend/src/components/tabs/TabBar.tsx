@@ -151,8 +151,8 @@ export const TabBar = ({ tabs, activeTabId, onTabClick, onTabClose, onOpenNewRec
                   onTabClose(tab.id);
                 }
               }}
-              title={`Close ${tab.title}`}
-              aria-label={`Close ${tab.title}`}
+              title={`Tanca ${tab.title}`}
+              aria-label={`Tanca ${tab.title}`}
             >
               ✕
             </CloseIcon>
@@ -160,8 +160,8 @@ export const TabBar = ({ tabs, activeTabId, onTabClick, onTabClose, onOpenNewRec
         </TabButton>
       ))}
       {/* Add the New Recipe button */}
-      <NewRecipeButton onClick={onOpenNewRecipeEditor} title="Create a new recipe">
-        + New Recipe
+      <NewRecipeButton onClick={onOpenNewRecipeEditor} title="Crea una recepta nova">
+        + Nova recepta
       </NewRecipeButton>
     </TabBarContainer>
   );

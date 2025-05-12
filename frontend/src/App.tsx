@@ -43,7 +43,7 @@ const loadAppState = (): { tabs: Tab[]; activeTabId: string } | null => {
       if (parsedState && Array.isArray(parsedState.tabs) && typeof parsedState.activeTabId === 'string') {
         // Ensure essential tabs exist if loading saved state
         const essentialTabs: Tab[] = [ // Explicitly type the array
-          { id: 'search', title: 'Search', type: 'search', isCloseable: false },
+          { id: 'search', title: 'Cerca', type: 'search', isCloseable: false },
           { id: 'ingredients', title: 'Ingredients', type: 'ingredients', isCloseable: false },
         ];
         const loadedTabs = parsedState.tabs as Tab[];
@@ -82,7 +82,7 @@ const App = () => {
   const [tabs, setTabs] = useState<Tab[]>(() => {
     const loadedState = loadAppState();
     return loadedState?.tabs || [
-      { id: 'search', title: 'Search', type: 'search', isCloseable: false },
+      { id: 'search', title: 'Cerca', type: 'search', isCloseable: false },
       { id: 'ingredients', title: 'Ingredients', type: 'ingredients', isCloseable: false },
     ];
   });
@@ -156,7 +156,7 @@ const App = () => {
     const newEditorId = `editor-${uuidv4()}`;
     const newTab: Tab = {
       id: newEditorId,
-      title: 'New Recipe',
+      title: 'Nova Recepta',
       type: 'recipeEditor',
       isCloseable: true,
       recipeId: undefined, // No recipeId when creating a new one
@@ -178,7 +178,7 @@ const App = () => {
 
     if (turningOff && hasTrackedItems) {
       proceed = window.confirm(
-        'Turning off Production Mode will reset tracked ingredient progress for this recipe. Are you sure you want to continue?'
+        'Desactivar el Mode Producció reiniciarà el progrés dels ingredients seguits per aquesta recepta. Esteu segurs que voleu continuar?'
       );
     }
 
@@ -243,7 +243,7 @@ const App = () => {
     // Create new editor tab if it doesn't exist
     const newTab: Tab = {
       id: editorTabId,
-      title: `Edit: ${recipeName}`,
+      title: `Edita: ${recipeName}`,
       type: 'recipeEditor',
       recipeId: recipeId, // Store the recipeId to edit
       isCloseable: true,

@@ -35,11 +35,8 @@ const IngredientListContainer = styled.ul`
   list-style: none;
   padding: 0;
   margin: 0;
-  border: var(--border-width) solid var(--border-color);
-  border-radius: var(--border-radius);
-  background-color: var(--surface-color);
-  box-shadow: var(--shadow-sm);
-  overflow: hidden;
+  /* Styles removed: border, border-radius, background-color, box-shadow, overflow */
+  /* These are now handled by the parent wrapper in RecipeTab for grid layout */
 `;
 
 const IngredientItem = styled.li`
@@ -266,7 +263,7 @@ const ProductionIngredientItem: React.FC<ProductionIngredientItemProps> = ({
           onAmountTracked(itemId, 0);
           setIsPartialInputVisible(false); // Hide input if cleared
       } // else: Input is invalid (not a number or negative) - keep input visible for correction
-  }, [partialInputValue, itemId, targetAmountGrams, onAmountTracked]);
+  }, [partialInputValue, itemId, onAmountTracked]);
 
    const handlePartialInputKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
@@ -305,7 +302,7 @@ const ProductionIngredientItem: React.FC<ProductionIngredientItemProps> = ({
         return `${formattedTargetDisplay}${unit} ✔️`;
       case 'partial':
         // Display consistently formatted tracked and target amounts
-        return `${formattedTracked} / ${formattedTargetDisplay} ${unit} (remaining: ${formattedRemaining})`;
+        return `${formattedTracked} / ${formattedTargetDisplay} ${unit} (restants: ${formattedRemaining})`;
       case 'not-added':
       default:
         // Use the consistently formatted target for the display
@@ -405,7 +402,7 @@ export const IngredientList = ({
   };
 
   return (
-    <div>
+    <React.Fragment> {/* Use Fragment instead of div */}
       <SectionHeading>Ingredients</SectionHeading>
       <IngredientListContainer>
         {ingredients.map((item) => (
@@ -419,6 +416,6 @@ export const IngredientList = ({
           </IngredientItem>
         ))}
       </IngredientListContainer>
-    </div>
+    </React.Fragment>
   );
 };

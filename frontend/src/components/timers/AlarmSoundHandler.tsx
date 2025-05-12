@@ -15,7 +15,7 @@ const AlarmSoundHandler: React.FC = () => {
         audioRef.current.src = '/sounds/alarm.mp3';
         audioRef.current.loop = true;
         audioRef.current.play().catch(error => {
-          console.error('Error playing sound:', error);
+          console.error('Error en reproduir el so:', error);
         });
       }
     } else {

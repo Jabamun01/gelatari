@@ -1,3 +1,4 @@
+import React from 'react'; // Import React for Fragment
 // Removed React import as Fragments are no longer needed
 import { styled } from '@linaria/react';
 // Removed LinkedRecipeInfo import
@@ -20,11 +21,8 @@ const StyledOrderedList = styled.ol`
   padding: 0;
   margin: 0;
   counter-reset: step-counter; /* Initialize counter */
-  border: var(--border-width) solid var(--border-color); /* Use new variables */
-  border-radius: var(--border-radius);
-  background-color: var(--surface-color); /* Use surface color */
-  box-shadow: var(--shadow-sm); /* Add subtle shadow */
-  overflow: hidden; /* Clip children to border radius */
+  /* Styles removed: border, border-radius, background-color, box-shadow, overflow */
+  /* These are now handled by the parent wrapper in RecipeTab for grid layout */
 `;
 
 const StepListItem = styled.li`
@@ -75,14 +73,14 @@ const StepListItem = styled.li`
 // --- Component Implementation ---
 export const StepList = ({ steps }: StepListProps) => { // Only accept steps prop
   return (
-    <div> {/* Wrap list in a div to contain the heading */}
-      <SectionHeading>Steps</SectionHeading>
+    <React.Fragment> {/* Use Fragment instead of div */}
+      <SectionHeading>Passos</SectionHeading>
       <StyledOrderedList>
       {/* Simple mapping, rendering each step as plain text */}
       {steps.map((step, index) => (
         <StepListItem key={index}>{step}</StepListItem>
       ))}
       </StyledOrderedList>
-    </div>
+    </React.Fragment>
   );
 };

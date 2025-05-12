@@ -13,14 +13,41 @@ import { useDebounce } from '../../utils/hooks'; // Import the debounce hook
 
 // --- Styled Components ---
 
+const PageTitle = styled.h2`
+  text-align: center; /* Default centering */
+  margin-bottom: var(--space-lg); /* Keep bottom margin */
+  /* Inherits global h2 styles potentially */
+
+  @media (min-width: 1024px) {
+    grid-column: 1 / -1; /* Span across all columns in the grid */
+  }
+`;
+
 const IngredientsContainer = styled.div`
   /* Padding is handled by parent TabContent */
-  display: flex;
+  display: flex; /* Default: single column */
   flex-direction: column;
   gap: var(--space-xl);
-  max-width: 800px;
-  margin: var(--space-lg) auto; /* Add vertical margin */
+  max-width: 1200px; /* Allow wider content for two columns */
+  margin: var(--space-lg) auto;
+
+  @media (min-width: 1024px) {
+    display: grid;
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); /* Give more space to the list */
+    align-items: start; /* Align items to the top of their grid cell */
+    column-gap: var(--space-2xl); /* Explicitly set column gap */
+    /* row-gap can be added if needed, but title margin might suffice */
+    max-width: 1200px; /* Ensure container can expand */
+  }
 `;
+
+// New wrapper for the left column content
+const LeftColumnWrapper = styled.div`
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-lg); /* Maintain gap between elements in the left column */
+`;
+
 
 const IngredientList = styled.ul`
   list-style: none;
@@ -106,7 +133,7 @@ const DeleteButton = styled(ActionButton)`
 
 
 const AddIngredientForm = styled.form`
-  margin-top: var(--space-xl);
+  margin-top: var(--space-xl); /* Default top margin */
   padding: var(--space-lg);
   border: var(--border-width) solid var(--border-color);
   border-radius: var(--border-radius);
@@ -179,6 +206,10 @@ const AddIngredientForm = styled.form`
       font-size: var(--font-size-sm);
       height: 1.2em; /* Keep reserved space */
       margin-top: calc(var(--space-xs) * -1); /* Pull up slightly */
+  }
+
+  @media (min-width: 1024px) {
+      margin-top: 0; /* Remove top margin when in grid */
   }
 `;
 
@@ -309,7 +340,7 @@ export const IngredientsTab = () => {
     event.preventDefault();
     if (!newName.trim()) {
       // Basic validation: name is required
-      alert("Ingredient name cannot be empty."); // Replace with better UI later
+      alert("El nom de l'ingredient no pot estar buit."); // Replace with better UI later
       return;
     }
     const ingredientData: CreateIngredientDto = {
@@ -329,7 +360,7 @@ export const IngredientsTab = () => {
     },
     onError: (error) => {
       console.error("Error updating ingredient:", error);
-      alert(`Error updating ingredient: ${error.message || 'Unknown error'}`);
+      alert(`Error en actualitzar l'ingredient: ${error.message || 'Error desconegut'}`);
       // Optional: Show error notification
     },
   });
@@ -342,7 +373,7 @@ export const IngredientsTab = () => {
     },
     onError: (error) => {
       console.error("Error deleting ingredient:", error);
-      alert(`Error deleting ingredient: ${error.message || 'Unknown error'}`);
+      alert(`Error en eliminar l'ingredient: ${error.message || 'Error desconegut'}`);
       // Optional: Show error notification
     },
   });
@@ -359,7 +390,7 @@ export const IngredientsTab = () => {
      // Prevent action if another mutation is already in progress for simplicity
     if (updateMutation.isPending || deleteMutation.isPending) return;
     // Simple confirmation dialog
-    if (window.confirm(`Are you sure you want to delete "${name}"? This might affect existing recipes.`)) {
+    if (window.confirm(`Esteu segur que voleu eliminar "${name}"? Això podria afectar receptes existents.`)) {
        deleteMutation.mutate(id);
     }
   };
@@ -373,123 +404,120 @@ export const IngredientsTab = () => {
 
   return (
     <IngredientsContainer>
-      <h2 style={{ textAlign: 'center', marginBottom: 'var(--space-lg)' }}>Ingredients Management</h2> {/* Center heading */}
+      <PageTitle>Gestió d'Ingredients</PageTitle>
 
-      {isLoading && <StatusMessage>Loading ingredients...</StatusMessage>}
+      {/* Left Column Content */}
+      <LeftColumnWrapper>
+        {/* Title moved outside */}
 
-      {isError && (
-        <StatusMessage>
-          Error fetching ingredients: {error?.message || 'Unknown error'}
-        </StatusMessage>
-      )}
+        {/* Search and Limit Controls */}
+        <ControlsContainer>
+            <SearchInput
+                type="search"
+                placeholder="Cerca ingredients..."
+                value={searchTerm}
+                onChange={handleSearchChange}
+                aria-label="Search Ingredients"
+                disabled={isLoading} // Disable while initial load
+            />
+            <LimitSelector>
+                <label htmlFor="items-per-page">Per pàgina:</label>
+                <select
+                    id="items-per-page"
+                    value={limit}
+                    onChange={handleLimitChange}
+                    disabled={isLoading || isFetching} // Disable during any fetch
+                >
+                    {LIMIT_OPTIONS.map(option => (
+                        <option key={option} value={option}>
+                            {option}
+                        </option>
+                    ))}
+                </select>
+            </LimitSelector>
+        </ControlsContainer>
 
-      {/* Search and Limit Controls */}
-      <ControlsContainer>
-          <SearchInput
-              type="search"
-              placeholder="Search ingredients..."
-              value={searchTerm}
-              onChange={handleSearchChange}
-              aria-label="Search Ingredients"
-              disabled={isLoading} // Disable while initial load
-          />
-          <LimitSelector>
-              <label htmlFor="items-per-page">Per page:</label>
-              <select
-                  id="items-per-page"
-                  value={limit}
-                  onChange={handleLimitChange}
-                  disabled={isLoading || isFetching} // Disable during any fetch
-              >
-                  {LIMIT_OPTIONS.map(option => (
-                      <option key={option} value={option}>
-                          {option}
-                      </option>
-                  ))}
-              </select>
-          </LimitSelector>
-      </ControlsContainer>
+        {/* Loading/Error States for the list */}
+        {isLoading && <StatusMessage>Carregant ingredients...</StatusMessage>}
+        {isError && (
+          <StatusMessage>
+            Error al carregar ingredients: {error?.message || 'Error desconegut'}
+          </StatusMessage>
+        )}
 
-      {/* Display Ingredient List - Conditionally render based on loading/error states */}
-      {isLoading && <StatusMessage>Loading ingredients...</StatusMessage>}
+        {/* Display Ingredient List & Pagination - Conditionally render based on loading/error states */}
+        {!isLoading && !isError && ingredients && pagination && (
+           <>
+              <IngredientList aria-live="polite"> {/* Announce changes for screen readers */}
+              {ingredients.length === 0 ? (
+                  <IngredientItem>
+                      {debouncedSearchTerm
+                          ? `No s'han trobat ingredients que coincideixin amb "${debouncedSearchTerm}"`
+                          : "No s'han trobat ingredients"}
+                  </IngredientItem>
+              ) : (
+                  ingredients.map((ingredient: Ingredient) => { // Add explicit type
+                  return (
+                      <IngredientItem key={ingredient._id}>
+                      <BaseIngredientName>
+                          {ingredient.name}
+                      </BaseIngredientName>
+                      <ButtonContainer>
+                          <DeleteButton
+                          onClick={() => handleDeleteIngredient(ingredient._id, ingredient.name)}
+                          disabled={updateMutation.isPending || deleteMutation.isPending}
+                          >
+                          Eliminar
+                          </DeleteButton>
+                      </ButtonContainer>
+                      </IngredientItem>
+                  );
+                  })
+              )}
+              </IngredientList>
 
-      {isError && (
-        <StatusMessage>
-          Error fetching ingredients: {error?.message || 'Unknown error'}
-        </StatusMessage>
-      )}
+              {/* Pagination Controls */}
+              {pagination.totalPages > 1 && (
+                  <PaginationControls>
+                      <button
+                          onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                          disabled={currentPage === 1 || isLoading || isFetching}
+                      >
+                          Anterior
+                      </button>
+                      <span>
+                          Pàgina {pagination.currentPage} de {pagination.totalPages}
+                      </span>
+                      <button
+                          onClick={() => setCurrentPage((prev) => Math.min(prev + 1, pagination.totalPages))}
+                          disabled={currentPage === pagination.totalPages || isLoading || isFetching}
+                      >
+                          Següent
+                      </button>
+                  </PaginationControls>
+              )}
+           </>
+        )}
+      </LeftColumnWrapper>
 
-      {!isLoading && !isError && ingredients && pagination && (
-         <>
-            <IngredientList aria-live="polite"> {/* Announce changes for screen readers */}
-            {ingredients.length === 0 ? (
-                <IngredientItem>
-                    {debouncedSearchTerm
-                        ? `No ingredients found matching "${debouncedSearchTerm}".`
-                        : 'No ingredients found.'}
-                </IngredientItem>
-            ) : (
-                ingredients.map((ingredient: Ingredient) => { // Add explicit type
-                return (
-                    <IngredientItem key={ingredient._id}>
-                    <BaseIngredientName>
-                        {ingredient.name}
-                    </BaseIngredientName>
-                    <ButtonContainer>
-                        <DeleteButton
-                        onClick={() => handleDeleteIngredient(ingredient._id, ingredient.name)}
-                        disabled={updateMutation.isPending || deleteMutation.isPending}
-                        >
-                        Delete
-                        </DeleteButton>
-                    </ButtonContainer>
-                    </IngredientItem>
-                );
-                })
-            )}
-            </IngredientList>
-
-            {/* Pagination Controls */}
-            {pagination.totalPages > 1 && (
-                <PaginationControls>
-                    <button
-                        onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-                        disabled={currentPage === 1 || isLoading || isFetching}
-                    >
-                        Previous
-                    </button>
-                    <span>
-                        Page {pagination.currentPage} of {pagination.totalPages}
-                    </span>
-                    <button
-                        onClick={() => setCurrentPage((prev) => Math.min(prev + 1, pagination.totalPages))}
-                        disabled={currentPage === pagination.totalPages || isLoading || isFetching}
-                    >
-                        Next
-                    </button>
-                </PaginationControls>
-            )}
-         </>
-      )}
-
-      {/* --- Add Ingredient Form --- */}
+      {/* Right Column Content (Add Ingredient Form) */}
       <AddIngredientForm onSubmit={handleAddIngredient}>
-        <h3>Add New Ingredient</h3>
+        <h3>Afegir Nou Ingredient</h3>
         {/* Use column layout now */}
         <div>
-          <label htmlFor="ingredient-name">Name:</label>
+          <label htmlFor="ingredient-name">Nom:</label>
           <input
             id="ingredient-name"
             type="text"
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
-            placeholder="e.g., Flour"
+            placeholder="p.ex., Farina"
             required
             disabled={createMutation.isPending}
           />
         </div>
         <button type="submit" disabled={createMutation.isPending}>
-          {createMutation.isPending ? 'Adding...' : 'Add Ingredient'}
+          {createMutation.isPending ? 'Afegint...' : 'Afegir Ingredient'}
         </button>
          <div className="status-indicator">
             {createMutation.isError ? `Error: ${createMutation.error?.message}` : ''}

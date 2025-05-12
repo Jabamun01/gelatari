@@ -153,7 +153,7 @@ export const SearchableSelector = <T extends SelectableItem>({
   queryFn,
   onAdd, // Can be undefined now
   onSelect, // New prop
-  placeholder = "Search...",
+  placeholder = "Cerca...",
   minSearchLength = 2,
   initialSearchTerm = '',
   disabled = false,
@@ -281,10 +281,10 @@ export const SearchableSelector = <T extends SelectableItem>({
       />
       {(showResultsList || showMinLengthMessage) && ( // Show list container if results are expected or min length message needed
         <ResultsList ref={listRef} id="search-results-list" role="listbox"> {/* Role might change as items aren't directly selectable */}
-          {showLoading && <StatusMessage>Loading...</StatusMessage>}
-          {showError && <StatusMessage>Error: {error instanceof Error ? error.message : 'Unknown error'}</StatusMessage>}
-          {showMinLengthMessage && <StatusMessage>Enter at least {minSearchLength} characters...</StatusMessage>}
-          {showNoResults && <StatusMessage>No results found for "{debouncedSearchTerm}".</StatusMessage>}
+          {showLoading && <StatusMessage>Carregant...</StatusMessage>}
+          {showError && <StatusMessage>Error: {error instanceof Error ? error.message : 'Error desconegut'}</StatusMessage>}
+          {showMinLengthMessage && <StatusMessage>Introdueix almenys {minSearchLength} caràcters...</StatusMessage>}
+          {showNoResults && <StatusMessage>No s'han trobat resultats per "{debouncedSearchTerm}".</StatusMessage>}
           {showItems && results.map((item: T) => { // Add explicit type for item
             const currentAmount = itemAmounts[item.id] || '';
             const isAmountValid = !isNaN(parseInt(currentAmount, 10)) && parseInt(currentAmount, 10) > 0;
@@ -303,12 +303,12 @@ export const SearchableSelector = <T extends SelectableItem>({
                 key={item.id}
                 onClick={handleItemClick}
                 style={{ cursor: (!showAddControls && onSelect) ? 'pointer' : 'default' }} // Add pointer cursor if selectable
-                title={(!showAddControls && onSelect) ? `Select ${item.name}` : ''} // Add title attribute for clarity
+                title={(!showAddControls && onSelect) ? `Seleccionar ${item.name}` : ''} // Add title attribute for clarity
               >
                 <ItemDetails>
                   <ItemName>{item.name}</ItemName>
                   <ItemType>
-                    {item.type === 'ingredient' ? 'Ingredient' : 'Recipe'}
+                    {item.type === 'ingredient' ? 'Ingredient' : 'Recepta'}
                   </ItemType>
                 </ItemDetails>
                 {showAddControls && ( // Conditionally render amount/add controls
@@ -317,11 +317,11 @@ export const SearchableSelector = <T extends SelectableItem>({
                       <AmountInput
                         type="number"
                         min="1"
-                        placeholder="g"
+                        placeholder="g"  // Unit remains 'g' (grams) as it's standard
                         value={currentAmount}
                         onChange={(e) => handleAmountChange(item.id, e.target.value)}
                         onClick={(e) => e.stopPropagation()} // Prevent click from closing list
-                        aria-label={`Amount for ${item.name}`}
+                        aria-label={`Quantitat per ${item.name}`}
                       />
                       <span>g</span>
                     </AmountInputContainer>
@@ -333,7 +333,7 @@ export const SearchableSelector = <T extends SelectableItem>({
                       }}
                       disabled={!isAmountValid || disabled || !onAdd} // Also disable if onAdd is not provided
                     >
-                      Add
+                      Afegir
                     </AddItemButton>
                   </>
                 )}
