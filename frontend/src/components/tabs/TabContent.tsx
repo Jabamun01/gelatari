@@ -15,14 +15,11 @@ interface TabContentProps {
   trackedAmounts: Record<string, number>;
   onToggleProductionMode: (tabId: string) => void;
   onAmountTracked: (tabId: string, ingredientId: string, addedAmountGrams: number) => void;
-  // Add props for timer state and handlers
-  elapsedTime: number;
-  isRunning: boolean;
-  onTimerStart: (tabId: string) => void;
-  onTimerStop: (tabId: string) => void;
-  onTimerReset: (tabId: string) => void;
   // Add prop for opening the editor tab
   onOpenRecipeEditor: (recipeId: string, recipeName: string) => void;
+  // Add props for scale factor state and handler
+  scaleFactor: number;
+  onScaleChange: (tabId: string, newScaleFactor: number) => void;
 }
 
 const ContentContainer = styled.div`
@@ -43,13 +40,9 @@ export const TabContent = ({
   trackedAmounts,
   onToggleProductionMode,
   onAmountTracked,
-  // Destructure timer props
-  elapsedTime,
-  isRunning,
-  onTimerStart,
-  onTimerStop,
-  onTimerReset,
   onOpenRecipeEditor, // Destructure the new prop
+  scaleFactor, // Destructure scale factor props
+  onScaleChange,
 }: TabContentProps) => {
   // console.log('TabContent received activeTab:', activeTab); // Log the received activeTab prop - REMOVED
   if (!activeTab) {
@@ -77,14 +70,11 @@ export const TabContent = ({
             trackedAmounts={trackedAmounts}
             onToggleProductionMode={() => onToggleProductionMode(activeTab!.id)} // Pass tabId
             onAmountTracked={(ingredientId: string, amount: number) => onAmountTracked(activeTab!.id, ingredientId, amount)} // Pass tabId with explicit types
-            // Pass timer state and handlers down, calling handlers with the active tab ID
-            elapsedTime={elapsedTime}
-            isRunning={isRunning}
-            onTimerStart={() => onTimerStart(activeTab!.id)}
-            onTimerStop={() => onTimerStop(activeTab!.id)}
-            onTimerReset={() => onTimerReset(activeTab!.id)}
             onOpenEditor={onOpenRecipeEditor} // Pass the handler down
             onClose={() => onCloseTab(activeTab!.id)} // Pass the bound close handler
+            // Pass scale factor state and handler
+            scaleFactor={scaleFactor}
+            onScaleChange={(newScale: number) => onScaleChange(activeTab!.id, newScale)}
           />
         );
       } // Add closing brace for case 'recipe'

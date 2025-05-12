@@ -8,14 +8,11 @@ const isValidObjectId = (id: string): boolean => Types.ObjectId.isValid(id);
 
 export const createIngredientHandler = async (req: Request, res: Response) => {
   try {
-    const { name, isAllergen, aliases } = req.body;
+    const { name, aliases } = req.body;
 
     // Basic input validation
     if (!name || typeof name !== 'string' || name.trim() === '') {
       return res.status(400).json({ message: 'Ingredient name is required and must be a non-empty string.' });
-    }
-    if (isAllergen !== undefined && typeof isAllergen !== 'boolean') {
-        return res.status(400).json({ message: 'isAllergen must be a boolean value if provided.' });
     }
     if (aliases !== undefined && (!Array.isArray(aliases) || !aliases.every(a => typeof a === 'string' && a.trim() !== ''))) {
         return res.status(400).json({ message: 'Aliases must be an array of non-empty strings if provided.' });
@@ -48,7 +45,6 @@ export const createIngredientHandler = async (req: Request, res: Response) => {
 
     const ingredientData = {
         name: trimmedName,
-        isAllergen: typeof isAllergen === 'boolean' ? isAllergen : false,
         aliases: finalAliases,
     };
 
@@ -58,7 +54,6 @@ export const createIngredientHandler = async (req: Request, res: Response) => {
     // Proceed to create
     const newIngredient = await ingredientService.createIngredient(
         ingredientData.name,
-        ingredientData.isAllergen,
         ingredientData.aliases
     );
     res.status(201).json(newIngredient);
@@ -141,14 +136,9 @@ export const updateIngredientHandler = async (req: Request, res: Response) => {
     if (updates.name !== undefined && (typeof updates.name !== 'string' || updates.name.trim() === '')) {
         return res.status(400).json({ message: 'Ingredient name must be a non-empty string if provided for update.' });
     }
-     if (updates.isAllergen !== undefined && typeof updates.isAllergen !== 'boolean') {
-        return res.status(400).json({ message: 'isAllergen must be a boolean value if provided for update.' });
-    }
-
     // Filter updates to only include allowed fields if necessary
-    const allowedUpdates: { name?: string; isAllergen?: boolean } = {};
+    const allowedUpdates: { name?: string } = {};
     if (updates.name !== undefined) allowedUpdates.name = updates.name.trim();
-    if (updates.isAllergen !== undefined) allowedUpdates.isAllergen = updates.isAllergen;
 
 
     const updatedIngredient = await ingredientService.updateIngredient(id, allowedUpdates);

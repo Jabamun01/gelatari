@@ -73,12 +73,6 @@ const ItemType = styled.span`
   display: block;
 `;
 
-const ItemAllergen = styled.span`
-    color: var(--danger-color);
-    font-size: var(--font-size-xs);
-    font-weight: 500;
-    margin-left: var(--space-sm);
-`;
 
 
 const AmountInputContainer = styled.div`
@@ -138,8 +132,6 @@ export interface SelectableItem {
   id: string; // Unique identifier (e.g., 'ing_123', 'rec_456')
   name: string; // Display name
   type: 'ingredient' | 'recipe'; // Type identifier
-  // Add other relevant data if needed (e.g., isAllergen for ingredients)
-  isAllergen?: boolean;
 }
 
 interface SearchableSelectorProps<T extends SelectableItem> {
@@ -317,7 +309,6 @@ export const SearchableSelector = <T extends SelectableItem>({
                   <ItemName>{item.name}</ItemName>
                   <ItemType>
                     {item.type === 'ingredient' ? 'Ingredient' : 'Recipe'}
-                    {item.isAllergen && <ItemAllergen>(Allergen)</ItemAllergen>}
                   </ItemType>
                 </ItemDetails>
                 {showAddControls && ( // Conditionally render amount/add controls

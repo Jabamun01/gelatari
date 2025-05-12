@@ -7,10 +7,8 @@ export interface Tab {
   recipeId?: string; // Present if type is 'recipe' or 'recipeEditor' (for editing existing)
   isCloseable: boolean;
   initialScaleFactor?: number; // Optional initial scale for the recipe tab
+  scaleFactor?: number; // Current scale factor for the recipe tab
   // State for production mode, specific to recipe tabs
   isProductionMode?: boolean;
   trackedAmounts?: Record<string, number>; // Ingredient ID -> added amount (grams)
-  // State for production mode timer, specific to recipe tabs
-  timerElapsedTime?: number; // in seconds
-  timerIsRunning?: boolean;
 }

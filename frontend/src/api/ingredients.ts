@@ -10,9 +10,9 @@ export interface PaginatedIngredientsResponse {
     limit: number;
   };
 }
-// Define the base URL for the backend API. Adjust if necessary.
-const backendBaseUrl = 'http://localhost:3001';
-const ingredientsApiUrl = `${backendBaseUrl}/api/ingredients`;
+// Define the base URL for the backend API using Vite's environment variables.
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+const ingredientsApiUrl = `${API_BASE_URL}/ingredients`;
 
 /**
  * Fetches ingredients from the backend API with pagination.

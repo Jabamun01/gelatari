@@ -3,7 +3,6 @@ export interface RecipeIngredient {
   ingredient: {
     _id: string;
     name: string;
-    isAllergen: boolean;
   };
   amountGrams: number;
 }

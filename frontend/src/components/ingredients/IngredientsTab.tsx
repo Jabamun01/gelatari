@@ -58,11 +58,6 @@ const BaseIngredientName = styled.span`
   font-weight: 500; /* Make names slightly bolder */
 `;
 
-// Specific style for allergens
-const AllergenHighlight = styled(BaseIngredientName)`
-  color: var(--danger-color); /* Use danger color */
-  font-weight: 600; /* Semi-bold */
-`;
 
 const StatusMessage = styled.div`
   padding: var(--space-md) var(--space-lg); /* Use new spacing */
@@ -285,7 +280,6 @@ export const IngredientsTab = () => {
 
   // State for the new ingredient form
   const [newName, setNewName] = useState('');
-  const [newIsAllergen, setNewIsAllergen] = useState(false);
 
   // Get QueryClient instance
   const queryClient = useQueryClient();
@@ -299,7 +293,6 @@ export const IngredientsTab = () => {
       queryClient.invalidateQueries({ queryKey: ['ingredients'] });
       // Clear the form
       setNewName('');
-      setNewIsAllergen(false);
       // Optional: Show success notification (can be added later)
       console.log("Ingredient added successfully!");
     },
@@ -321,7 +314,6 @@ export const IngredientsTab = () => {
     }
     const ingredientData: CreateIngredientDto = {
       name: newName.trim(),
-      isAllergen: newIsAllergen,
     };
     createMutation.mutate(ingredientData);
   };
@@ -357,12 +349,6 @@ export const IngredientsTab = () => {
 
   // --- Handlers for Update and Delete ---
 
-  const handleToggleAllergen = (ingredient: Ingredient) => {
-    const updates: UpdateIngredientDto = { isAllergen: !ingredient.isAllergen };
-    // Prevent action if another mutation is already in progress for simplicity
-    if (updateMutation.isPending || deleteMutation.isPending) return;
-    updateMutation.mutate({ id: ingredient._id, updates });
-  };
 
   // Handler for search input change
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -444,22 +430,12 @@ export const IngredientsTab = () => {
                 </IngredientItem>
             ) : (
                 ingredients.map((ingredient: Ingredient) => { // Add explicit type
-                const IngredientNameComponent = ingredient.isAllergen
-                    ? AllergenHighlight
-                    : BaseIngredientName;
                 return (
                     <IngredientItem key={ingredient._id}>
-                    <IngredientNameComponent>
+                    <BaseIngredientName>
                         {ingredient.name}
-                        {ingredient.isAllergen && ' (Allergen)'} {/* Explicit text indicator */}
-                    </IngredientNameComponent>
+                    </BaseIngredientName>
                     <ButtonContainer>
-                        <ActionButton
-                        onClick={() => handleToggleAllergen(ingredient)}
-                        disabled={updateMutation.isPending || deleteMutation.isPending}
-                        >
-                        {ingredient.isAllergen ? 'Set Non-Allergen' : 'Set Allergen'}
-                        </ActionButton>
                         <DeleteButton
                         onClick={() => handleDeleteIngredient(ingredient._id, ingredient.name)}
                         disabled={updateMutation.isPending || deleteMutation.isPending}
@@ -511,16 +487,6 @@ export const IngredientsTab = () => {
             required
             disabled={createMutation.isPending}
           />
-        </div>
-        <div className="checkbox-row">
-          <input
-            id="ingredient-allergen"
-            type="checkbox"
-            checked={newIsAllergen}
-            onChange={(e) => setNewIsAllergen(e.target.checked)}
-            disabled={createMutation.isPending}
-          />
-          <label htmlFor="ingredient-allergen">Is Allergen?</label>
         </div>
         <button type="submit" disabled={createMutation.isPending}>
           {createMutation.isPending ? 'Adding...' : 'Add Ingredient'}

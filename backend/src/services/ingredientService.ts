@@ -4,18 +4,16 @@ import mongoose from 'mongoose';
 /**
  * Creates a new ingredient in the database.
  * @param name - The name of the ingredient.
- * @param isAllergen - Whether the ingredient is an allergen.
  * @param aliases - Optional array of aliases for the ingredient.
  * @returns The created ingredient document.
  * @throws Error if creation fails (e.g., duplicate name).
  */
 export const createIngredient = async (
   name: string,
-  isAllergen: boolean,
   aliases?: string[]
 ): Promise<IIngredient> => {
   try {
-    const newIngredient = new Ingredient({ name, isAllergen, aliases: aliases || [] });
+    const newIngredient = new Ingredient({ name, aliases: aliases || [] });
     await newIngredient.save();
     return newIngredient;
   } catch (error: any) {
@@ -103,12 +101,12 @@ export const getIngredientById = async (id: string): Promise<IIngredient | null>
 /**
  * Updates an existing ingredient by its ID.
  * @param id - The ID of the ingredient to update.
- * @param updates - An object containing the fields to update (name, isAllergen).
+ * @param updates - An object containing the fields to update (name).
  * @returns The updated ingredient document or null if not found or ID is invalid.
  */
 export const updateIngredient = async (
   id: string,
-  updates: { name?: string; isAllergen?: boolean }
+  updates: { name?: string }
 ): Promise<IIngredient | null> => {
    if (!mongoose.Types.ObjectId.isValid(id)) {
       console.warn(`Invalid ingredient ID format for update: ${id}`);

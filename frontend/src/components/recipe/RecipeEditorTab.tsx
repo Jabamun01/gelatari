@@ -153,9 +153,8 @@ const ComponentListItem = styled.li`
   }
 `;
 
-const ComponentName = styled.span<{ isAllergen?: boolean }>`
-  font-weight: ${props => props.isAllergen ? '600' : '500'}; /* Adjust weight */
-  color: ${props => props.isAllergen ? 'var(--danger-color)' : 'inherit'};
+const ComponentName = styled.span`
+  font-weight: 500;
   margin-right: var(--space-sm);
 `;
 
@@ -347,7 +346,6 @@ export const RecipeEditorTab = ({ recipeId, onClose, onOpenRecipeTab }: RecipeEd
         id: `ing_${ing._id}`,
         name: ing.name,
         type: 'ingredient',
-        isAllergen: ing.isAllergen,
       }));
 
       const recipes = recipesResponse
@@ -394,7 +392,7 @@ export const RecipeEditorTab = ({ recipeId, onClose, onOpenRecipeTab }: RecipeEd
     console.log("Adding component:", item, "Amount:", amountGrams);
     // Amount validation is now done inside SearchableSelector before calling this
 
-    const { id: prefixedId, name, type, isAllergen } = item; // Use item directly from parameter
+    const { id: prefixedId, name, type } = item; // Use item directly from parameter
     const id = prefixedId.substring(4); // Remove 'ing_' or 'rec_' prefix
 
     if (type === 'ingredient') {
@@ -404,7 +402,7 @@ export const RecipeEditorTab = ({ recipeId, onClose, onOpenRecipeTab }: RecipeEd
          return;
       }
       const newRecipeIngredient: RecipeIngredient = {
-        ingredient: { _id: id, name: name, isAllergen: isAllergen ?? false }, // Use data from selected item
+        ingredient: { _id: id, name: name },
         amountGrams: amountGrams, // Use amount from parameter
       };
       setRecipeData(prev => ({ ...prev, ingredients: [...(prev.ingredients || []), newRecipeIngredient] }));
@@ -567,7 +565,6 @@ export const RecipeEditorTab = ({ recipeId, onClose, onOpenRecipeTab }: RecipeEd
                           ingredient: {
                               _id: matchedDbIngredient._id,
                               name: matchedDbIngredient.name, // Use DB name
-                              isAllergen: matchedDbIngredient.isAllergen,
                               // We don't need aliases here in the recipe ingredient itself
                           },
                           amountGrams: amountGrams,
@@ -630,7 +627,6 @@ export const RecipeEditorTab = ({ recipeId, onClose, onOpenRecipeTab }: RecipeEd
             ingredient: {
                 _id: resolvedIngredient._id,
                 name: resolvedIngredient.name,
-                isAllergen: resolvedIngredient.isAllergen,
                 // No need for aliases here
             },
             amountGrams: originalCsvAmount,
@@ -821,7 +817,7 @@ export const RecipeEditorTab = ({ recipeId, onClose, onOpenRecipeTab }: RecipeEd
             {recipeData.ingredients?.map((item) => (
               <ComponentListItem key={`ing-${item.ingredient._id}`}>
                 <div>
-                  <ComponentName isAllergen={item.ingredient.isAllergen}>{item.ingredient.name}</ComponentName>
+                  <ComponentName>{item.ingredient.name}</ComponentName>
                   <ComponentAmount>({item.amountGrams}g - Ingredient)</ComponentAmount>
                 </div>
                 <RemoveButton onClick={() => handleRemoveRecipeComponent(item.ingredient._id, 'ingredient')} disabled={isLoading}>Remove</RemoveButton>
@@ -992,7 +988,6 @@ const ResolveUnmatchedIngredientModal: React.FC<ResolveModalProps> = ({
     const queryClient = useQueryClient();
     const [selectedDbIngredient, setSelectedDbIngredient] = useState<SelectableItem | null>(null);
     const [newIngredientName, setNewIngredientName] = useState(unmatchedItem.name);
-    const [newIngredientIsAllergen, setNewIngredientIsAllergen] = useState(false);
     const [isSubmittingAlias, setIsSubmittingAlias] = useState(false);
     const [isSubmittingNew, setIsSubmittingNew] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -1001,7 +996,6 @@ const ResolveUnmatchedIngredientModal: React.FC<ResolveModalProps> = ({
     useEffect(() => {
         setSelectedDbIngredient(null);
         setNewIngredientName(unmatchedItem.name);
-        setNewIngredientIsAllergen(false);
         setError(null);
         setIsSubmittingAlias(false);
         setIsSubmittingNew(false);
@@ -1044,7 +1038,6 @@ const ResolveUnmatchedIngredientModal: React.FC<ResolveModalProps> = ({
 
         const createDto: CreateIngredientApiDto = {
             name: trimmedNewName,
-            isAllergen: newIngredientIsAllergen,
             // Add the original CSV name as an alias if it's different from the new name
             aliases: trimmedNewName.toLowerCase() !== unmatchedItem.name.toLowerCase() ? [unmatchedItem.name] : [],
         };
@@ -1141,17 +1134,6 @@ const ResolveUnmatchedIngredientModal: React.FC<ResolveModalProps> = ({
                             Original CSV name "{unmatchedItem.name}" will be added as an alias.
                         </small>
                     )}
-                </FormGroup>
-                <FormGroup>
-                     <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)', cursor: 'pointer' }}>
-                        <input
-                            type="checkbox"
-                            checked={newIngredientIsAllergen}
-                            onChange={(e) => setNewIngredientIsAllergen(e.target.checked)}
-                            disabled={isLoading}
-                        />
-                        Is Allergen
-                    </label>
                 </FormGroup>
                  <PrimaryButton
                     onClick={handleCreateNew}

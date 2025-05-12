@@ -21,8 +21,8 @@ export const fetchRecipes = async (
   typeFilter?: RecipeTypeFilter
 ): Promise<RecipeSearchResult[]> => {
   // Ensure the backend base URL is correct. Adjust if necessary.
-  const backendBaseUrl = 'http://localhost:3001';
-  const apiUrl = new URL(`${backendBaseUrl}/api/recipes`);
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+  const apiUrl = new URL(`${API_BASE_URL}/recipes`);
 
   // Add search term query parameter
   apiUrl.searchParams.append('searchTerm', searchTerm);
@@ -58,8 +58,8 @@ export const fetchRecipes = async (
  * @returns A promise that resolves to an array of RecipeSearchResult.
  */
 export const getAllRecipes = async (): Promise<RecipeSearchResult[]> => {
-  const backendBaseUrl = 'http://localhost:3001';
-  const apiUrl = `${backendBaseUrl}/api/recipes`; // Endpoint for all recipes
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+  const apiUrl = `${API_BASE_URL}/recipes`; // Endpoint for all recipes
 
   try {
     const response = await fetch(apiUrl);
@@ -87,8 +87,8 @@ export const getAllRecipes = async (): Promise<RecipeSearchResult[]> => {
  */
 export const fetchRecipeById = async (recipeId: string): Promise<RecipeDetails> => {
   // Ensure the backend base URL is correct. Adjust if necessary.
-  const backendBaseUrl = 'http://localhost:3001'; // Make sure this matches your backend setup
-  const apiUrl = `${backendBaseUrl}/api/recipes/${recipeId}`;
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL; // Make sure this matches your backend setup
+  const apiUrl = `${API_BASE_URL}/recipes/${recipeId}`;
 
   try {
     const response = await fetch(apiUrl);
@@ -116,8 +116,8 @@ export const fetchRecipeById = async (recipeId: string): Promise<RecipeDetails> 
  * @returns A promise that resolves to the created RecipeDetails.
  */
 export const createRecipe = async (recipeData: CreateRecipeDto): Promise<RecipeDetails> => {
-  const backendBaseUrl = 'http://localhost:3001';
-  const apiUrl = `${backendBaseUrl}/api/recipes`;
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+  const apiUrl = `${API_BASE_URL}/recipes`;
 
   try {
     const response = await fetch(apiUrl, {
@@ -150,8 +150,8 @@ export const createRecipe = async (recipeData: CreateRecipeDto): Promise<RecipeD
  * @returns A promise that resolves to the updated RecipeDetails.
  */
 export const updateRecipe = async (id: string, recipeData: UpdateRecipeDto): Promise<RecipeDetails> => {
-  const backendBaseUrl = 'http://localhost:3001';
-  const apiUrl = `${backendBaseUrl}/api/recipes/${id}`;
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+  const apiUrl = `${API_BASE_URL}/recipes/${id}`;
 
   try {
     const response = await fetch(apiUrl, {
@@ -183,8 +183,8 @@ export const updateRecipe = async (id: string, recipeData: UpdateRecipeDto): Pro
  * @returns A promise that resolves when the deletion is successful.
  */
 export const deleteRecipe = async (id: string): Promise<void> => {
-  const backendBaseUrl = 'http://localhost:3001';
-  const apiUrl = `${backendBaseUrl}/api/recipes/${id}`;
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+  const apiUrl = `${API_BASE_URL}/recipes/${id}`;
 
   try {
     const response = await fetch(apiUrl, {

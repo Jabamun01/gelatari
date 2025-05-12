@@ -1,8 +1,12 @@
-import { useState, useEffect, useRef } from 'react'; // Add useEffect, useRef
+import { useState, useEffect } from 'react';
+import { v4 as uuidv4 } from 'uuid';
 import { styled } from '@linaria/react';
 import { Tab } from './types/tabs';
 import { TabBar } from './components/tabs/TabBar';
 import { TabContent } from './components/tabs/TabContent';
+import FloatingAddTimerButton from './components/timers/FloatingAddTimerButton';
+import { FloatingTimersDisplay } from './components/timers/FloatingTimersDisplay';
+import AlarmSoundHandler from './components/timers/AlarmSoundHandler';
 // Global styles are imported and applied automatically by Linaria
 // import { globalStyles } from './styles/global'; // No longer needed here
 
@@ -27,13 +31,76 @@ const TabContentContainer = styled.div`
 `;
 
 
+const APP_STATE_STORAGE_KEY = 'gelatariAppState';
+
+// Function to load state from localStorage
+const loadAppState = (): { tabs: Tab[]; activeTabId: string } | null => {
+  try {
+    const savedState = localStorage.getItem(APP_STATE_STORAGE_KEY);
+    if (savedState) {
+      const parsedState = JSON.parse(savedState);
+      // Basic validation (can be more thorough)
+      if (parsedState && Array.isArray(parsedState.tabs) && typeof parsedState.activeTabId === 'string') {
+        // Ensure essential tabs exist if loading saved state
+        const essentialTabs: Tab[] = [ // Explicitly type the array
+          { id: 'search', title: 'Search', type: 'search', isCloseable: false },
+          { id: 'ingredients', title: 'Ingredients', type: 'ingredients', isCloseable: false },
+        ];
+        const loadedTabs = parsedState.tabs as Tab[];
+        // Start with essential tabs and add loaded non-essential tabs, ensuring scaleFactor exists
+        const finalTabs: Tab[] = [...essentialTabs];
+        loadedTabs.forEach(loadedTab => {
+          if (!essentialTabs.some(et => et.id === loadedTab.id)) {
+            // Ensure scaleFactor is present, defaulting if necessary
+            const tabToAdd: Tab = {
+              ...loadedTab,
+              scaleFactor: loadedTab.scaleFactor ?? loadedTab.initialScaleFactor ?? 1,
+              trackedAmounts: loadedTab.trackedAmounts ?? {}, // Ensure trackedAmounts exists
+              isProductionMode: loadedTab.isProductionMode ?? false, // Ensure production mode exists
+            };
+            finalTabs.push(tabToAdd);
+          }
+        });
+
+        // Ensure activeTabId is valid
+        const finalActiveTabId = finalTabs.some(tab => tab.id === parsedState.activeTabId)
+          ? parsedState.activeTabId
+          : finalTabs[0]?.id || 'search'; // Fallback to first tab or 'search'
+
+        return { tabs: finalTabs, activeTabId: finalActiveTabId };
+      }
+    }
+  } catch (error) {
+    console.error("Failed to load app state from localStorage:", error);
+  }
+  return null;
+};
+
+
 const App = () => {
-  const initialTabs: Tab[] = [
-    { id: 'search', title: 'Search', type: 'search', isCloseable: false },
-    { id: 'ingredients', title: 'Ingredients', type: 'ingredients', isCloseable: false },
-  ];
-  const [tabs, setTabs] = useState<Tab[]>(initialTabs);
-  const [activeTabId, setActiveTabId] = useState<string>('search');
+  // Initialize state from localStorage or use defaults
+  const [tabs, setTabs] = useState<Tab[]>(() => {
+    const loadedState = loadAppState();
+    return loadedState?.tabs || [
+      { id: 'search', title: 'Search', type: 'search', isCloseable: false },
+      { id: 'ingredients', title: 'Ingredients', type: 'ingredients', isCloseable: false },
+    ];
+  });
+  const [activeTabId, setActiveTabId] = useState<string>(() => {
+     const loadedState = loadAppState(); // Load again or pass from above useState
+     return loadedState?.activeTabId || 'search';
+  });
+
+  // Effect to save state to localStorage whenever tabs or activeTabId change
+  useEffect(() => {
+    try {
+      const stateToSave = { tabs, activeTabId };
+      localStorage.setItem(APP_STATE_STORAGE_KEY, JSON.stringify(stateToSave));
+    } catch (error) {
+      console.error("Failed to save app state to localStorage:", error);
+    }
+  }, [tabs, activeTabId]);
+
 
   const handleTabClick = (tabId: string) => {
     setActiveTabId(tabId);
@@ -73,15 +140,12 @@ const App = () => {
       type: 'recipe',
       recipeId: recipeId,
       isCloseable: true,
-      initialScaleFactor, // Add the initial scale factor here
+      initialScaleFactor, // Store the initial scale factor
+      scaleFactor: initialScaleFactor ?? 1, // Initialize current scale factor
       // Initialize production mode state for the new tab
       isProductionMode: false,
       trackedAmounts: {},
-      // Initialize timer state for the new tab
-      timerElapsedTime: 0,
-      timerIsRunning: false,
     };
-    // console.log('Creating new tab:', newTab); // Log the new tab object - REMOVED
 
     setTabs(prevTabs => [...prevTabs, newTab]); // Add new tab
     setActiveTabId(recipeId); // Activate the new tab
@@ -89,7 +153,7 @@ const App = () => {
 
   // Handler to open a new, blank recipe editor tab
   const handleOpenNewRecipeEditor = () => {
-    const newEditorId = `editor-${crypto.randomUUID()}`;
+    const newEditorId = `editor-${uuidv4()}`;
     const newTab: Tab = {
       id: newEditorId,
       title: 'New Recipe',
@@ -101,24 +165,40 @@ const App = () => {
     setActiveTabId(newEditorId);
   };
 
-  // Handler to toggle production mode for a specific tab
+  // Handler to toggle production mode for a specific tab with confirmation
   const handleToggleProductionMode = (tabId: string) => {
-    setTabs(prevTabs =>
-      prevTabs.map(tab => {
-        if (tab.id === tabId && tab.type === 'recipe') {
-          const nextIsProductionMode = !tab.isProductionMode;
-          return {
-            ...tab,
-            isProductionMode: nextIsProductionMode,
-            // Reset tracked amounts and timer if turning production mode OFF
-            trackedAmounts: nextIsProductionMode ? tab.trackedAmounts : {},
-            timerElapsedTime: nextIsProductionMode ? (tab.timerElapsedTime ?? 0) : 0,
-            timerIsRunning: nextIsProductionMode ? (tab.timerIsRunning ?? false) : false,
-          };
-        }
-        return tab;
-      })
-    );
+    const tabToToggle = tabs.find(tab => tab.id === tabId && tab.type === 'recipe');
+
+    if (!tabToToggle) return; // Should not happen, but good practice
+
+    const turningOff = tabToToggle.isProductionMode; // Current state is ON, so next is OFF
+    const hasTrackedItems = tabToToggle.trackedAmounts && Object.values(tabToToggle.trackedAmounts).some(amount => amount > 0);
+
+    let proceed = true; // Assume we proceed unless confirmation is needed and denied
+
+    if (turningOff && hasTrackedItems) {
+      proceed = window.confirm(
+        'Turning off Production Mode will reset tracked ingredient progress for this recipe. Are you sure you want to continue?'
+      );
+    }
+
+    if (proceed) {
+      setTabs(prevTabs =>
+        prevTabs.map(tab => {
+          if (tab.id === tabId && tab.type === 'recipe') {
+            const nextIsProductionMode = !tab.isProductionMode;
+            return {
+              ...tab,
+              isProductionMode: nextIsProductionMode,
+              // Reset tracked amounts only if turning production mode OFF
+              trackedAmounts: nextIsProductionMode ? tab.trackedAmounts : {},
+            };
+          }
+          return tab;
+        })
+      );
+    }
+    // If proceed is false, do nothing (state remains unchanged)
   };
 
   // Handler to track ingredient amount for a specific tab
@@ -138,70 +218,17 @@ const App = () => {
       })
     );
   };
-// --- Timer Logic ---
-const intervalRefs = useRef<Record<string, NodeJS.Timeout | null>>({});
 
-// Effect to manage intervals for all running timers
-useEffect(() => {
-  tabs.forEach(tab => {
-    if (tab.type === 'recipe' && tab.timerIsRunning) {
-      // Start interval if it's not already running for this tab
-      if (!intervalRefs.current[tab.id]) {
-        intervalRefs.current[tab.id] = setInterval(() => {
-          setTabs(prevTabs =>
-            prevTabs.map(t =>
-              t.id === tab.id
-                ? { ...t, timerElapsedTime: (t.timerElapsedTime ?? 0) + 1 }
-                : t
-            )
-          );
-        }, 1000);
-      }
-    } else {
-      // Stop interval if it exists for this tab
-      if (intervalRefs.current[tab.id]) {
-        clearInterval(intervalRefs.current[tab.id]!);
-        intervalRefs.current[tab.id] = null;
-      }
-    }
-  });
-
-  // Cleanup function to clear all intervals on unmount
-  return () => {
-    Object.values(intervalRefs.current).forEach(intervalId => {
-      if (intervalId) {
-        clearInterval(intervalId);
-      }
-    });
-    intervalRefs.current = {}; // Reset refs
+  // Handler to update scale factor for a specific tab
+  const handleScaleChange = (tabId: string, newScaleFactor: number) => {
+    setTabs(prevTabs =>
+      prevTabs.map(tab =>
+        tab.id === tabId && tab.type === 'recipe'
+          ? { ...tab, scaleFactor: newScaleFactor }
+          : tab
+      )
+    );
   };
-}, [tabs]); // Rerun whenever the tabs array changes (including timerIsRunning status)
-
-
-// Timer Handlers for a specific tab
-const handleTimerStart = (tabId: string) => {
-  setTabs(prevTabs =>
-    prevTabs.map(tab =>
-      tab.id === tabId ? { ...tab, timerIsRunning: true } : tab
-    )
-  );
-};
-
-const handleTimerStop = (tabId: string) => {
-  setTabs(prevTabs =>
-    prevTabs.map(tab =>
-      tab.id === tabId ? { ...tab, timerIsRunning: false } : tab
-    )
-  );
-};
-
-const handleTimerReset = (tabId: string) => {
-  setTabs(prevTabs =>
-    prevTabs.map(tab =>
-      tab.id === tabId ? { ...tab, timerIsRunning: false, timerElapsedTime: 0 } : tab
-    )
-  );
-};
 
   // Handler to open an editor tab for a specific recipe
   const handleOpenRecipeEditor = (recipeId: string, recipeName: string) => {
@@ -250,15 +277,15 @@ const activeTab = tabs.find(tab => tab.id === activeTabId);
           trackedAmounts={activeTab?.trackedAmounts ?? {}}
           onToggleProductionMode={handleToggleProductionMode}
           onAmountTracked={handleAmountTracked}
-          // Pass timer state and handlers for the active tab
-          elapsedTime={activeTab?.timerElapsedTime ?? 0}
-          isRunning={activeTab?.timerIsRunning ?? false}
-          onTimerStart={handleTimerStart}
-          onTimerStop={handleTimerStop}
-          onTimerReset={handleTimerReset}
           onOpenRecipeEditor={handleOpenRecipeEditor} // Pass the new handler
+          // Pass scale factor state and handler
+          scaleFactor={activeTab?.scaleFactor ?? 1}
+          onScaleChange={handleScaleChange}
         />
       </TabContentContainer>
+      <FloatingAddTimerButton />
+      <FloatingTimersDisplay />
+      <AlarmSoundHandler />
     </AppContainer>
   );
 };

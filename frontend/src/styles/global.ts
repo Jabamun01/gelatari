@@ -21,6 +21,11 @@ export const globalStyles = css`
       --danger-color: #EF4444; /* Red-500 */
       --danger-color-dark: #DC2626; /* Red-600 */
       --warning-color: #F59E0B; /* Amber-500 */
+      --timer-color-red: #EF4444;
+      --timer-color-blue: #3B82F6;
+      --timer-color-green: #10B981;
+      --timer-color-yellow: #F59E0B;
+      --timer-color-purple: #8B5CF6;
 
       /* Typography */
       --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';
@@ -41,6 +46,7 @@ export const globalStyles = css`
 
       /* Borders */
       --border-radius: 6px;
+      --border-radius-lg: 8px;
       --border-width: 1px;
 
       /* Shadows */

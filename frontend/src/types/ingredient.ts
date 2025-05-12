@@ -4,7 +4,6 @@
 export interface Ingredient {
   _id: string; // MongoDB ObjectId as string
   name: string;
-  isAllergen: boolean;
   aliases: string[];
 }
 
@@ -14,7 +13,6 @@ export interface Ingredient {
  */
 export interface CreateIngredientDto {
   name: string;
-  isAllergen: boolean;
   aliases?: string[]; // Optional when creating
 }
 
@@ -24,7 +22,5 @@ export interface CreateIngredientDto {
  */
 export interface UpdateIngredientDto {
   // Only include fields that the frontend should be able to modify.
-  // Based on the prompt, only allergen status is explicitly mentioned for update.
   name?: string; // Allow name updates
-  isAllergen?: boolean;
 }

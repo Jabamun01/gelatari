@@ -7,6 +7,7 @@ interface ScalingControlProps {
   scaleFactor: number;
   onScaleChange: (newScale: number) => void;
   baseYieldGrams: number;
+  disabled?: boolean; // Add optional disabled prop
 }
 
 // --- Styled Components ---
@@ -94,6 +95,20 @@ const SliderInput = styled.input`
    &:focus::-moz-range-thumb {
      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3); /* Focus ring */
   }
+
+  /* Disabled state */
+  &:disabled {
+    background: var(--border-color); /* Darker track */
+    cursor: not-allowed;
+  }
+  &:disabled::-webkit-slider-thumb {
+    background: var(--text-color-lighter); /* Grey thumb */
+    cursor: not-allowed;
+  }
+  &:disabled::-moz-range-thumb {
+    background: var(--text-color-lighter); /* Grey thumb */
+    cursor: not-allowed;
+  }
 `;
 
 // Inherit global input styles and customize
@@ -111,6 +126,13 @@ const NumberInput = styled.input`
     -webkit-appearance: none;
     margin: 0;
   }
+  /* Disabled state */
+  &:disabled {
+    background-color: var(--surface-color-light); /* Lighter background */
+    color: var(--text-color-lighter);
+    cursor: not-allowed;
+    border-color: var(--border-color);
+  }
 `;
 
 // --- Component Implementation ---
@@ -118,6 +140,7 @@ export const ScalingControl = ({
   scaleFactor,
   onScaleChange,
   baseYieldGrams,
+  disabled = false, // Destructure disabled prop with default
 }: ScalingControlProps) => {
   const minScale = 0.1;
   const maxScale = 50; // Adjust max scale as needed
@@ -164,6 +187,7 @@ export const ScalingControl = ({
           value={scaleFactor}
           onChange={handleSliderChange}
           list="scaleMarks" // Link to datalist
+          disabled={disabled} // Apply disabled prop
         />
         <NumberInput
           type="number"
@@ -173,6 +197,7 @@ export const ScalingControl = ({
           value={scaleFactor.toFixed(1)} // Display with one decimal
           onChange={handleNumberChange}
           aria-label="Scale Factor Input"
+          disabled={disabled} // Apply disabled prop
         />
       </InputRow>
       {/* Datalist for slider snap points */}

@@ -13,9 +13,12 @@
     "@linaria/core": "^6.3.0",
     "@linaria/react": "^6.3.0",
     "@tanstack/react-query": "^5.71.5",
+    "lucide-react": "^0.509.0",
     "papaparse": "^5.5.2",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "react-draggable": "^4.4.6",
+    "uuid": "^11.1.0"
   },
   "devDependencies": {
     "@babel/preset-react": "^7.26.3",

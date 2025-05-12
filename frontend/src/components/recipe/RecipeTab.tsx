@@ -1,4 +1,3 @@
-import { useState } from 'react'; // Remove useEffect, useRef
 import { styled } from '@linaria/react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { fetchRecipeById, deleteRecipe } from '../../api/recipes';
@@ -7,7 +6,6 @@ import { Tab } from '../../types/tabs'; // Import Tab type
 import { IngredientList } from './IngredientList'; // Import the ingredient list component
 import { StepList } from './StepList'; // Import the new step list component
 import { ScalingControl } from './ScalingControl'; // Import the scaling control
-import { Timer } from '../common/Timer'; // Import the Timer component
 
 interface RecipeTabProps {
   recipeId: string;
@@ -18,15 +16,12 @@ interface RecipeTabProps {
   trackedAmounts: Record<string, number>;
   onToggleProductionMode: () => void; // Handler now takes no args as tabId is known in parent
   onAmountTracked: (ingredientId: string, addedAmountGrams: number) => void; // Handler now takes no tabId
-  // Add timer props (passed down from App -> TabContent)
-  elapsedTime: number;
-  isRunning: boolean;
-  onTimerStart: () => void; // Handlers no longer need tabId here
-  onTimerStop: () => void;
-  onTimerReset: () => void;
   // Add prop for opening the editor
   onOpenEditor: (recipeId: string, recipeName: string) => void;
   onClose: () => void; // Prop to close the tab
+  // Add props for scale factor state and handler
+  scaleFactor: number;
+  onScaleChange: (newScaleFactor: number) => void;
 }
 
 const RecipeContainer = styled.div`
@@ -151,25 +146,18 @@ const DeleteButton = styled.button`
 // --- Component ---
 export const RecipeTab = ({
   recipeId,
-  tabs,
+  // tabs, // No longer needed here
   handleOpenRecipeTab,
   isProductionMode, // Destructure new props
   trackedAmounts,
   onToggleProductionMode,
   onAmountTracked,
-  // Destructure timer props
-  elapsedTime,
-  isRunning,
-  onTimerStart,
-  onTimerStop,
-  onTimerReset,
   onOpenEditor, // Destructure the new prop
   onClose, // Destructure the close handler
+  scaleFactor, // Destructure scale factor props
+  onScaleChange,
 }: RecipeTabProps) => {
-  // Find the current tab to get the initial scale factor
-  const currentTab = tabs.find(tab => tab.id === recipeId);
-  const initialScale = currentTab?.initialScaleFactor ?? 1;
-  const [scaleFactor, setScaleFactor] = useState(initialScale); // Initialize with tab's scale factor or default to 1
+  // Removed local scaleFactor state
   // Removed local isProductionMode state
   // Removed local trackedAmounts state
   // REMOVED Timer State (useState, useRef) - Now managed in App.tsx
@@ -282,9 +270,10 @@ export const RecipeTab = ({
         {/* Wrapper for Controls */}
         <ControlsWrapper>
           <ScalingControl
-            scaleFactor={scaleFactor}
-            onScaleChange={setScaleFactor}
+            scaleFactor={scaleFactor} // Use prop
+            onScaleChange={onScaleChange} // Use prop handler
             baseYieldGrams={recipe.baseYieldGrams}
+            disabled={isProductionMode} // Disable when in production mode
           />
           {/* Production Mode Toggle */}
           <ProductionModeToggle
@@ -293,16 +282,6 @@ export const RecipeTab = ({
           >
             {isProductionMode ? 'Production Mode: ON' : 'Production Mode: OFF'}
           </ProductionModeToggle>
-          {/* Conditionally render Timer */}
-          {isProductionMode && (
-            <Timer
-              isRunning={isRunning} // Use prop directly
-              elapsedTime={elapsedTime} // Use prop directly
-              onStart={onTimerStart} // Use prop directly
-              onStop={onTimerStop} // Use prop directly
-              onReset={onTimerReset} // Use prop directly
-            />
-          )}
         </ControlsWrapper>
       </RecipeContainer>
     );

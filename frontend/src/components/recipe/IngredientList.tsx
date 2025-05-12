@@ -1,25 +1,34 @@
 import { styled } from '@linaria/react';
-import { RecipeIngredient, LinkedRecipeInfo } from '../../types/recipe'; // Add LinkedRecipeInfo
-import { formatAmount } from '../../utils/formatting'; // Import the utility
+import React, { useState, useCallback } from 'react'; // Import useState and useCallback
+import { RecipeIngredient, LinkedRecipeInfo } from '../../types/recipe';
+import { formatAmount } from '../../utils/formatting';
 
-// --- Props Interface ---
+// --- Constants ---
+const COMPLETION_THRESHOLD = 0.999; // Allow for minor floating point inaccuracies
+
+// --- Props Interfaces ---
 interface IngredientListProps {
   ingredients: RecipeIngredient[];
   linkedRecipes: LinkedRecipeInfo[];
   scaleFactor: number;
   onOpenRecipeTab: (recipeId: string, recipeName: string, initialScaleFactor?: number) => void;
-  isProductionMode: boolean; // Add production mode flag
-  trackedAmounts: Record<string, number>; // Add tracked amounts state
-  onAmountTracked: (ingredientId: string, addedAmountGrams: number) => void; // Add handler for tracking updates
+  isProductionMode: boolean;
+  trackedAmounts: Record<string, number>;
+  onAmountTracked: (ingredientId: string, addedAmountGrams: number) => void;
 }
 
-// Helper function moved to utils/formatting.ts
+interface ProductionIngredientItemProps {
+  itemId: string;
+  itemName: string;
+  targetAmountGrams: number;
+  trackedAmountGrams: number;
+  onAmountTracked: (ingredientId: string, addedAmountGrams: number) => void;
+}
+
 // --- Styled Components ---
-// Add a heading for the section
 const SectionHeading = styled.h3`
-  /* Inherits global h3 styles */
   margin-bottom: var(--space-md);
-  font-size: var(--font-size-lg); /* Slightly smaller heading */
+  font-size: var(--font-size-lg);
 `;
 
 const IngredientListContainer = styled.ul`
@@ -39,7 +48,6 @@ const IngredientItem = styled.li`
   align-items: center;
   padding: var(--space-md) var(--space-lg);
   border-bottom: var(--border-width) solid var(--border-color-light);
-  /* Add subtle hover effect */
   transition: background-color 0.15s ease;
 
   &:last-child {
@@ -47,22 +55,15 @@ const IngredientItem = styled.li`
   }
 
   &:hover {
-      background-color: var(--surface-color-light); /* Use light surface on hover */
+    background-color: var(--surface-color-light);
   }
 `;
 
-// Base span for name, allows extending for allergen styling
 const BaseIngredientName = styled.span`
   flex-grow: 1;
-  margin-right: var(--space-md);
+  margin: 0 var(--space-md); /* Adjust margin for checkbox */
   color: var(--text-color);
-  font-weight: 500; /* Make names slightly bolder */
-`;
-
-// Specific style for allergens, extending the base
-const AllergenHighlight = styled(BaseIngredientName)`
-  color: var(--danger-color); /* Use danger color for allergens */
-  font-weight: 600; /* Use semi-bold */
+  font-weight: 500;
 `;
 
 const IngredientAmount = styled.span`
@@ -70,62 +71,23 @@ const IngredientAmount = styled.span`
   white-space: nowrap;
   color: var(--text-color-light);
   font-size: var(--font-size-sm);
-  min-width: 60px; /* Ensure minimum width for alignment */
+  min-width: 60px;
   text-align: right;
 `;
 
-// --- Production Mode Specific Styles ---
-const TrackingWrapper = styled.div`
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm);
-  margin-left: auto;
-  padding-left: var(--space-md);
-  flex-shrink: 0; /* Prevent shrinking */
-`;
-
-// Inherit global input styles and customize
-const TrackingInput = styled.input`
-  width: 70px;
-  padding: var(--space-xs) var(--space-sm);
-  /* Inherits border, radius, focus from global */
-  text-align: right;
-  font-size: var(--font-size-sm);
-  box-shadow: none; /* Remove shadow for smaller input */
-
-  /* Hide spinner buttons */
-  &::-webkit-outer-spin-button,
-  &::-webkit-inner-spin-button {
-    -webkit-appearance: none;
-    margin: 0;
-  }
-`;
-
-const AddedAmountText = styled.span`
-  font-size: var(--font-size-sm);
-  color: var(--text-color-light);
-  white-space: nowrap;
-  min-width: 100px; /* Give space for "XXXg added /" */
-  text-align: right;
-`;
-
-// --- Original Styled Components ---
-// Styled component for the clickable linked recipe name (similar to StepList's previous button)
-// Style like a link, but using a button element for semantics
 const LinkedRecipeButton = styled.button`
   background: none;
   border: none;
   padding: 0;
-  margin: 0;
+  margin: 0 var(--space-md); /* Adjust margin for checkbox */
   font: inherit;
-  font-weight: 500; /* Match ingredient name weight */
+  font-weight: 500;
   color: var(--primary-color);
   text-decoration: none;
   cursor: pointer;
   display: inline;
   text-align: left;
   flex-grow: 1;
-  margin-right: var(--space-md);
   transition: color 0.15s ease;
 
   &:hover {
@@ -134,129 +96,328 @@ const LinkedRecipeButton = styled.button`
   }
 
   &:focus {
-      outline: none;
-      text-decoration: underline;
-      color: var(--primary-color-dark);
-      /* Optional: Add focus ring */
-      /* box-shadow: 0 0 0 2px var(--primary-color); */
+    outline: none;
+    text-decoration: underline;
+    color: var(--primary-color-dark);
   }
 `;
 
+// --- Production Mode Specific Styles ---
+const ProdItemWrapper = styled.div`
+  display: flex;
+  align-items: center;
+  width: 100%;
+`;
 
-// --- Component Implementation ---
+const LargeCheckbox = styled.input`
+  /* Reset default checkbox styles */
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-color: var(--surface-color-light);
+  border: var(--border-width) solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+  padding: 0;
+  margin: 0;
+  display: inline-block;
+  position: relative;
+  cursor: pointer;
+
+  /* Size */
+  width: 28px; /* Larger size */
+  height: 28px;
+  flex-shrink: 0; /* Prevent shrinking */
+
+  /* Custom checkmark */
+  &:checked {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+  }
+
+  &:checked::after {
+    content: '✔'; /* Checkmark character */
+    font-size: 18px; /* Adjust size */
+    color: var(--text-color-on-primary); /* White checkmark */
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    font-weight: bold;
+  }
+
+  /* Focus state */
+  &:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--primary-color-light);
+  }
+`;
+
+const QuantityDisplay = styled.button<{ state: 'not-added' | 'partial' | 'full' }>`
+  background: none;
+  border: none;
+  padding: var(--space-xs) var(--space-sm);
+  margin: 0;
+  font: inherit;
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  white-space: nowrap;
+  text-align: right;
+  cursor: pointer;
+  border-radius: var(--border-radius-sm);
+  transition: background-color 0.15s ease, color 0.15s ease, text-decoration 0.15s ease;
+  min-width: 100px; /* Ensure enough space */
+  color: ${({ state }) =>
+    state === 'full' ? 'var(--success-color)' :
+    state === 'partial' ? 'var(--warning-color-dark)' : // Use a distinct color for partial
+    'var(--text-color-light)'};
+  text-decoration: ${({ state }) => (state === 'full' ? 'line-through' : 'none')};
+
+  &:hover {
+    background-color: var(--surface-color-light);
+  }
+
+  &:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--primary-color-light);
+  }
+`;
+
+const PartialInputWrapper = styled.div`
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+`;
+
+const PartialInput = styled.input`
+  width: 70px;
+  padding: var(--space-xs) var(--space-sm);
+  text-align: right;
+  font-size: var(--font-size-sm);
+  box-shadow: none;
+  border: var(--border-width) solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+  background-color: var(--surface-color-light);
+
+  /* Hide spinner buttons */
+  &::-webkit-outer-spin-button,
+  &::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  &:focus {
+      outline: none;
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 1px var(--primary-color-light);
+  }
+`;
+
+const InputUnitLabel = styled.span`
+    font-size: var(--font-size-xs);
+    color: var(--text-color-lighter);
+    white-space: nowrap;
+`;
+
+// --- Production Ingredient Item Component ---
+const ProductionIngredientItem: React.FC<ProductionIngredientItemProps> = ({
+  itemId,
+  itemName,
+  targetAmountGrams,
+  trackedAmountGrams,
+  onAmountTracked,
+}) => {
+  const [isPartialInputVisible, setIsPartialInputVisible] = useState(false);
+  const [partialInputValue, setPartialInputValue] = useState(''); // Local state for input
+
+  const isFullyAdded = trackedAmountGrams >= targetAmountGrams * COMPLETION_THRESHOLD;
+  const isPartiallyAdded = trackedAmountGrams > 0 && !isFullyAdded;
+  const state = isFullyAdded ? 'full' : isPartiallyAdded ? 'partial' : 'not-added';
+
+  const handleCheckboxChange = useCallback(() => {
+    if (isFullyAdded) {
+      onAmountTracked(itemId, 0); // Reset if clicking when full
+    } else {
+      onAmountTracked(itemId, targetAmountGrams); // Mark as full
+    }
+    setIsPartialInputVisible(false); // Hide input on checkbox change
+    setPartialInputValue(''); // Clear input value
+  }, [isFullyAdded, itemId, targetAmountGrams, onAmountTracked]);
+
+  const handleQuantityClick = useCallback(() => {
+    if (!isFullyAdded) {
+      setIsPartialInputVisible(true);
+      // Pre-fill input with current tracked amount if partial, otherwise empty
+      setPartialInputValue(isPartiallyAdded ? String(Math.round(trackedAmountGrams)) : '');
+    }
+    // If fully added, clicking does nothing for now (could potentially reset?)
+  }, [isFullyAdded, isPartiallyAdded, trackedAmountGrams]);
+
+  const handlePartialInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setPartialInputValue(e.target.value); // Update local input state immediately
+  }, []);
+
+  const handlePartialInputBlur = useCallback(() => {
+      const value = parseFloat(partialInputValue);
+      if (!isNaN(value) && value >= 0) {
+          onAmountTracked(itemId, value); // Update parent state
+          setIsPartialInputVisible(false); // Always hide input after valid entry
+          setPartialInputValue(''); // Clear input
+      } else if (partialInputValue === '') {
+          onAmountTracked(itemId, 0);
+          setIsPartialInputVisible(false); // Hide input if cleared
+      } // else: Input is invalid (not a number or negative) - keep input visible for correction
+  }, [partialInputValue, itemId, targetAmountGrams, onAmountTracked]);
+
+   const handlePartialInputKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handlePartialInputBlur(); // Apply value on Enter
+      (e.target as HTMLInputElement).blur(); // Remove focus
+    } else if (e.key === 'Escape') {
+      setIsPartialInputVisible(false); // Hide on Escape
+      setPartialInputValue(''); // Reset input value
+    }
+  }, [handlePartialInputBlur]);
+
+
+  const renderQuantityDisplay = () => {
+    const useKg = targetAmountGrams >= 1000; // Determine unit based on target
+    const unit = useKg ? 'kg' : 'g';
+    const divisor = useKg ? 1000 : 1;
+    const decimalPlaces = useKg ? 1 : 0;
+
+    // Helper to format a gram value based on the determined unit (kg or g)
+    const formatValue = (grams: number) => {
+        const value = grams / divisor;
+        // Use toFixed for kg, Math.round for g
+        return useKg ? value.toFixed(decimalPlaces) : String(Math.round(value));
+    };
+
+    const formattedTracked = formatValue(trackedAmountGrams);
+    const formattedTargetDisplay = formatValue(targetAmountGrams); // Consistently formatted target
+
+    // For remaining amount, format based on its own value using the original helper
+    const remainingRaw = Math.max(0, targetAmountGrams - trackedAmountGrams);
+    const formattedRemaining = formatAmount(remainingRaw);
+
+    switch (state) {
+      case 'full':
+        // Use the consistently formatted target for the display
+        return `${formattedTargetDisplay}${unit} ✔️`;
+      case 'partial':
+        // Display consistently formatted tracked and target amounts
+        return `${formattedTracked} / ${formattedTargetDisplay} ${unit} (remaining: ${formattedRemaining})`;
+      case 'not-added':
+      default:
+        // Use the consistently formatted target for the display
+        return `${formattedTargetDisplay}${unit}`;
+    }
+  };
+
+  return (
+    <ProdItemWrapper>
+      <LargeCheckbox
+        type="checkbox"
+        checked={isFullyAdded}
+        onChange={handleCheckboxChange}
+        aria-label={`Mark ${itemName} as added`}
+      />
+      <BaseIngredientName>{itemName}</BaseIngredientName>
+      {isPartialInputVisible ? (
+        <PartialInputWrapper>
+          <PartialInput
+            type="number"
+            value={partialInputValue}
+            onChange={handlePartialInputChange}
+            onBlur={handlePartialInputBlur} // Apply value on blur
+            onKeyDown={handlePartialInputKeyDown} // Handle Enter/Escape
+            min="0"
+            step="1" // Or adjust step based on ingredient type if needed
+            aria-label={`Enter added amount for ${itemName}`}
+            autoFocus // Focus the input when it appears
+          />
+          <InputUnitLabel>{formatAmount(0).replace(/[\d.,\s]+/g, '')}</InputUnitLabel> {/* Extract unit */}
+        </PartialInputWrapper>
+      ) : (
+        <QuantityDisplay state={state} onClick={handleQuantityClick} aria-label={`Current amount for ${itemName}: ${renderQuantityDisplay()}`}>
+          {renderQuantityDisplay()}
+        </QuantityDisplay>
+      )}
+    </ProdItemWrapper>
+  );
+};
+
+
+// --- Main Component Implementation ---
 export const IngredientList = ({
   ingredients,
   linkedRecipes,
   scaleFactor,
   onOpenRecipeTab,
-  isProductionMode, // Destructure new props
+  isProductionMode,
   trackedAmounts,
   onAmountTracked,
 }: IngredientListProps) => {
+  const renderItem = (
+    item: RecipeIngredient | LinkedRecipeInfo,
+    isLinkedRecipe: boolean
+  ) => {
+    const itemId = isLinkedRecipe ? (item as LinkedRecipeInfo).recipe._id : (item as RecipeIngredient).ingredient._id;
+    const itemName = isLinkedRecipe ? (item as LinkedRecipeInfo).recipe.name : (item as RecipeIngredient).ingredient.name;
+    const scaledAmount = item.amountGrams * scaleFactor;
+    const formattedAmount = formatAmount(scaledAmount);
+    const trackedAmount = trackedAmounts[itemId] ?? 0;
+
+    if (isProductionMode) {
+      return (
+        <ProductionIngredientItem
+          key={itemId}
+          itemId={itemId}
+          itemName={itemName}
+          targetAmountGrams={scaledAmount}
+          trackedAmountGrams={trackedAmount}
+          onAmountTracked={onAmountTracked}
+        />
+      );
+    } else {
+      // Original rendering logic for non-production mode
+      if (isLinkedRecipe) {
+        const linkedItem = item as LinkedRecipeInfo;
+        const initialScaleFactor = (linkedItem.amountGrams * scaleFactor) / 1000;
+        return (
+          <>
+            <LinkedRecipeButton
+              onClick={() => onOpenRecipeTab(linkedItem.recipe._id, linkedItem.recipe.name, initialScaleFactor)}
+            >
+              {itemName}
+            </LinkedRecipeButton>
+            <IngredientAmount>{formattedAmount}</IngredientAmount>
+          </>
+        );
+      } else {
+        return (
+          <>
+            <BaseIngredientName>{itemName}</BaseIngredientName>
+            <IngredientAmount>{formattedAmount}</IngredientAmount>
+          </>
+        );
+      }
+    }
+  };
+
   return (
-    <div> {/* Wrap list in a div to contain the heading */}
+    <div>
       <SectionHeading>Ingredients</SectionHeading>
       <IngredientListContainer>
-      {ingredients.map((item) => {
-        const scaledAmount = item.amountGrams * scaleFactor;
-        const formattedAmount = formatAmount(scaledAmount);
-        // Choose the correct styled component for the name based on allergen status
-        const IngredientNameComponent = item.ingredient.isAllergen
-          ? AllergenHighlight
-          : BaseIngredientName;
-
-        return (
+        {ingredients.map((item) => (
           <IngredientItem key={item.ingredient._id}>
-            <IngredientNameComponent>
-              {item.ingredient.name}
-            </IngredientNameComponent>
-            <TrackingWrapper>
-              {isProductionMode && (
-                <>
-                  <AddedAmountText>
-                    {formatAmount(trackedAmounts[item.ingredient._id] ?? 0)} added /
-                  </AddedAmountText>
-                  <TrackingInput
-                    type="number"
-                    value={trackedAmounts[item.ingredient._id] ?? ''} // Use empty string if undefined for controlled input
-                    onChange={(e) => {
-                      const value = parseFloat(e.target.value);
-                      // Only call handler if it's a valid non-negative number
-                      if (!isNaN(value) && value >= 0) {
-                        onAmountTracked(item.ingredient._id, value);
-                      } else if (e.target.value === '') {
-                         // Allow clearing the input, treat as 0
-                         onAmountTracked(item.ingredient._id, 0);
-                      }
-                    }}
-                    min="0" // Prevent negative numbers
-                    step="1" // Increment by grams
-                    aria-label={`Tracked amount for ${item.ingredient.name}`}
-                  />
-                </>
-              )}
-              <IngredientAmount>
-                {isProductionMode ? ` ${formattedAmount}` : formattedAmount} {/* Add space before target amount in prod mode */}
-              </IngredientAmount>
-            </TrackingWrapper>
+            {renderItem(item, false)}
           </IngredientItem>
-        );
-      })}
-      {/* Render Linked Recipes */}
-      {linkedRecipes.map((linkedItem) => {
-        const scaledAmount = linkedItem.amountGrams * scaleFactor;
-        const formattedAmount = formatAmount(scaledAmount);
-        // Calculate the initial scale factor based on the *parent's* current scaleFactor
-        // and the amount of this linked recipe used in the parent's base (1kg) recipe.
-        const initialScaleFactor = (linkedItem.amountGrams * scaleFactor) / 1000;
-        // Removed console.log
-
-        return (
+        ))}
+        {linkedRecipes.map((linkedItem) => (
           <IngredientItem key={linkedItem.recipe._id}>
-            {/* Use the button for the name */}
-            <LinkedRecipeButton
-              onClick={() => {
-                // Removed console.log
-                onOpenRecipeTab(
-                  linkedItem.recipe._id,
-                  linkedItem.recipe.name,
-                  initialScaleFactor
-                );
-              }}
-            >
-              {linkedItem.recipe.name} {/* Display linked recipe name */}
-            </LinkedRecipeButton>
-            {/* Add tracking wrapper for linked recipes */}
-            <TrackingWrapper>
-              {isProductionMode && (
-                <>
-                  <AddedAmountText>
-                    {formatAmount(trackedAmounts[linkedItem.recipe._id] ?? 0)} added /
-                  </AddedAmountText>
-                  <TrackingInput
-                    type="number"
-                    value={trackedAmounts[linkedItem.recipe._id] ?? ''}
-                    onChange={(e) => {
-                      const value = parseFloat(e.target.value);
-                      if (!isNaN(value) && value >= 0) {
-                        onAmountTracked(linkedItem.recipe._id, value);
-                      } else if (e.target.value === '') {
-                         onAmountTracked(linkedItem.recipe._id, 0);
-                      }
-                    }}
-                    min="0"
-                    step="1"
-                    aria-label={`Tracked amount for ${linkedItem.recipe.name}`}
-                  />
-                </>
-              )}
-              <IngredientAmount>
-                 {isProductionMode ? ` ${formattedAmount}` : formattedAmount}
-              </IngredientAmount>
-            </TrackingWrapper>
+            {renderItem(linkedItem, true)}
           </IngredientItem>
-        );
-      })}
+        ))}
       </IngredientListContainer>
     </div>
   );
