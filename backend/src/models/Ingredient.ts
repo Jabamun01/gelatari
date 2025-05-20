@@ -4,6 +4,7 @@ import { Schema, model, Document } from 'mongoose';
 export interface IIngredient extends Document {
   name: string;
   aliases: string[];
+  quantityInStock: number;
 }
 
 // Mongoose schema definition for Ingredient
@@ -18,6 +19,11 @@ const ingredientSchema = new Schema<IIngredient>({
     type: [String],
     default: [], // Default to an empty array
     index: true, // Index aliases for faster searching
+  },
+  quantityInStock: {
+    type: Number,
+    // required: true, // Made optional, default will apply on creation if not provided
+    default: 0,
   },
 });
 

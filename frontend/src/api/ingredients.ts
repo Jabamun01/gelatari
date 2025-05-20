@@ -1,4 +1,5 @@
 import { Ingredient, CreateIngredientDto, UpdateIngredientDto } from '../types/ingredient';
+import { RecipeDetails } from '../types/recipe';
 
 // Define the structure for the paginated response
 export interface PaginatedIngredientsResponse {
@@ -10,6 +11,25 @@ export interface PaginatedIngredientsResponse {
     limit: number;
   };
 }
+
+// Type for the custom error when an ingredient is in use
+export interface IngredientInUseErrorType {
+  name: 'IngredientInUseError';
+  message: string;
+  dependentRecipes: RecipeDetails[];
+}
+
+// Type guard to check if an error is an IngredientInUseErrorType
+export const isIngredientInUseError = (error: unknown): error is IngredientInUseErrorType => {
+  if (error && typeof error === 'object') {
+    // Check if the properties exist and have the correct type/value
+    const nameCheck = 'name' in error && (error as { name: unknown }).name === 'IngredientInUseError';
+    const recipesCheck = 'dependentRecipes' in error && Array.isArray((error as { dependentRecipes: unknown }).dependentRecipes);
+    return nameCheck && recipesCheck;
+  }
+  return false;
+};
+
 // Define the base URL for the backend API using Vite's environment variables.
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 const ingredientsApiUrl = `${API_BASE_URL}/ingredients`;
@@ -49,6 +69,33 @@ export const getAllIngredients = async (
   } catch (error) {
     console.error('Failed to fetch ingredients:', error);
     throw error; // Re-throw for react-query or other handlers
+  }
+};
+/**
+ * Fetches a single ingredient by its ID from the backend API.
+ * @param ingredientId The ID of the ingredient to fetch.
+ * @returns A promise that resolves to the Ingredient object.
+ */
+export const getIngredientById = async (ingredientId: string): Promise<Ingredient> => {
+  const apiUrl = `${ingredientsApiUrl}/${ingredientId}`;
+  try {
+    const response = await fetch(apiUrl);
+
+    if (!response.ok) {
+      if (response.status === 404) {
+        throw new Error(`Ingredient with ID ${ingredientId} not found.`);
+      }
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(
+        `Network response was not ok: ${response.status} ${response.statusText}. ${errorData.message || ''}`
+      );
+    }
+
+    const data: Ingredient = await response.json();
+    return data;
+  } catch (error) {
+    console.error(`Failed to fetch ingredient with ID ${ingredientId}:`, error);
+    throw error;
   }
 };
 
@@ -159,8 +206,16 @@ export const deleteIngredient = async (id: string): Promise<void> => {
     });
 
     if (!response.ok) {
-      // Handle 404 specifically if needed, otherwise treat as general error
-      const errorData = await response.json().catch(() => ({}));
+      const errorData = await response.json().catch(() => ({ message: 'Failed to parse error response' }));
+      if (response.status === 409 && errorData.dependentRecipes && Array.isArray(errorData.dependentRecipes)) {
+        // Assuming the backend sends { message: string, dependentRecipes: RecipeDetails[] }
+        const customError: IngredientInUseErrorType = {
+          name: 'IngredientInUseError',
+          message: errorData.message || 'Ingredient is in use by other recipes.',
+          dependentRecipes: errorData.dependentRecipes,
+        };
+        throw customError;
+      }
       throw new Error(
         `Network response was not ok: ${response.status} ${response.statusText}. ${errorData.message || ''}`
       );
@@ -170,6 +225,61 @@ export const deleteIngredient = async (id: string): Promise<void> => {
     return;
   } catch (error) {
     console.error(`Failed to delete ingredient with ID ${id}:`, error);
+    // Re-throw the error to be caught by the calling function
+    throw error;
+  }
+};
+/**
+ * Adds stock to an existing ingredient via the backend API.
+ * @param ingredientId The ID of the ingredient to update.
+ * @param quantityToAdd The amount of stock to add.
+ * @returns A promise that resolves to the updated Ingredient object.
+ */
+export const addStockToIngredientApi = async (ingredientId: string, quantityToAdd: number): Promise<Ingredient> => {
+  const apiUrl = `${ingredientsApiUrl}/${ingredientId}/stock`;
+  try {
+    const response = await fetch(apiUrl, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ quantityToAdd }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(
+        `Network response was not ok: ${response.status} ${response.statusText}. ${errorData.message || ''}`
+      );
+    }
+
+    const data: Ingredient = await response.json();
+    return data;
+  } catch (error) {
+    console.error(`Failed to add stock to ingredient with ID ${ingredientId}:`, error);
+    throw error;
+  }
+};
+
+/**
+ * Fetches recipes that depend on a specific ingredient.
+ * @param ingredientId The ID of the ingredient.
+ * @returns A promise that resolves to an array of RecipeDetails objects.
+ */
+export const getIngredientDependencies = async (ingredientId: string): Promise<RecipeDetails[]> => {
+  const apiUrl = `${ingredientsApiUrl}/${ingredientId}/dependencies`; // Assuming this endpoint exists
+  try {
+    const response = await fetch(apiUrl);
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(
+        `Network response was not ok: ${response.status} ${response.statusText}. ${errorData.message || 'Failed to fetch dependencies'}`
+      );
+    }
+    const dependentRecipes: RecipeDetails[] = await response.json();
+    return dependentRecipes || []; // Or simply: return dependentRecipes; // Ensure it returns an array
+  } catch (error) {
+    console.error(`Failed to fetch dependencies for ingredient ID ${ingredientId}:`, error);
     throw error;
   }
 };

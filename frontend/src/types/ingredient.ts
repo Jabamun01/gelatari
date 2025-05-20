@@ -5,6 +5,7 @@ export interface Ingredient {
   _id: string; // MongoDB ObjectId as string
   name: string;
   aliases: string[];
+  quantityInStock: number;
 }
 
 /**
@@ -14,6 +15,7 @@ export interface Ingredient {
 export interface CreateIngredientDto {
   name: string;
   aliases?: string[]; // Optional when creating
+  quantityInStock?: number; // Optional when creating
 }
 
 /**
@@ -23,4 +25,6 @@ export interface CreateIngredientDto {
 export interface UpdateIngredientDto {
   // Only include fields that the frontend should be able to modify.
   name?: string; // Allow name updates
+  aliases?: string[];
+  quantityInStock?: number;
 }

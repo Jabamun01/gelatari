@@ -73,9 +73,9 @@ const IngredientAmount = styled.span`
 `;
 
 const LinkedRecipeButton = styled.button`
-  background: none;
-  border: none;
-  padding: 0;
+  background: transparent;
+  border: var(--border-width) solid var(--border-color);
+  padding: var(--space-xs) var(--space-sm); /* Add some padding */
   margin: 0 var(--space-md); /* Adjust margin for checkbox */
   font: inherit;
   font-weight: 500;
@@ -85,17 +85,22 @@ const LinkedRecipeButton = styled.button`
   display: inline;
   text-align: left;
   flex-grow: 1;
-  transition: color 0.15s ease;
+  transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
 
   &:hover {
     color: var(--primary-color-dark);
     text-decoration: underline;
+    background-color: var(--surface-color-hover);
+    border-color: var(--border-color-hover);
   }
 
   &:focus {
     outline: none;
     text-decoration: underline;
     color: var(--primary-color-dark);
+    background-color: var(--surface-color-hover);
+    border-color: var(--border-color-hover);
+    box-shadow: 0 0 0 2px var(--focus-ring-color);
   }
 `;
 
@@ -104,6 +109,7 @@ const ProdItemWrapper = styled.div`
   display: flex;
   align-items: center;
   width: 100%;
+  cursor: pointer; /* Indicate interactivity */
 `;
 
 const LargeCheckbox = styled.input`
@@ -150,8 +156,8 @@ const LargeCheckbox = styled.input`
 `;
 
 const QuantityDisplay = styled.button<{ state: 'not-added' | 'partial' | 'full' }>`
-  background: none;
-  border: none;
+  background: transparent;
+  border: var(--border-width) solid var(--border-color);
   padding: var(--space-xs) var(--space-sm);
   margin: 0;
   font: inherit;
@@ -170,12 +176,15 @@ const QuantityDisplay = styled.button<{ state: 'not-added' | 'partial' | 'full' 
   text-decoration: ${({ state }) => (state === 'full' ? 'line-through' : 'none')};
 
   &:hover {
-    background-color: var(--surface-color-light);
+    background-color: var(--surface-color-hover);
+    border-color: var(--border-color-hover);
   }
 
   &:focus {
     outline: none;
-    box-shadow: 0 0 0 2px var(--primary-color-light);
+    background-color: var(--surface-color-hover);
+    border-color: var(--border-color-hover);
+    box-shadow: 0 0 0 2px var(--focus-ring-color);
   }
 `;
 
@@ -311,22 +320,24 @@ const ProductionIngredientItem: React.FC<ProductionIngredientItemProps> = ({
   };
 
   return (
-    <ProdItemWrapper>
+    <ProdItemWrapper onClick={handleCheckboxChange}>
       <LargeCheckbox
         type="checkbox"
         checked={isFullyAdded}
         onChange={handleCheckboxChange}
+        onClick={(e: React.MouseEvent) => e.stopPropagation()} // Prevent double toggle when checkbox itself is clicked
         aria-label={`Mark ${itemName} as added`}
       />
       <BaseIngredientName>{itemName}</BaseIngredientName>
       {isPartialInputVisible ? (
-        <PartialInputWrapper>
+        <PartialInputWrapper onClick={(e: React.MouseEvent) => e.stopPropagation()}>
           <PartialInput
             type="number"
             value={partialInputValue}
             onChange={handlePartialInputChange}
             onBlur={handlePartialInputBlur} // Apply value on blur
             onKeyDown={handlePartialInputKeyDown} // Handle Enter/Escape
+            onClick={(e: React.MouseEvent) => e.stopPropagation()} // Prevent click from bubbling to ProdItemWrapper
             min="0"
             step="1" // Or adjust step based on ingredient type if needed
             aria-label={`Enter added amount for ${itemName}`}
@@ -335,7 +346,7 @@ const ProductionIngredientItem: React.FC<ProductionIngredientItemProps> = ({
           <InputUnitLabel>{formatAmount(0).replace(/[\d.,\s]+/g, '')}</InputUnitLabel> {/* Extract unit */}
         </PartialInputWrapper>
       ) : (
-        <QuantityDisplay state={state} onClick={handleQuantityClick} aria-label={`Current amount for ${itemName}: ${renderQuantityDisplay()}`}>
+        <QuantityDisplay state={state} onClick={(e: React.MouseEvent) => { e.stopPropagation(); handleQuantityClick(); }} aria-label={`Current amount for ${itemName}: ${renderQuantityDisplay()}`}>
           {renderQuantityDisplay()}
         </QuantityDisplay>
       )}

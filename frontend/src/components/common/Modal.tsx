@@ -65,23 +65,27 @@ const ModalTitle = styled.h3`
 
 // Reusing RemoveButton style for Close button, but adjusting color/hover
 const CloseButton = styled.button`
-  background: none;
-  border: none;
+  background: transparent;
+  border: var(--border-width) solid var(--border-color);
   color: var(--text-color-light);
   font-size: var(--font-size-xl); /* Larger close icon */
   cursor: pointer;
   padding: var(--space-xs);
   line-height: 1;
   border-radius: var(--border-radius);
-  transition: background-color 0.15s ease, color 0.15s ease;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
 
   &:hover {
     color: var(--text-color);
-    background-color: var(--surface-color-light);
+    background-color: var(--surface-color-hover);
+    border-color: var(--border-color-hover);
   }
 
   &:focus {
       outline: none;
+      color: var(--text-color);
+      background-color: var(--surface-color-hover);
+      border-color: var(--border-color-hover);
       box-shadow: 0 0 0 3px var(--focus-ring-color);
   }
 `;

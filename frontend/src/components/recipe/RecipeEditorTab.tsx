@@ -167,8 +167,8 @@ const ComponentAmount = styled.span`
 
 // Subtle button for removing items - styled for text
 const RemoveButton = styled.button`
-  background: none;
-  border: none;
+  background: transparent;
+  border: var(--border-width) solid var(--border-color);
   color: var(--danger-color);
   cursor: pointer;
   font-size: var(--font-size-sm);
@@ -176,18 +176,20 @@ const RemoveButton = styled.button`
   margin-left: var(--space-md);
   line-height: 1.2; /* Adjusted line-height for text */
   border-radius: var(--border-radius); /* Standard border radius */
-  transition: background-color 0.15s ease, color 0.15s ease;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
   font-weight: 500; /* Slightly bolder */
 
   &:hover:not(:disabled) {
-    color: var(--text-on-primary); /* White text */
-    background-color: var(--danger-color); /* Red background */
+    color: var(--danger-color-dark);
+    background-color: rgba(239, 68, 68, 0.1); /* var(--danger-bg-hover) or similar */
+    border-color: var(--border-color-hover);
   }
 
   &:focus {
       outline: none;
-      background-color: var(--danger-color-dark); /* Darker red on focus */
-      color: var(--text-on-primary);
+      background-color: rgba(239, 68, 68, 0.15); /* Slightly darker hover for focus */
+      color: var(--danger-color-dark);
+      border-color: var(--border-color-hover);
       box-shadow: 0 0 0 3px var(--focus-ring-color); /* Standard focus ring */
   }
 
@@ -328,47 +330,50 @@ export const RecipeEditorTab = ({ recipeId, onClose, onOpenRecipeTab }: RecipeEd
   // --- Fetch components (ingredients & recipes) based on search term ---
   const minSearchLength = 2;
   // The query key base passed to SearchableSelector. The debounced term is added internally by the component.
-  const componentQueryKeyBase = ['componentSearch', recipeId];
+  const componentQueryKeyBase = ['componentSearch', recipeId]; // Used for linked recipes
+  const ingredientsForFormQueryKeyBase = ['ingredientsForFormSearch', recipeId];
 
-  const fetchComponents = useCallback(async (term: string): Promise<SelectableItem[]> => {
+
+  const fetchIngredientsForForm = useCallback(async (term: string): Promise<SelectableItem[]> => {
     if (term.length < minSearchLength) {
       return [];
     }
-    console.log(`Fetching components for term: "${term}"`);
+    console.log(`Fetching ingredients for form, term: "${term}"`);
     try {
-      // Fetch both in parallel
-      const [ingredientsResponse, recipesResponse] = await Promise.all([
-        getAllIngredients(1, 20, term), // Fetch page 1, limit 20, with name filter
-        fetchRecipes(term) // Fetch recipes matching the term
-      ]);
-
-      const ingredients = ingredientsResponse.data.map((ing: Ingredient): SelectableItem => ({
-        id: `ing_${ing._id}`,
+      const ingredientsResponse = await getAllIngredients(1, 20, term);
+      return ingredientsResponse.data.map((ing: Ingredient): SelectableItem => ({
+        id: `ing_${ing._id}`, // Keep ing_ prefix for consistency if SearchableSelector expects it
         name: ing.name,
-        type: 'ingredient',
+        type: 'ingredient', // Explicitly set type
       }));
+    } catch (error) {
+      console.error("Failed to fetch ingredients for form:", error);
+      return [];
+    }
+  }, []);
 
-      const recipes = recipesResponse
-        .filter((rec: RecipeSearchResult) => rec._id !== recipeId) // Exclude current recipe if editing
+
+  const fetchLinkedRecipeCandidates = useCallback(async (term: string): Promise<SelectableItem[]> => {
+    if (term.length < minSearchLength) {
+      return [];
+    }
+    console.log(`Fetching recipe candidates for term: "${term}"`);
+    try {
+      // Call fetchRecipes with page, limit, and searchTerm
+      const recipesApiResponse = await fetchRecipes(1, 20, term); // Default page 1, limit 20
+      return recipesApiResponse.recipes // Access the 'recipes' array from the response
+        .filter((rec: RecipeSearchResult) => rec._id !== recipeId) // Exclude current recipe
         .map((rec: RecipeSearchResult): SelectableItem => ({
           id: `rec_${rec._id}`,
           name: rec.name,
           type: 'recipe',
         }));
-
-      // Combine and potentially sort or limit results further if needed
-      return [...ingredients, ...recipes];
-
     } catch (error) {
-      console.error("Failed to fetch components:", error);
-      // Return empty array or throw error based on how you want useQuery to handle it
+      console.error("Failed to fetch recipe candidates:", error);
       return [];
-      // throw error; // Or re-throw if you want useQuery's error state to be set
     }
-  }, [recipeId]); // recipeId is a dependency if it's used in filtering
+  }, [recipeId]);
 
-  // Note: useQuery is now handled within SearchableSelector,
-  // but we keep fetchComponents defined here for clarity and potential reuse.
 
   // --- Event Handlers ---
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -387,38 +392,50 @@ export const RecipeEditorTab = ({ recipeId, onClose, onOpenRecipeTab }: RecipeEd
     }));
   };
 
-  // This function now acts as the 'onAdd' callback for SearchableSelector
-  const handleAddComponent = (item: SelectableItem, amountGrams: number) => {
-    console.log("Adding component:", item, "Amount:", amountGrams);
-    // Amount validation is now done inside SearchableSelector before calling this
-
-    const { id: prefixedId, name, type } = item; // Use item directly from parameter
-    const id = prefixedId.substring(4); // Remove 'ing_' or 'rec_' prefix
-
-    if (type === 'ingredient') {
-      // Check if already added
-      if (recipeData.ingredients?.some(ingItem => ingItem.ingredient._id === id)) {
-         alert(`${name} is already in the recipe.`);
-         return;
-      }
-      const newRecipeIngredient: RecipeIngredient = {
-        ingredient: { _id: id, name: name },
-        amountGrams: amountGrams, // Use amount from parameter
-      };
-      setRecipeData(prev => ({ ...prev, ingredients: [...(prev.ingredients || []), newRecipeIngredient] }));
-
-    } else if (type === 'recipe') {
-      // Check if already added
-      if (recipeData.linkedRecipes?.some(recItem => recItem.recipe._id === id)) {
-         alert(`${name} is already linked in the recipe.`);
-         return;
-      }
-      const newLinkedRecipe: LinkedRecipeInfo = {
-        recipe: { _id: id, name: name }, // Use data from selected item
-        amountGrams: amountGrams, // Use amount from parameter
-      };
-      setRecipeData(prev => ({ ...prev, linkedRecipes: [...(prev.linkedRecipes || []), newLinkedRecipe] }));
+  // New handler for adding ingredients directly from SearchableSelector
+  const handleAddIngredientFromSelector = (item: SelectableItem, quantity: number) => {
+    if (item.type !== 'ingredient') {
+      console.warn("handleAddIngredientFromSelector called with non-ingredient item:", item);
+      return;
     }
+    // Ensure item.id has 'ing_' prefix before stripping, or handle cases where it might not
+    const ingredientId = item.id.startsWith('ing_') ? item.id.substring(4) : item.id;
+    const ingredientName = item.name;
+
+    console.log("Adding ingredient from selector:", ingredientId, ingredientName, "Amount:", quantity);
+    if (recipeData.ingredients?.some(ingItem => ingItem.ingredient._id === ingredientId)) {
+      alert(`${ingredientName} is already in the recipe.`);
+      return;
+    }
+    const newRecipeIngredient: RecipeIngredient = {
+      ingredient: { _id: ingredientId, name: ingredientName },
+      amountGrams: quantity,
+    };
+    setRecipeData(prev => ({ ...prev, ingredients: [...(prev.ingredients || []), newRecipeIngredient] }));
+    // Search term clearing and list hiding is handled by SearchableSelector itself.
+  };
+
+  // This function now acts as the 'onAdd' callback for SearchableSelector FOR LINKED RECIPES
+  const handleAddLinkedRecipe = (item: SelectableItem, amountGrams: number) => {
+    console.log("Adding linked recipe:", item, "Amount:", amountGrams);
+
+    const { id: prefixedId, name, type } = item;
+    if (type !== 'recipe') {
+        console.warn("handleAddLinkedRecipe called with non-recipe item:", item);
+        return;
+    }
+    const id = prefixedId.substring(4); // Remove 'rec_' prefix
+
+    // Check if already added
+    if (recipeData.linkedRecipes?.some(recItem => recItem.recipe._id === id)) {
+       alert(`${name} is already linked in the recipe.`);
+       return;
+    }
+    const newLinkedRecipe: LinkedRecipeInfo = {
+      recipe: { _id: id, name: name },
+      amountGrams: amountGrams,
+    };
+    setRecipeData(prev => ({ ...prev, linkedRecipes: [...(prev.linkedRecipes || []), newLinkedRecipe] }));
 
     // Resetting state is handled inside SearchableSelector after calling onAdd
   };
@@ -685,6 +702,9 @@ export const RecipeEditorTab = ({ recipeId, onClose, onOpenRecipeTab }: RecipeEd
       if (isEditing) {
           queryClient.invalidateQueries({ queryKey: ['recipe', recipeId] }); // Invalidate specific recipe view/edit
       }
+      queryClient.invalidateQueries({ queryKey: ['recipeDependencies'] }); // Invalidate ALL recipe dependency data
+      queryClient.invalidateQueries({ queryKey: ['ingredientDependencies'] }); // Invalidate ALL ingredient dependency data
+      queryClient.invalidateQueries({ queryKey: ['ingredients'] }); // Invalidate general ingredients list
       // Option 1: Close editor, open RecipeTab for the saved recipe
       onClose(); // Close the editor tab using the passed function
       onOpenRecipeTab(savedRecipe._id, savedRecipe.name); // Open the display tab using the passed function
@@ -841,19 +861,33 @@ export const RecipeEditorTab = ({ recipeId, onClose, onOpenRecipeTab }: RecipeEd
           </FormGroup>
 
           <AddComponentForm>
-            {/* Use SearchableSelector - spans full width */}
-            <div style={{ width: '100%' }}> {/* Wrapper to allow label and ensure full width */}
-              <FormLabel>Afegeix Component</FormLabel> {/* Keep label */}
+            {/* Section for adding Ingredients using SearchableSelector */}
+            <div style={{ width: '100%', marginBottom: 'var(--space-lg)' }}>
+              <FormLabel style={{ marginBottom: 'var(--space-sm)'}}>Afegeix Ingredient a la Recepta</FormLabel>
               <SearchableSelector<SelectableItem>
-                queryKeyBase={componentQueryKeyBase} // Use the updated base key
-                queryFn={fetchComponents}
-                onAdd={handleAddComponent} // Pass the correct handler to onAdd
-                placeholder="Cerca i afegeix ingredients o receptes..."
+                queryKeyBase={ingredientsForFormQueryKeyBase}
+                queryFn={fetchIngredientsForForm}
+                onAdd={handleAddIngredientFromSelector} // Use the new handler
+                placeholder="Cerca ingredient per afegir..."
                 minSearchLength={minSearchLength}
                 disabled={isLoading}
+                showAddControls={true} // Explicitly true for clarity, though it's the default
               />
             </div>
-            {/* The separate AmountInputGroup and AddButton are removed as they are now inside SearchableSelector items */}
+
+            {/* Section for adding Linked Recipes using SearchableSelector */}
+            <div style={{ width: '100%' }}>
+              <FormLabel style={{ marginBottom: 'var(--space-sm)'}}>Afegeix Recepta Vinculada</FormLabel>
+              <SearchableSelector<SelectableItem>
+                queryKeyBase={componentQueryKeyBase} // Keep original key for this selector instance
+                queryFn={fetchLinkedRecipeCandidates} // Use the new function that only fetches recipes
+                onAdd={handleAddLinkedRecipe} // Use the new handler for linked recipes
+                placeholder="Cerca i afegeix receptes vinculades..."
+                minSearchLength={minSearchLength}
+                disabled={isLoading}
+                // showAddControls is true by default, which is what we want for linked recipes here
+              />
+            </div>
           </AddComponentForm>
 
           {/* --- CSV Import Section --- */}
@@ -951,8 +985,8 @@ export const RecipeEditorTab = ({ recipeId, onClose, onOpenRecipeTab }: RecipeEd
               totalItems={unmatchedIngredients.length}
               onResolveSuccess={handleResolveSuccess}
               onSkip={handleSkipUnmatched}
-              existingIngredientsQueryKeyBase={componentQueryKeyBase} // Reuse for search
-              fetchExistingIngredientsFn={fetchComponents} // Reuse for search
+              existingIngredientsQueryKeyBase={ingredientsForFormQueryKeyBase} // Use specific key for ingredient search
+              fetchExistingIngredientsFn={fetchIngredientsForForm} // Use specific fetch for ingredients
           />
       )}
     </EditorContainer>

@@ -29,10 +29,15 @@ export const getDefaultStepsByCategory = async (
 
 // Optional: Functions for creating/updating default steps could be added here
 // if management via API is needed later. For now, manual seeding is assumed.
-// Example (not required by current step):
-/*
+
+/**
+ * Creates or updates the default steps for a given recipe category.
+ * @param category - The category to create or update default steps for.
+ * @param steps - An array of step strings.
+ * @returns A promise resolving to the created or updated default steps document, or null on error.
+ */
 export const createOrUpdateDefaultSteps = async (
-  category: 'ice cream' | 'sorbet',
+  category: string,
   steps: string[]
 ): Promise<IDefaultSteps | null> => {
   try {
@@ -47,4 +52,3 @@ export const createOrUpdateDefaultSteps = async (
     return null;
   }
 };
-*/

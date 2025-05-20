@@ -1,17 +1,20 @@
 import React from 'react'; // Import React for event types
 import { styled } from '@linaria/react';
-import { Tab } from '../../types/tabs';
+import { TabData } from '../../types/tabs';
 
 interface TabBarProps {
-  tabs: Tab[];
+  tabs: TabData[];
   activeTabId: string;
   onTabClick: (tabId: string) => void;
   onTabClose: (tabId: string) => void;
-  onOpenNewRecipeEditor: () => void; // Add the new prop
+  onOpenNewRecipeEditor: () => void;
+  onOpenIngredientsTab: () => void; // Add prop for opening ingredients tab
+  onOpenDefaultStepsTab: () => void; // Add prop for opening default steps tab
 }
 
 const TabBarContainer = styled.div`
   display: flex;
+  flex-wrap: wrap; /* Allow tabs to wrap to the next line */
   align-items: stretch; /* Stretch items to fill height */
   border-bottom: var(--border-width) solid var(--tab-border-color);
   background-color: var(--surface-color);
@@ -103,29 +106,52 @@ const TabButton = styled.button<TabButtonProps>`
 // Style for the "New Recipe" button
 // Inherit base button styles and customize
 // Style the "New Recipe" button as a primary action
-const NewRecipeButton = styled.button`
-  /* Inherits base button styles */
+const ActionButton = styled.button` // Generic action button style
   padding: var(--space-sm) var(--space-md);
-  margin-left: auto; /* Push to the right */
-  margin-right: var(--space-sm); /* Add some margin */
   align-self: center; /* Center vertically */
   background-color: var(--primary-color);
   color: var(--text-on-primary);
-  border-color: var(--primary-color);
+  border: 1px solid var(--primary-color); /* Ensure border is consistent */
+  border-radius: var(--border-radius);
   font-size: var(--font-size-sm);
   font-weight: 600;
   line-height: 1;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
 
   &:hover:not(:disabled) {
     background-color: var(--primary-color-dark);
     border-color: var(--primary-color-dark);
   }
 
-  /* Focus style handled globally */
+  &:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--surface-color), 0 0 0 4px var(--primary-color); /* Focus ring */
+  }
+`;
+
+const IngredientsButton = styled(ActionButton)`
+  /* Specific styles for Ingredients button if needed, e.g., different color */
+  /* For now, it will inherit ActionButton styles */
+`;
+
+const NewRecipeButton = styled(ActionButton)`
+  /* No specific styles here, inherits from ActionButton */
+`;
+
+const RightAlignedActionsContainer = styled.div`
+  display: flex;
+  align-items: center; /* Align buttons vertically */
+  margin-left: auto; /* Push this container to the right */
+  gap: var(--space-sm); /* Space between buttons */
+`;
+
+const DefaultStepsButton = styled(ActionButton)`
+  /* Specific styles for Default Steps button if needed */
 `;
 
 
-export const TabBar = ({ tabs, activeTabId, onTabClick, onTabClose, onOpenNewRecipeEditor }: TabBarProps) => { // Destructure new prop
+export const TabBar = ({ tabs, activeTabId, onTabClick, onTabClose, onOpenNewRecipeEditor, onOpenIngredientsTab, onOpenDefaultStepsTab }: TabBarProps) => { // Destructure new props
   return (
     <TabBarContainer>
       {tabs.map((tab) => (
@@ -159,10 +185,17 @@ export const TabBar = ({ tabs, activeTabId, onTabClick, onTabClose, onOpenNewRec
           )}
         </TabButton>
       ))}
-      {/* Add the New Recipe button */}
-      <NewRecipeButton onClick={onOpenNewRecipeEditor} title="Crea una recepta nova">
-        + Nova recepta
-      </NewRecipeButton>
+      <RightAlignedActionsContainer>
+        <DefaultStepsButton onClick={onOpenDefaultStepsTab} title="Gestiona els passos per defecte">
+          Passos per Defecte
+        </DefaultStepsButton>
+        <IngredientsButton onClick={onOpenIngredientsTab} title="Mostra els ingredients">
+          Ingredients
+        </IngredientsButton>
+        <NewRecipeButton onClick={onOpenNewRecipeEditor} title="Crea una recepta nova">
+          + Nova recepta
+        </NewRecipeButton>
+      </RightAlignedActionsContainer>
     </TabBarContainer>
   );
 };

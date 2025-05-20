@@ -6,6 +6,8 @@ import {
   getRecipeByIdHandler,
   updateRecipeHandler,
   deleteRecipeHandler,
+  finalizeRecipeProductionHandler, // Added import
+  getRecipeDependenciesHandler, // Added import for the new handler
 } from '../controllers/recipeController';
 
 const router = Router();
@@ -17,5 +19,11 @@ router.get('/', asyncHandler(getAllRecipesHandler));
 router.get('/:id', asyncHandler(getRecipeByIdHandler));
 router.put('/:id', asyncHandler(updateRecipeHandler)); // Or PATCH
 router.delete('/:id', asyncHandler(deleteRecipeHandler));
+
+// Route for finalizing recipe production
+router.post('/:recipeId/finalize-production', asyncHandler(finalizeRecipeProductionHandler));
+
+// Route for getting recipes that depend on a specific recipe
+router.get('/:id/dependencies', asyncHandler(getRecipeDependenciesHandler));
 
 export default router;

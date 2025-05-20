@@ -274,25 +274,112 @@ export const deleteRecipeHandler = async (req: Request<{ id: string }>, res: Res
         return; // Explicit return void
     }
 
-    const deletedRecipe = await recipeService.deleteRecipe(id);
+    const result = await recipeService.deleteRecipe(id);
 
-    if (!deletedRecipe) {
+    if (!result) {
       // Service returns null if not found or invalid ID
       res.status(404).json({ message: 'Recipe not found for deletion or invalid ID' });
       return; // Explicit return void
     }
 
-    // Send back the deleted recipe data (or just a success message)
-    // Sending the deleted object might be useful for cache invalidation on the client
-    // res.status(200).json(deletedRecipe);
-    // Or a simpler success message:
-    res.status(200).json({ message: 'Recipe deleted successfully', deletedRecipeId: deletedRecipe._id });
-    // Or status 204 No Content if nothing is returned in the body
+    // Check if the result indicates dependencies
+    if ('dependencies' in result) {
+      // Type guard to ensure result is RecipeDeletionDependencies
+      const dependencyResult = result as recipeService.RecipeDeletionDependencies;
+      res.status(409).json({
+        message: 'Recipe cannot be deleted because it is a dependency for other recipes.',
+        dependencies: dependencyResult.dependencies,
+      });
+      return; // Explicit return void
+    }
+
+    // If it's not null and not a dependency object, it's the deleted IRecipe document
+    const deletedRecipeDocument = result as IRecipe; // Cast to IRecipe
+
+    // Send back a success message with the ID of the deleted recipe
+    res.status(200).json({ message: 'Recipe deleted successfully', deletedRecipeId: deletedRecipeDocument._id });
+    // Alternatively, for 204 No Content:
     // res.status(204).send();
 
   } catch (error: any) {
     console.error(`Error in deleteRecipeHandler for ID ${req.params.id}:`, error);
-    // Let asyncHandler forward the error
-    // res.status(500).json({ message: 'Internal server error deleting recipe' });
+    // Handle errors thrown by the service, e.g., "Failed to delete recipe"
+    if (error.message && error.message.includes('Failed to delete recipe')) {
+        res.status(500).json({ message: 'Internal server error during recipe deletion.', details: error.message });
+    } else {
+        // Let asyncHandler forward other errors or provide a generic message
+        res.status(500).json({ message: 'An unexpected error occurred while deleting the recipe.' });
+    }
+  }
+};
+
+/**
+ * Handles finalizing the production of a recipe, triggering ingredient stock deduction.
+ */
+export const finalizeRecipeProductionHandler = async (req: Request<{ recipeId: string }>, res: Response): Promise<void> => {
+  try {
+    const { recipeId } = req.params;
+
+    if (!recipeId) {
+      res.status(400).json({ message: 'Recipe ID parameter is required.' });
+      return;
+    }
+
+    const finalizedRecipe = await recipeService.finalizeRecipeProduction(recipeId);
+
+    if (!finalizedRecipe) {
+      // This case should ideally be handled by the service throwing an error if not found.
+      // If service returns null for "not found", then this is correct.
+      res.status(404).json({ message: `Recipe with ID ${recipeId} not found or could not be finalized.` });
+      return;
+    }
+
+    res.status(200).json({ message: 'Recipe production finalized successfully. Ingredient stock updated.', recipe: finalizedRecipe });
+
+  } catch (error: any) {
+    console.error(`Error in finalizeRecipeProductionHandler for recipe ID ${req.params.recipeId}:`, error);
+    if (error.message.includes('Recipe not found')) {
+      res.status(404).json({ message: error.message });
+    } else if (error.message.includes('Failed to finalize recipe production')) {
+        res.status(500).json({ message: 'Failed to finalize recipe production.', details: error.message });
+    } else {
+      res.status(500).json({ message: 'Internal server error during recipe finalization.' });
+    }
+  }
+};
+
+/**
+ * Handles fetching all recipes that depend on a specific recipe (i.e., use it as a linked recipe).
+ */
+export const getRecipeDependenciesHandler = async (req: Request<{ id: string }>, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+
+    if (!id) {
+        res.status(400).json({ message: 'Recipe ID parameter is required to find dependencies.' });
+        return;
+    }
+
+    // ID validation (format) is handled by the service layer, but a check here is fine.
+    // The service will return [] for invalid ID format if not throwing an error.
+
+    const dependentRecipes = await recipeService.getDependentParentRecipes(id);
+
+    // The service function getDependentParentRecipes is expected to return an array.
+    // If the recipe has no dependencies, it will be an empty array.
+    // If the recipe ID is invalid or not found, it might also return an empty array or throw.
+    // The current service implementation returns [] for invalid ID format.
+
+    res.status(200).json(dependentRecipes);
+
+  } catch (error: any) {
+    console.error(`Error in getRecipeDependenciesHandler for recipe ID ${req.params.id}:`, error);
+    // Check if the error is one thrown by the service layer for "Failed to fetch..."
+    if (error.message && error.message.includes('Failed to fetch dependent parent recipes')) {
+        res.status(500).json({ message: 'Internal server error fetching recipe dependencies.', details: error.message });
+    } else {
+        // Generic internal server error for other unexpected issues
+        res.status(500).json({ message: 'An unexpected error occurred while fetching recipe dependencies.' });
+    }
   }
 };

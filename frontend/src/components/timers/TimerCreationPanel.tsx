@@ -45,17 +45,35 @@ const PanelContainer = styled.div`
   left: 50%;
   transform: translate(-50%, -50%);
   background-color: var(--surface-color);
-  padding: var(--space-lg); /* Reduced padding */
+  padding: var(--space-xl); /* Increased padding for a more spacious feel */
   border-radius: var(--border-radius);
   box-shadow: var(--shadow-lg);
   z-index: 1000;
-  width: 400px; /* Increased width for a longer slider */
+  width: 420px; /* Slightly increased width */
   opacity: 0;
   transition: opacity 0.2s ease;
 
   &[data-visible="true"] {
     opacity: 1;
   }
+`;
+
+const ModalTitle = styled.h2`
+  font-size: 1.375rem; /* Approx 22px */
+  color: var(--text-color-strong);
+  margin-top: 0;
+  margin-bottom: var(--space-md);
+  text-align: center;
+  font-weight: 600;
+`;
+
+const StepDescription = styled.p`
+  font-size: var(--font-size-base);
+  color: var(--text-color-light);
+  text-align: center;
+  margin-top: 0;
+  margin-bottom: var(--space-lg);
+  line-height: var(--line-height-base);
 `;
 
 const DurationInputContainer = styled.div`
@@ -115,7 +133,8 @@ const ColorSwatch = styled.button<{ $color: string; }>`
 const ButtonGroup = styled.div`
   display: flex;
   gap: var(--space-sm);
-  justify-content: flex-end;
+  /* justifyContent will be handled per instance or dynamically */
+  margin-top: var(--space-xl); /* Add consistent margin above button groups */
 `;
 
 const Button = styled.button`
@@ -277,21 +296,21 @@ export const TimerCreationPanel: React.FC<TimerCreationPanelProps> = ({
     <>
       <Overlay onClick={onClose} />
       <PanelContainer data-visible={isOpen} aria-modal="true" role="dialog">
-        <StatusMessage>{statusMessage}</StatusMessage>
+        <ModalTitle>Temporitzador</ModalTitle>
 
         {currentStep === 1 && (
           <>
+            <StepDescription>Estableix la durada desitjada per al teu temporitzador.</StepDescription>
+            <StatusMessage>{statusMessage}</StatusMessage>
             <DurationInputContainer>
               <DurationDisplayInput
                 type="text"
                 value={manualDurationInput}
                 onChange={handleManualDurationChange}
                 placeholder="MM:SS"
-                aria-label="Timer duration"
+                aria-label="Durada del temporitzador"
               />
-              <Button className="primary" onClick={handleGoToStep2} disabled={parseDurationToSeconds(manualDurationInput) === null || parseDurationToSeconds(manualDurationInput)! <=0}>
-                Següent
-              </Button>
+              {/* "Següent" (Next) button moved to ButtonGroup below */}
             </DurationInputContainer>
             <Slider
               id="duration-slider"
@@ -302,30 +321,38 @@ export const TimerCreationPanel: React.FC<TimerCreationPanelProps> = ({
               onChange={handleSliderChange}
               onMouseUp={handleSliderRelease}
               onTouchEnd={handleSliderRelease} /* For touch devices */
-              aria-label="Timer duration slider"
+              aria-label="Control lliscant de la durada del temporitzador"
             />
+            <ButtonGroup style={{ justifyContent: 'flex-end' }}>
+              <Button className="primary" onClick={handleGoToStep2} disabled={parseDurationToSeconds(manualDurationInput) === null || parseDurationToSeconds(manualDurationInput)! <=0}>
+                Següent
+              </Button>
+            </ButtonGroup>
           </>
         )}
 
         {currentStep === 2 && (
           <>
+            <StepDescription>Tria un color per identificar el teu temporitzador.</StepDescription>
+            <StatusMessage>{statusMessage}</StatusMessage>
             <ColorSwatchContainer>
               {availableColors.map((color) => (
                 <ColorSwatch
                   key={color}
                   $color={color}
                   onClick={() => handleColorSelect(color)}
-                  aria-label={`Select color ${color}`}
+                  aria-label={`Selecciona el color ${color}`}
                 />
               ))}
             </ColorSwatchContainer>
+            <ButtonGroup style={{ justifyContent: 'flex-start' }}>
+              <Button className="secondary" onClick={() => { setCurrentStep(1); setStatusMessage(''); }}>
+                Enrere
+              </Button>
+            </ButtonGroup>
           </>
         )}
-
-        <ButtonGroup>
-          {/* Cancel button removed as per feedback */}
-          {/* Create Timer button is removed as per new flow */}
-        </ButtonGroup>
+        {/* Original ButtonGroup for cancel/create is removed as per existing comments and new flow */}
       </PanelContainer>
     </>
   );

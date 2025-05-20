@@ -1,23 +1,24 @@
+import React from 'react';
 import { styled } from '@linaria/react';
-import { Tab } from '../../types/tabs';
+import { TabData, RecipeTabData } from '../../types/tabs'; // Updated import
 import { SearchTab } from '../search/SearchTab';
 import { RecipeTab } from '../recipe/RecipeTab'; // Import the RecipeTab component
 import { IngredientsTab } from '../ingredients/IngredientsTab'; // Import the IngredientsTab component
 import { RecipeEditorTab } from '../recipe/RecipeEditorTab'; // Import the RecipeEditorTab component
+import IngredientEditTab from '../ingredients/IngredientEditTab'; // Import the new IngredientEditTab component
+import DefaultStepsTab from '../defaultSteps/DefaultStepsTab'; // Placeholder for the new component
 
 interface TabContentProps {
-  activeTab: Tab | undefined;
-  tabs: Tab[];
+  activeTab: TabData | undefined; // Use TabData
+  tabs: TabData[]; // Use TabData
   onOpenRecipeTab: (recipeId: string, recipeName: string, initialScaleFactor?: number) => void;
-  onCloseTab: (tabId: string) => void; // Add the close tab handler prop
-  // Add props for production mode state and handlers
+  onCloseTab: (tabId: string) => void;
   isProductionMode: boolean;
   trackedAmounts: Record<string, number>;
   onToggleProductionMode: (tabId: string) => void;
   onAmountTracked: (tabId: string, ingredientId: string, addedAmountGrams: number) => void;
-  // Add prop for opening the editor tab
   onOpenRecipeEditor: (recipeId: string, recipeName: string) => void;
-  // Add props for scale factor state and handler
+  onOpenIngredientEditTab: (ingredientName: string, ingredientId?: string) => void; // Allow optional ingredientId for creation
   scaleFactor: number;
   onScaleChange: (tabId: string, newScaleFactor: number) => void;
 }
@@ -40,63 +41,76 @@ export const TabContent = ({
   trackedAmounts,
   onToggleProductionMode,
   onAmountTracked,
-  onOpenRecipeEditor, // Destructure the new prop
-  scaleFactor, // Destructure scale factor props
+  onOpenRecipeEditor,
+  onOpenIngredientEditTab, // Destructure new prop
+  scaleFactor,
   onScaleChange,
 }: TabContentProps) => {
-  // console.log('TabContent received activeTab:', activeTab); // Log the received activeTab prop - REMOVED
   if (!activeTab) {
     return <ContentContainer>No s'ha seleccionat cap pestanya.</ContentContainer>; // Fallback
   }
 
-  const renderContent = () => {
+  const renderContent = (): React.ReactElement | null => {
     switch (activeTab.type) {
       case 'search':
         // Pass the handler down to SearchTab
-        return <SearchTab onOpenRecipeTab={onOpenRecipeTab} />;
+        return <SearchTab onOpenRecipeTab={onOpenRecipeTab} onOpenRecipeEditor={onOpenRecipeEditor} />;
       case 'recipe': {
         // Re-check activeTab here to satisfy TS control flow analysis
-        if (!activeTab) return null;
-        // console.log('Rendering recipe content for recipeId:', activeTab.recipeId); // Log the recipeId - REMOVED
-        // Render the RecipeTab component, passing the guaranteed recipeId
+        // activeTab is already confirmed to be RecipeTabData by the switch case
+        // and its existence is confirmed by the initial check.
+        // However, to be absolutely safe with strict null checks if properties were optional on RecipeTabData:
+        if (activeTab.type !== 'recipe' || !activeTab.recipeId) return null;
+        const recipeActiveTab = activeTab as RecipeTabData; // Explicit cast for clarity
+
         return (
           <RecipeTab
-            key={activeTab.id}
-            recipeId={activeTab.recipeId!}
+            key={recipeActiveTab.id}
+            recipeId={recipeActiveTab.recipeId} // No longer needs !
             tabs={tabs}
             handleOpenRecipeTab={onOpenRecipeTab}
-            // Pass the state and handlers down
             isProductionMode={isProductionMode}
             trackedAmounts={trackedAmounts}
-            onToggleProductionMode={() => onToggleProductionMode(activeTab!.id)} // Pass tabId
-            onAmountTracked={(ingredientId: string, amount: number) => onAmountTracked(activeTab!.id, ingredientId, amount)} // Pass tabId with explicit types
-            onOpenEditor={onOpenRecipeEditor} // Pass the handler down
-            onClose={() => onCloseTab(activeTab!.id)} // Pass the bound close handler
-            // Pass scale factor state and handler
+            onToggleProductionMode={() => onToggleProductionMode(recipeActiveTab.id)}
+            onAmountTracked={(ingredientId: string, amount: number) => onAmountTracked(recipeActiveTab.id, ingredientId, amount)}
+            onOpenEditor={onOpenRecipeEditor}
+            onClose={() => onCloseTab(recipeActiveTab.id)}
             scaleFactor={scaleFactor}
-            onScaleChange={(newScale: number) => onScaleChange(activeTab!.id, newScale)}
+            onScaleChange={(newScale: number) => onScaleChange(recipeActiveTab.id, newScale)}
           />
         );
-      } // Add closing brace for case 'recipe'
+      }
       case 'ingredients':
-        return <IngredientsTab />; // Render the IngredientsTab component
+        // Pass the onOpenIngredientEditTab prop to IngredientsTab
+        return <IngredientsTab onOpenIngredientEditTab={onOpenIngredientEditTab} onOpenRecipeEditTab={(recipeId) => onOpenRecipeEditor(recipeId, "Edit Recipe")} />;
       case 'recipeEditor':
-        // Re-check activeTab to satisfy TS
-        if (!activeTab) return null;
+        if (activeTab.type !== 'recipeEditor') return null; // Type guard
         return <RecipeEditorTab
-                 recipeId={activeTab.recipeId}
-                 tabId={activeTab.id} // Pass the tab's own ID
-                 onClose={() => onCloseTab(activeTab.id)} // Pass a function that closes THIS tab
-                 onOpenRecipeTab={onOpenRecipeTab} // Pass down the recipe opener
+                 key={activeTab.id} // Add key for consistency
+                 recipeId={activeTab.recipeId} // recipeId is optional on RecipeEditorTabData
+                 tabId={activeTab.id}
+                 onClose={() => onCloseTab(activeTab.id)}
+                 onOpenRecipeTab={onOpenRecipeTab}
                />;
+      case 'ingredientEdit': // New case for ingredient edit tab
+        if (activeTab.type !== 'ingredientEdit') return null; // Type guard
+        return (
+          <IngredientEditTab
+            key={activeTab.id} // Add key for stable component instance
+            tab={activeTab} // Pass the full activeTab object, which is IngredientEditTabData
+            onCloseTab={onCloseTab} // Pass the onCloseTab function
+          />
+        );
+      case 'defaultSteps': // Placeholder for the new tab type
+        if (activeTab.type !== 'defaultSteps') return null;
+        return <DefaultStepsTab />;
       default: {
-        // Ensure exhaustiveness for TabType
-        // Re-check activeTab here as well
-        if (!activeTab) return null;
-        // const _exhaustiveCheck: never = activeTab.type; // This check is no longer exhaustive due to 'recipeEditor'
-        return <div>Tipus de pestanya desconegut: {activeTab.type}</div>;
-      } // Add closing brace for default case
-    } // Add closing brace for switch statement
+        // This case should be unreachable if all TabData types are handled above.
+        // TypeScript knows activeTab is 'never' here.
+        console.warn("Unhandled tab type in TabContent renderContent:", activeTab);
+        return <div>Contingut no disponible per a aquest tipus de pestanya.</div>;
+      }
+    }
   };
 
   return (

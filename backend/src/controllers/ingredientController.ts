@@ -8,7 +8,7 @@ const isValidObjectId = (id: string): boolean => Types.ObjectId.isValid(id);
 
 export const createIngredientHandler = async (req: Request, res: Response) => {
   try {
-    const { name, aliases } = req.body;
+    const { name, aliases, quantityInStock } = req.body;
 
     // Basic input validation
     if (!name || typeof name !== 'string' || name.trim() === '') {
@@ -17,9 +17,13 @@ export const createIngredientHandler = async (req: Request, res: Response) => {
     if (aliases !== undefined && (!Array.isArray(aliases) || !aliases.every(a => typeof a === 'string' && a.trim() !== ''))) {
         return res.status(400).json({ message: 'Aliases must be an array of non-empty strings if provided.' });
     }
+    if (quantityInStock !== undefined && (typeof quantityInStock !== 'number' || isNaN(quantityInStock))) {
+        return res.status(400).json({ message: 'QuantityInStock must be a number if provided.' });
+    }
 
     const trimmedName = name.trim();
     const finalAliases = aliases ? aliases.map((a: string) => a.trim()).filter((a: string) => a) : []; // Trim and filter empty aliases
+    const finalQuantityInStock = quantityInStock !== undefined ? Number(quantityInStock) : undefined;
 
     // Check if name or any alias conflicts with existing names or aliases (case-insensitive)
     const potentialConflicts = [trimmedName, ...finalAliases];
@@ -46,6 +50,7 @@ export const createIngredientHandler = async (req: Request, res: Response) => {
     const ingredientData = {
         name: trimmedName,
         aliases: finalAliases,
+        quantityInStock: finalQuantityInStock,
     };
 
     // The conflict check above already handles duplicates based on name and aliases.
@@ -54,7 +59,8 @@ export const createIngredientHandler = async (req: Request, res: Response) => {
     // Proceed to create
     const newIngredient = await ingredientService.createIngredient(
         ingredientData.name,
-        ingredientData.aliases
+        ingredientData.aliases,
+        ingredientData.quantityInStock
     );
     res.status(201).json(newIngredient);
   } catch (error: any) {
@@ -119,40 +125,76 @@ export const getIngredientByIdHandler = async (req: Request, res: Response) => {
   }
 };
 
-export const updateIngredientHandler = async (req: Request, res: Response) => {
+export const updateIngredientHandler = async (req: Request, res: Response, next: Function) => {
   try {
     const { id } = req.params;
-    const updates = req.body;
+    const { name, aliases, quantityInStock } = req.body;
 
-     if (!isValidObjectId(id)) {
-        return res.status(400).json({ message: 'Invalid ingredient ID format.' });
+    if (!isValidObjectId(id)) {
+      return res.status(400).json({ message: 'Invalid ingredient ID format.' });
     }
 
-    // Basic validation for updates
-    if (!updates || typeof updates !== 'object' || Object.keys(updates).length === 0) {
-      return res.status(400).json({ message: 'Update data is required and cannot be empty.' });
-    }
-    // Optional: Add more specific validation for allowed update fields (e.g., name, isAllergen)
-    if (updates.name !== undefined && (typeof updates.name !== 'string' || updates.name.trim() === '')) {
-        return res.status(400).json({ message: 'Ingredient name must be a non-empty string if provided for update.' });
-    }
-    // Filter updates to only include allowed fields if necessary
-    const allowedUpdates: { name?: string } = {};
-    if (updates.name !== undefined) allowedUpdates.name = updates.name.trim();
+    // --- Input Validation ---
+    const updateData: { name?: string; aliases?: string[]; quantityInStock?: number } = {};
+    let hasValidUpdateField = false;
 
+    if (name !== undefined) {
+      if (typeof name !== 'string' || name.trim() === '') {
+        return res.status(400).json({ message: 'Ingredient name must be a non-empty string if provided.' });
+      }
+      updateData.name = name.trim();
+      hasValidUpdateField = true;
+    }
 
-    const updatedIngredient = await ingredientService.updateIngredient(id, allowedUpdates);
+    if (aliases !== undefined) {
+      if (!Array.isArray(aliases) || !aliases.every(a => typeof a === 'string')) {
+        return res.status(400).json({ message: 'Aliases must be an array of strings if provided.' });
+      }
+      // Allow empty strings in aliases array as per some use cases, or trim and filter:
+      // updateData.aliases = aliases.map(a => a.trim()).filter(a => a);
+      updateData.aliases = aliases;
+      hasValidUpdateField = true;
+    }
+
+    if (quantityInStock !== undefined) {
+      if (typeof quantityInStock !== 'number' || isNaN(quantityInStock)) {
+        return res.status(400).json({ message: 'QuantityInStock must be a number if provided.' });
+      }
+      updateData.quantityInStock = quantityInStock;
+      hasValidUpdateField = true;
+    }
+
+    if (!hasValidUpdateField && Object.keys(req.body).length > 0) {
+        // If body is not empty but no valid fields were extracted (e.g. only extraneous fields sent)
+        return res.status(400).json({ message: 'No valid fields provided for update. Allowed fields are: name, aliases, quantityInStock.' });
+    }
+    // If req.body is empty, service layer will handle it by returning current ingredient.
+
+    // --- Service Call ---
+    const updatedIngredient = await ingredientService.updateIngredientById(id, updateData);
+
     if (!updatedIngredient) {
-      return res.status(404).json({ message: 'Ingredient not found for update.' });
+      return res.status(404).json({ message: 'Ingredient not found.' });
     }
+
     res.status(200).json(updatedIngredient);
+
   } catch (error: any) {
-     // Handle potential duplicate key error from MongoDB (code 11000) during update
-    if (error.code === 11000) {
-        return res.status(400).json({ message: `An ingredient with the name "${req.body.name}" already exists.` });
+    console.error(`Error in updateIngredientHandler for ID ${req.params.id}:`, error);
+
+    // Specific error handling based on service layer exceptions
+    if (error.message.includes('already exists')) { // From duplicate name check
+      return res.status(409).json({ message: error.message }); // 409 Conflict
     }
-    console.error('Error updating ingredient:', error);
-    res.status(500).json({ message: 'Internal server error while updating ingredient.' });
+    if (error.message.startsWith('Validation failed')) { // From Mongoose validation
+      return res.status(400).json({ message: error.message });
+    }
+    
+    // Pass to generic error handler
+    // For other errors, or if you want a centralized error handling middleware:
+    // next(error);
+    // For now, returning a generic 500 for unhandled cases here:
+    return res.status(500).json({ message: 'Internal server error while updating ingredient.' });
   }
 };
 
@@ -165,15 +207,34 @@ export const deleteIngredientHandler = async (req: Request, res: Response) => {
     }
 
     const deletedIngredient = await ingredientService.deleteIngredient(id);
+    // The service now throws an error if not found, so a null check here is less critical
+    // but kept for robustness if service logic changes.
     if (!deletedIngredient) {
+      // This case should ideally be covered by the service throwing a 404 error.
       return res.status(404).json({ message: 'Ingredient not found for deletion.' });
     }
-    // Send back the deleted ingredient object or just a success message
-    // res.status(200).json(deletedIngredient);
     res.status(200).json({ message: 'Ingredient deleted successfully.', ingredient: deletedIngredient });
-  } catch (error) {
-    console.error('Error deleting ingredient:', error);
-    res.status(500).json({ message: 'Internal server error while deleting ingredient.' });
+  } catch (error: any) {
+    console.error('Error deleting ingredient:', error.message);
+    // Handle specific operational errors thrown by the service
+    if (error.isOperational) {
+      if (error.statusCode === 409) { // Conflict - ingredient in use
+        return res.status(409).json({
+          message: error.message,
+          details: error.details, // Contains the list of recipes
+        });
+      }
+      if (error.statusCode === 404) { // Not Found
+        return res.status(404).json({ message: error.message });
+      }
+      // Handle other operational errors if any are defined
+    }
+    // Handle invalid ID format error (if service throws it with a specific message/code)
+    if (error.message.startsWith('Invalid ingredient ID format')) {
+        return res.status(400).json({ message: error.message });
+    }
+    // Generic server error for unhandled cases
+    res.status(500).json({ message: error.message || 'Internal server error while deleting ingredient.' });
   }
 };
 
@@ -220,4 +281,64 @@ export const addAliasToIngredientHandler = async (req: Request, res: Response) =
         }
         res.status(500).json({ message: 'Internal server error while adding alias.' });
     }
+};
+
+export const addStockToIngredientHandler = async (req: Request, res: Response) => {
+  try {
+    const { ingredientId } = req.params;
+    const { quantityToAdd } = req.body;
+
+    if (!isValidObjectId(ingredientId)) {
+      return res.status(400).json({ message: 'Invalid ingredient ID format.' });
+    }
+
+    if (typeof quantityToAdd !== 'number') {
+      return res.status(400).json({ message: 'quantityToAdd is required and must be a number.' });
+    }
+
+    const updatedIngredient = await ingredientService.updateIngredientStock(ingredientId, quantityToAdd);
+
+    if (!updatedIngredient) {
+      // This could be because the ingredient was not found
+      // Or potentially other issues like validation if strict rules were in place (e.g. stock cannot be negative)
+      const ingredientExists = await ingredientService.getIngredientById(ingredientId);
+      if (!ingredientExists) {
+        return res.status(404).json({ message: `Ingredient with ID ${ingredientId} not found.` });
+      }
+      // If ingredient exists but update failed, it's an unexpected server error or validation issue
+      return res.status(500).json({ message: 'Failed to update ingredient stock for an unknown reason.' });
+    }
+
+    res.status(200).json(updatedIngredient);
+  } catch (error: any) {
+    console.error(`Error in addStockToIngredientHandler for ID ${req.params.ingredientId}:`, error);
+    if (error.message.includes('Validation failed')) {
+        return res.status(400).json({ message: error.message });
+    }
+    if (error.message.includes('Failed to update ingredient stock')) { // Generic from service
+        return res.status(500).json({ message: error.message });
+    }
+    res.status(500).json({ message: 'Internal server error while updating ingredient stock.' });
+  }
+};
+export const getIngredientDependencies = async (req: Request, res: Response) => {
+  try {
+    const { ingredientId } = req.params;
+
+    if (!isValidObjectId(ingredientId)) {
+      return res.status(400).json({ message: 'Invalid ingredient ID format.' });
+    }
+
+    const recipes = await ingredientService.getRecipesByIngredientId(ingredientId);
+    // The service function returns an empty array if no recipes are found,
+    // or if the ingredientId was invalid (after our initial check).
+    // So, we can directly return the result.
+    res.status(200).json(recipes);
+
+  } catch (error: any) {
+    console.error(`Error fetching ingredient dependencies for ID ${req.params.ingredientId}:`, error);
+    // Handle specific errors if the service layer were to throw them differently,
+    // but for now, a generic 500 is appropriate for unexpected service errors.
+    res.status(500).json({ message: 'Internal server error while fetching ingredient dependencies.' });
+  }
 };
