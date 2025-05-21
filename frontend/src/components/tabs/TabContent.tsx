@@ -32,6 +32,12 @@ const ContentContainer = styled.div`
   /* border-top: 1px solid var(--border-color-light); */
 `;
 
+// Wrapper for individual tab panel content for ARIA attributes
+const TabPanelWrapper = styled.div`
+  height: 100%; // Ensure it fills the ContentContainer
+  overflow-y: auto; // Allow internal scrolling if content overflows
+`;
+
 export const TabContent = ({
   activeTab,
   tabs,
@@ -113,9 +119,31 @@ export const TabContent = ({
     }
   };
 
+  // Get the currently rendered content
+  const currentContent = renderContent();
+
   return (
     <ContentContainer>
-      {renderContent()}
+      {/* Render all tab panels but only display the active one.
+          This is one approach. Another is to only render the active one.
+          Rendering all allows for keeping state of inactive tabs, but might have performance implications
+          for very many complex tabs. For this app, it's likely fine.
+          The visibility is controlled by the parent ensuring only activeTab's content is effectively shown.
+      */}
+      {tabs.map(tab => (
+        <TabPanelWrapper
+          key={tab.id}
+          id={`tabpanel-${tab.id}`}
+          role="tabpanel"
+          aria-labelledby={`tab-${tab.id}`}
+          hidden={activeTab?.id !== tab.id} // Hide non-active tab panels
+        >
+          {/* Conditionally render content only if it's the active tab to avoid running logic for hidden tabs unnecessarily */}
+          {activeTab?.id === tab.id && currentContent}
+        </TabPanelWrapper>
+      ))}
+      {/* Fallback if no active tab somehow (should not happen with current logic) */}
+      {!activeTab && <ContentContainer>No s'ha seleccionat cap pestanya.</ContentContainer>}
     </ContentContainer>
   );
 };

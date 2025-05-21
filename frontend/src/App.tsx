@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { styled } from '@linaria/react';
-import { TabData, RecipeTabData, RecipeEditorTabData, IngredientsTabData, SearchTabData, IngredientEditTabData, DefaultStepsTabData } from './types/tabs'; // Updated import (removed TabType)
+import { TabData, RecipeTabData, RecipeEditorTabData, IngredientsTabData, SearchTabData, IngredientEditTabData, DefaultStepsTabData } from './types/tabs';
 import { TabBar } from './components/tabs/TabBar';
+import { GlobalActionBar } from './components/common/GlobalActionBar'; // Import GlobalActionBar
 import { TabContent } from './components/tabs/TabContent';
 import FloatingAddTimerButton from './components/timers/FloatingAddTimerButton';
 import { FloatingTimersDisplay } from './components/timers/FloatingTimersDisplay';
@@ -401,8 +402,7 @@ const App = () => {
 
 
 // Calculate activeTab based on the current state *after* potential updates
-const activeTab: TabData | undefined = tabs.find(tab => tab.id === activeTabId); // Use TabData
-// console.log('Calculated activeTab for render:', activeTab); // Log the calculated active tab - REMOVED
+const activeTab: TabData | undefined = tabs.find(tab => tab.id === activeTabId);
   return (
     <AppContainer>
       <TabBar
@@ -410,13 +410,16 @@ const activeTab: TabData | undefined = tabs.find(tab => tab.id === activeTabId);
         activeTabId={activeTabId}
         onTabClick={handleTabClick}
         onTabClose={handleCloseTab}
+        // Removed action button props from TabBar
+      />
+      <GlobalActionBar
         onOpenNewRecipeEditor={handleOpenNewRecipeEditor}
         onOpenIngredientsTab={handleOpenIngredientsTab}
-        onOpenDefaultStepsTab={handleOpenDefaultStepsTab} // Added this prop
+        onOpenDefaultStepsTab={handleOpenDefaultStepsTab}
       />
       <TabContentContainer>
         <TabContent
-          activeTab={activeTab} // Type is now TabData | undefined
+          activeTab={activeTab}
           tabs={tabs}
           onOpenRecipeTab={handleOpenRecipeTab}
           onCloseTab={handleCloseTab}

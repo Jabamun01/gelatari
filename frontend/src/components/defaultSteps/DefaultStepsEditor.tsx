@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { styled } from '@linaria/react';
 import { fetchDefaultSteps, updateDefaultSteps } from '../../api/defaultSteps';
+import { PrimaryButton, DangerButton } from '../common/Button';
 
 interface DefaultStepsEditorProps {
   category: 'ice cream' | 'sorbet';
@@ -46,47 +47,6 @@ const StepInput = styled.textarea`
     border-color: var(--primary-color);
     outline: none;
     box-shadow: 0 0 0 2px var(--primary-color-light);
-  }
-`;
-
-const ActionButton = styled.button`
-  padding: var(--space-sm) var(--space-md);
-  background-color: var(--primary-color);
-  color: var(--text-on-primary);
-  border: none;
-  border-radius: var(--border-radius);
-  cursor: pointer;
-  font-weight: 500;
-  transition: background-color 0.15s ease;
-
-  &:hover:not(:disabled) {
-    background-color: var(--primary-color-dark);
-  }
-
-  &:disabled {
-    background-color: var(--disabled-color);
-    cursor: not-allowed;
-  }
-`;
-
-const DeleteButton = styled.button`
-  padding: var(--space-xs);
-  background-color: transparent;
-  color: var(--danger-color);
-  border: 1px solid var(--danger-color);
-  border-radius: var(--border-radius);
-  cursor: pointer;
-  font-size: var(--font-size-sm);
-  line-height: 1;
-  transition: background-color 0.15s ease, color 0.15s ease;
-
-  &:hover:not(:disabled) {
-    background-color: var(--danger-color);
-    color: var(--text-on-primary);
-  }
-   &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
   }
 `;
 
@@ -163,34 +123,45 @@ const DefaultStepsEditor: React.FC<DefaultStepsEditorProps> = ({ category }) => 
   };
 
   if (isLoading) {
-    return <LoadingIndicator>Carregant passos per defecte...</LoadingIndicator>;
+    return <LoadingIndicator aria-live="polite">Carregant passos per defecte...</LoadingIndicator>;
   }
+
+  const categoryDisplayName = category === 'ice cream' ? 'Gelat' : 'Sorbet';
 
   return (
     <EditorContainer>
-      <h3>{`Editant Passos per Defecte: ${category === 'ice cream' ? 'Gelat' : 'Sorbet'}`}</h3>
+      <h3>{`Editant Passos per Defecte: ${categoryDisplayName}`}</h3>
       <StepListContainer>
         {steps.map((step, index) => (
           <StepItem key={index}>
             <StepInput
+              aria-label={`Pas ${index + 1} per a ${categoryDisplayName}`}
               value={step}
               onChange={(e) => handleStepChange(index, e.target.value)}
               placeholder="Descripció del pas"
               rows={2}
             />
-            <DeleteButton onClick={() => handleDeleteStep(index)} disabled={isSaving} title="Elimina Pas">
+            <DangerButton onClick={() => handleDeleteStep(index)} disabled={isSaving} title={`Elimina el pas ${index + 1}`} style={{padding: 'var(--space-xs)'}}>
               ✕
-            </DeleteButton>
+            </DangerButton>
           </StepItem>
         ))}
       </StepListContainer>
-      <ActionButton onClick={handleAddStep} disabled={isSaving}>
+      <PrimaryButton onClick={handleAddStep} disabled={isSaving}>
         Afegeix Pas
-      </ActionButton>
-      <ActionButton onClick={handleSaveChanges} disabled={isSaving || steps.length === 0}>
+      </PrimaryButton>
+      <PrimaryButton onClick={handleSaveChanges} disabled={isSaving || steps.length === 0}>
         {isSaving ? 'Guardant...' : 'Guarda Canvis'}
-      </ActionButton>
-      {message && <MessageArea type={message.type}>{message.text}</MessageArea>}
+      </PrimaryButton>
+      {message && (
+        <MessageArea
+          type={message.type}
+          role={message.type === 'error' ? 'alert' : 'status'}
+          aria-live="polite"
+        >
+          {message.text}
+        </MessageArea>
+      )}
     </EditorContainer>
   );
 };

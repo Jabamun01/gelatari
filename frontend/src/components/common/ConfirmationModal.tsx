@@ -1,7 +1,7 @@
 import React from 'react';
 import { styled } from '@linaria/react';
-import { Modal } from './Modal'; // Assuming Modal.tsx is in the same directory
-import { PrimaryButton, DefaultButton, DangerButton } from './DependencyModalStyles'; // Reusing button styles
+import { Modal } from './Modal';
+import { PrimaryButton, SecondaryButton, DangerButton } from './Button';
 
 interface ConfirmationModalProps {
   isOpen: boolean;
@@ -55,9 +55,9 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
       title={title}
       footer={
         <FooterActions>
-          <DefaultButton onClick={onClose}>
+          <SecondaryButton onClick={onClose}>
             {cancelButtonText}
-          </DefaultButton>
+          </SecondaryButton>
           <ConfirmButtonComponent onClick={handleConfirm}>
             {confirmButtonText}
           </ConfirmButtonComponent>

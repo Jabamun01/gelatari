@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { styled } from '@linaria/react';
+import { ActionButton as ReusableActionButton, DangerButton, SecondaryButton } from '../common/Button';
 import {
   getAllIngredients,
   updateIngredient,
@@ -117,48 +118,23 @@ const StatusMessage = styled.div`
   text-align: center;
 `;
 
+// New ErrorMessage styled component, similar to RecipeTab's ErrorMessage
+const ErrorMessage = styled.div`
+  padding: var(--space-lg);
+  color: var(--danger-color-dark);
+  background-color: rgba(239, 68, 68, 0.1); /* Light red background */
+  border: 1px solid var(--danger-color);
+  border-radius: var(--border-radius);
+  text-align: center;
+  margin-top: var(--space-lg);
+  margin-bottom: var(--space-lg);
+`;
+
 const ButtonContainer = styled.div`
   display: flex;
   gap: var(--space-sm);
   margin-left: var(--space-md);
   flex-shrink: 0;
-`;
-
-const ActionButton = styled.button`
-  padding: var(--space-xs) var(--space-sm);
-  font-size: var(--font-size-sm);
-  font-weight: 500;
-  border: var(--border-width) solid var(--border-color);
-  background-color: var(--surface-color);
-  color: var(--text-color);
-  box-shadow: none;
-
-  &:hover:not(:disabled) {
-    background-color: var(--background-color);
-    border-color: var(--border-color);
-  }
-`;
-
-const DeleteButton = styled(ActionButton)`
-  border: var(--border-width) solid var(--border-color);
-  color: var(--danger-color);
-  background-color: transparent;
-
-   &:hover:not(:disabled) {
-    background-color: rgba(239, 68, 68, 0.1); // var(--danger-bg-hover) or similar could be a token
-    color: var(--danger-color-dark);
-    border-color: var(--border-color-hover);
-  }
-`;
-
-const EditButton = styled(ActionButton)`
-  color: var(--info-color);
-
-  &:hover:not(:disabled) {
-    background-color: var(--info-color);
-    color: var(--text-on-primary);
-    border-color: var(--info-color);
-  }
 `;
 
 const PaginationControls = styled.div`
@@ -418,28 +394,28 @@ export const IngredientsTab = ({ onOpenIngredientEditTab, onOpenRecipeEditTab }:
                     ))}
                 </select>
             </LimitSelector>
-            <ActionButton
+            <ReusableActionButton
                 onClick={() => onOpenIngredientEditTab("Nou Ingredient")}
                 title="Afegir nou ingredient"
                 style={{ flexShrink: 0 }}
                 disabled={isLoading || isFetching || itemDeletionHook.isProcessingDelete || itemDeletionHook.isLoadingDependencies}
             >
                 + Afegir
-            </ActionButton>
+            </ReusableActionButton>
         </ControlsContainer>
  
-        {isLoading && <StatusMessage>Carregant ingredients...</StatusMessage>}
+        {isLoading && <StatusMessage aria-live="polite">Carregant ingredients...</StatusMessage>}
         {isError && (
-          <StatusMessage>
+          <ErrorMessage aria-live="polite" role="alert">
             Error al carregar ingredients: {error?.message || 'Error desconegut'}
-          </StatusMessage>
+          </ErrorMessage>
         )}
 
         {!isLoading && !isError && ingredients && pagination && (
            <>
-              <IngredientList aria-live="polite">
+              <IngredientList aria-live="polite" aria-label="Llista d'ingredients">
               {ingredients.length === 0 ? (
-                  <IngredientItem>
+                  <IngredientItem role="status"> {/* Use role="status" for no results message */}
                       {debouncedSearchTerm
                           ? `No s'han trobat ingredients que coincideixin amb "${debouncedSearchTerm}"`
                           : "No s'han trobat ingredients"}
@@ -447,6 +423,9 @@ export const IngredientsTab = ({ onOpenIngredientEditTab, onOpenRecipeEditTab }:
               ) : (
                   ingredients.map((ingredient: Ingredient) => {
                   const quantityForThisIngredient = addStockQuantities[ingredient._id] || 0;
+                  // Use a unique id for the input if the label needs to point to it.
+                  // However, aria-label on the input itself is also a good option here.
+                  const addStockInputId = `add-stock-input-${ingredient._id}`;
                   return (
                       <IngredientItem key={ingredient._id}>
                         <IngredientDetails>
@@ -462,29 +441,31 @@ export const IngredientsTab = ({ onOpenIngredientEditTab, onOpenRecipeEditTab }:
                         <AddStockForm>
                           <input
                             type="number"
+                            id={addStockInputId} // Add id for potential label association
                             value={quantityForThisIngredient === 0 ? '' : quantityForThisIngredient}
                             onChange={(e) => handleStockQuantityChange(ingredient._id, e.target.value)}
                             placeholder="Quant."
                             min="0"
-                            aria-label={`Quantitat a afegir per ${ingredient.name}`}
+                            aria-label={`Quantitat a afegir per ${ingredient.name}`} // aria-label is fine here
                             disabled={(addStockMutation.isPending && addStockMutation.variables?.ingredientId === ingredient._id) || itemDeletionHook.isProcessingDelete || itemDeletionHook.isLoadingDependencies}
                           />
-                          <ActionButton
+                          <ReusableActionButton
                             onClick={() => handleAddStock(ingredient._id, ingredient.name)}
+                            aria-label={`Afegeix stock per ${ingredient.name}`} // More specific aria-label
                             disabled={(addStockMutation.isPending && addStockMutation.variables?.ingredientId === ingredient._id) || quantityForThisIngredient <= 0 || itemDeletionHook.isProcessingDelete || itemDeletionHook.isLoadingDependencies}
                           >
                             Afegeix
-                          </ActionButton>
+                          </ReusableActionButton>
                         </AddStockForm>
                         <ButtonContainer>
-                            <EditButton
+                            <SecondaryButton
                                 onClick={() => handleEditIngredient(ingredient._id, ingredient.name)}
                                 disabled={updateMutation.isPending || (addStockMutation.isPending && addStockMutation.variables?.ingredientId === ingredient._id) || itemDeletionHook.isProcessingDelete || itemDeletionHook.isLoadingDependencies}
                                 title={`Edita ${ingredient.name}`}
                             >
                                 Editar
-                            </EditButton>
-                            <DeleteButton
+                            </SecondaryButton>
+                            <DangerButton
                                 onClick={() => handleDeleteIngredient(ingredient._id, ingredient.name)}
                                 disabled={
                                   updateMutation.isPending ||
@@ -496,7 +477,7 @@ export const IngredientsTab = ({ onOpenIngredientEditTab, onOpenRecipeEditTab }:
                                 {itemDeletionHook.currentItem?.id === ingredient._id && (itemDeletionHook.isProcessingDelete || itemDeletionHook.isLoadingDependencies)
                                   ? (itemDeletionHook.isProcessingDelete ? 'Eliminant...' : 'Comprovant...')
                                   : 'Eliminar'}
-                            </DeleteButton>
+                            </DangerButton>
                         </ButtonContainer>
                       </IngredientItem>
                   );
@@ -506,21 +487,21 @@ export const IngredientsTab = ({ onOpenIngredientEditTab, onOpenRecipeEditTab }:
 
               {pagination.totalPages > 1 && (
                   <PaginationControls>
-                      <button
+                      <ReusableActionButton
                           onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
                           disabled={currentPage === 1 || isLoading || isFetching}
                       >
                           Anterior
-                      </button>
+                      </ReusableActionButton>
                       <span>
                           Pàgina {pagination.currentPage} de {pagination.totalPages}
                       </span>
-                      <button
+                      <ReusableActionButton
                           onClick={() => setCurrentPage((prev) => Math.min(prev + 1, pagination.totalPages))}
                           disabled={currentPage === pagination.totalPages || isLoading || isFetching}
                       >
                           Següent
-                      </button>
+                      </ReusableActionButton>
                   </PaginationControls>
               )}
            </>

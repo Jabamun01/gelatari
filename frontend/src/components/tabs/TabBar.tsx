@@ -1,6 +1,7 @@
-import React from 'react'; // Import React for event types
+import React from 'react';
 import { styled } from '@linaria/react';
 import { TabData } from '../../types/tabs';
+import { ActionButton, PrimaryButton } from '../common/Button';
 
 interface TabBarProps {
   tabs: TabData[];
@@ -9,25 +10,29 @@ interface TabBarProps {
   onTabClose: (tabId: string) => void;
   onOpenNewRecipeEditor: () => void;
   onOpenIngredientsTab: () => void; // Add prop for opening ingredients tab
-  onOpenDefaultStepsTab: () => void; // Add prop for opening default steps tab
+  // onOpenNewRecipeEditor: () => void; // Removed
+  // onOpenIngredientsTab: () => void; // Removed
+  // onOpenDefaultStepsTab: () => void; // Removed
 }
 
-const TabBarContainer = styled.div`
+const NavContainer = styled.nav`
   display: flex;
-  flex-wrap: wrap; /* Allow tabs to wrap to the next line */
-  align-items: stretch; /* Stretch items to fill height */
+  flex-wrap: wrap;
+  align-items: stretch;
   border-bottom: var(--border-width) solid var(--tab-border-color);
   background-color: var(--surface-color);
-  padding: 0 var(--space-sm); /* Adjust padding */
+  padding: 0 var(--space-sm);
   gap: var(--space-xs);
   box-shadow: var(--shadow-sm);
-  position: relative; /* For potential absolute positioning inside */
-  min-height: 50px; /* Ensure a minimum height */
+  position: relative;
+  min-height: 50px; 
+  justify-content: space-between; /* Ensure tabs are on left, actions (if any) on right */
 `;
 
 // Define TabButtonProps to include the isActive prop for styling
-interface TabButtonProps {
+interface TabButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   isActive: boolean;
+  // No need to explicitly add aria-controls here if it's passed directly
 }
 
 // Define a dedicated styled component for the close icon (span)
@@ -103,76 +108,41 @@ const TabButton = styled.button<TabButtonProps>`
   }
 `;
 
-// Style for the "New Recipe" button
-// Inherit base button styles and customize
-// Style the "New Recipe" button as a primary action
-const ActionButton = styled.button` // Generic action button style
-  padding: var(--space-sm) var(--space-md);
-  align-self: center; /* Center vertically */
-  background-color: var(--primary-color);
-  color: var(--text-on-primary);
-  border: 1px solid var(--primary-color); /* Ensure border is consistent */
-  border-radius: var(--border-radius);
-  font-size: var(--font-size-sm);
-  font-weight: 600;
-  line-height: 1;
-  cursor: pointer;
-  transition: background-color 0.15s ease, border-color 0.15s ease;
-
-  &:hover:not(:disabled) {
-    background-color: var(--primary-color-dark);
-    border-color: var(--primary-color-dark);
-  }
-
-  &:focus {
-    outline: none;
-    box-shadow: 0 0 0 2px var(--surface-color), 0 0 0 4px var(--primary-color); /* Focus ring */
-  }
-`;
-
-const IngredientsButton = styled(ActionButton)`
-  /* Specific styles for Ingredients button if needed, e.g., different color */
-  /* For now, it will inherit ActionButton styles */
-`;
-
-const NewRecipeButton = styled(ActionButton)`
-  /* No specific styles here, inherits from ActionButton */
-`;
-
 const RightAlignedActionsContainer = styled.div`
   display: flex;
   align-items: center; /* Align buttons vertically */
   margin-left: auto; /* Push this container to the right */
   gap: var(--space-sm); /* Space between buttons */
+  padding: var(--space-sm) 0; 
 `;
 
-const DefaultStepsButton = styled(ActionButton)`
-  /* Specific styles for Default Steps button if needed */
-`;
-
-
-export const TabBar = ({ tabs, activeTabId, onTabClick, onTabClose, onOpenNewRecipeEditor, onOpenIngredientsTab, onOpenDefaultStepsTab }: TabBarProps) => { // Destructure new props
+export const TabBar = ({ tabs, activeTabId, onTabClick, onTabClose }: TabBarProps) => { // Removed action button props
   return (
-    <TabBarContainer>
-      {tabs.map((tab) => (
-        <TabButton
-          key={tab.id} // Use tab.id (which should be the recipe._id for recipe tabs)
-          isActive={tab.id === activeTabId}
-          onClick={() => onTabClick(tab.id)}
-          title={tab.title} // Tooltip
-        >
-          {tab.title}
-          {tab.isCloseable && (
-            <CloseIcon // Use the dedicated styled component
-              role="button" // Accessibility: Indicate it acts like a button
-              tabIndex={0} // Accessibility: Make it focusable
+    <NavContainer aria-label="Main navigation">
+      <div role="tablist" style={{ display: 'flex', alignItems: 'stretch', gap: 'var(--space-xs)'}}>
+        {tabs.map((tab) => (
+          <TabButton
+            key={tab.id}
+            id={`tab-${tab.id}`} // Added id for aria-labelledby on tabpanel
+            role="tab"
+            aria-selected={tab.id === activeTabId}
+            aria-controls={`tabpanel-${tab.id}`} // Points to the corresponding tabpanel
+            isActive={tab.id === activeTabId}
+            onClick={() => onTabClick(tab.id)}
+            title={tab.title}
+          >
+            {tab.title}
+            {tab.isCloseable && (
+            <CloseIcon
+              role="button"
+              tabIndex={0}
               onClick={(e: React.MouseEvent) => {
-                e.stopPropagation(); // Prevent tab click when closing
+                e.stopPropagation();
                 onTabClose(tab.id);
               }}
-              onKeyDown={(e: React.KeyboardEvent) => { // Accessibility: Allow closing with Enter/Space
+              onKeyDown={(e: React.KeyboardEvent) => {
                 if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault(); // Prevent potential default actions
+                  e.preventDefault();
                   e.stopPropagation();
                   onTabClose(tab.id);
                 }
@@ -183,19 +153,10 @@ export const TabBar = ({ tabs, activeTabId, onTabClick, onTabClose, onOpenNewRec
               ✕
             </CloseIcon>
           )}
-        </TabButton>
-      ))}
-      <RightAlignedActionsContainer>
-        <DefaultStepsButton onClick={onOpenDefaultStepsTab} title="Gestiona els passos per defecte">
-          Passos per Defecte
-        </DefaultStepsButton>
-        <IngredientsButton onClick={onOpenIngredientsTab} title="Mostra els ingredients">
-          Ingredients
-        </IngredientsButton>
-        <NewRecipeButton onClick={onOpenNewRecipeEditor} title="Crea una recepta nova">
-          + Nova recepta
-        </NewRecipeButton>
-      </RightAlignedActionsContainer>
-    </TabBarContainer>
+          </TabButton>
+        ))}
+      </div>
+      {/* RightAlignedActionsContainer is removed */}
+    </NavContainer>
   );
 };

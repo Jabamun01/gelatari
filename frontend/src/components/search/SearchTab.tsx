@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { styled } from '@linaria/react';
 import { useQuery, keepPreviousData } from '@tanstack/react-query';
+import { ActionButton, DangerButton, SecondaryButton } from '../common/Button';
 import { fetchRecipes, RecipeApiResponse, RecipeSearchResult } from '../../api/recipes';
 import { RecipeDetails } from '../../types/recipe';
 import { useDebounce } from '../../utils/hooks';
@@ -100,60 +101,23 @@ const ActionButtons = styled.div`
   // Specific button styling is now handled by StyledEditButton and StyledDeleteButton
 `;
 
-const StyledEditButton = styled.button`
-  padding: var(--space-sm) var(--space-md);
-  font-size: var(--font-size-sm);
-  font-weight: 500;
-  border-radius: var(--border-radius);
-  background-color: var(--surface-color);
-  color: var(--text-color);
-  border: var(--border-width) solid var(--border-color);
-  cursor: pointer;
-  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
-
-  &:hover {
-    background-color: var(--button-hover-bg);
-    border-color: var(--border-color); // As per context, though var(--primary-color) might be more common
-  }
-
-  &:disabled {
-    opacity: 0.7;
-    cursor: not-allowed;
-    background-color: var(--surface-color-disabled);
-    border-color: var(--border-color-disabled);
-    color: var(--text-color-disabled);
-  }
-`;
-
-const StyledDeleteButton = styled.button`
-  padding: var(--space-sm) var(--space-md);
-  font-size: var(--font-size-sm);
-  font-weight: 500;
-  border-radius: var(--border-radius);
-  background-color: transparent;
-  color: var(--danger-color);
-  border: var(--border-width) solid var(--border-color);
-  cursor: pointer;
-  transition: background-color 0.15s ease, color 0.15s ease;
-
-  &:hover {
-    background-color: rgba(239, 68, 68, 0.1); // var(--danger-bg-hover) or similar could be a token
-    color: var(--danger-color-dark);
-  }
-
-  &:disabled {
-    opacity: 0.7;
-    cursor: not-allowed;
-    background-color: transparent;
-    color: var(--danger-color-disabled); // Assuming a disabled state for danger buttons
-  }
-`;
-
 const StatusMessage = styled.div`
   padding: var(--space-md) var(--space-lg);
   color: var(--text-color-light);
   font-style: italic;
   text-align: center;
+`;
+
+// New ErrorMessage styled component, similar to RecipeTab's ErrorMessage
+const ErrorMessage = styled.div`
+  padding: var(--space-lg);
+  color: var(--danger-color-dark);
+  background-color: rgba(239, 68, 68, 0.1); /* Light red background */
+  border: 1px solid var(--danger-color);
+  border-radius: var(--border-radius);
+  text-align: center;
+  margin-top: var(--space-lg);
+  margin-bottom: var(--space-lg);
 `;
 
 const NoResultsItem = styled.li` // Changed from styled(ResultItem) as it's simpler now
@@ -175,9 +139,7 @@ const PaginationControls = styled.div`
   margin-top: var(--space-lg);
   margin-bottom: var(--space-lg);
 
-  button {
-    padding: var(--space-sm) var(--space-md);
-  }
+  /* Reusable ActionButton will be used here, no need for specific button styling in PaginationControls */
 
   span {
     font-size: var(--font-size-sm);
@@ -294,17 +256,17 @@ export const SearchTab = ({ onOpenRecipeTab, onOpenRecipeEditor }: SearchTabProp
         </LimitSelector>
       </ControlsContainer>
 
-      {(isLoading || isFetching) && !data && <StatusMessage>Carregant receptes...</StatusMessage>}
+      {(isLoading || isFetching) && !data && <StatusMessage aria-live="polite">Carregant receptes...</StatusMessage>}
 
       {isError && (
-        <StatusMessage>Error en obtenir receptes: {error?.message || 'Error desconegut'}</StatusMessage>
+        <ErrorMessage aria-live="polite" role="alert">Error en obtenir receptes: {error?.message || 'Error desconegut'}</ErrorMessage>
       )}
 
       {!isLoading && !isError && (
         <>
-          <ResultsList>
+          <ResultsList aria-label="Resultats de la cerca de receptes">
             {recipes.length === 0 ? (
-              <NoResultsItem key="no-results">
+              <NoResultsItem key="no-results" role="status">
                 {debouncedSearchTerm
                   ? `No s'han trobat receptes que coincideixin amb "${debouncedSearchTerm}".`
                   : "No s'han trobat receptes."}
@@ -322,13 +284,13 @@ export const SearchTab = ({ onOpenRecipeTab, onOpenRecipeEditor }: SearchTabProp
                     {recipe.name}
                   </RecipeName>
                   <ActionButtons>
-                    <StyledEditButton
+                    <SecondaryButton
                       onClick={() => onOpenRecipeEditor(recipe._id, recipe.name)}
                       aria-label={`Edit ${recipe.name}`}
                     >
                       Editar
-                    </StyledEditButton>
-                    <StyledDeleteButton
+                    </SecondaryButton>
+                    <DangerButton
                       onClick={() => handleDeleteRecipe(recipe)}
                       aria-label={`Delete ${recipe.name}`}
                       disabled={itemDeletionHook.isProcessingDelete || (itemDeletionHook.isLoadingDependencies && itemDeletionHook.currentItem?.id === recipe._id)}
@@ -338,7 +300,7 @@ export const SearchTab = ({ onOpenRecipeTab, onOpenRecipeEditor }: SearchTabProp
                         : (itemDeletionHook.isLoadingDependencies && itemDeletionHook.currentItem?.id === recipe._id
                           ? 'Comprovant...'
                           : 'Eliminar')}
-                    </StyledDeleteButton>
+                    </DangerButton>
                   </ActionButtons>
                 </ResultItem>
               ))
@@ -347,21 +309,21 @@ export const SearchTab = ({ onOpenRecipeTab, onOpenRecipeEditor }: SearchTabProp
 
           {pagination && pagination.totalPages > 1 && (
             <PaginationControls>
-              <button
+              <ActionButton
                 onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
                 disabled={currentPage === 1 || isLoading || isFetching || itemDeletionHook.isProcessingDelete || itemDeletionHook.isLoadingDependencies}
               >
                 Anterior
-              </button>
+              </ActionButton>
               <span>
                 Pàgina {pagination.currentPage} de {pagination.totalPages}
               </span>
-              <button
+              <ActionButton
                 onClick={() => setCurrentPage((prev) => Math.min(prev + 1, pagination.totalPages))}
                 disabled={currentPage === pagination.totalPages || isLoading || isFetching || itemDeletionHook.isProcessingDelete || itemDeletionHook.isLoadingDependencies}
               >
                 Següent
-              </button>
+              </ActionButton>
             </PaginationControls>
           )}
         </>

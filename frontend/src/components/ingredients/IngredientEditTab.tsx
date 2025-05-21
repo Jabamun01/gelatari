@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { styled } from '@linaria/react';
 import { IngredientEditTabData } from '../../types/tabs';
+import { PrimaryButton as ReusablePrimaryButton, SecondaryButton as ReusableSecondaryButton, DangerButton as ReusableDangerButton } from '../common/Button';
 import { updateIngredient, getIngredientById, createIngredient } from '../../api/ingredients';
 import { UpdateIngredientDto, CreateIngredientDto, Ingredient } from '../../types/ingredient';
 import { useQueryClient } from '@tanstack/react-query';
@@ -86,45 +87,6 @@ const AliasInputContainer = styled.div`
 
 const AliasInput = styled(FormInput)`
   flex-grow: 1;
-`;
-
-const Button = styled.button`
-  /* Inherits global styles */
-`;
-
-const PrimaryButton = styled(Button)`
-  background-color: var(--primary-color);
-  color: var(--text-on-primary);
-  border-color: var(--primary-color);
-
-  &:hover:not(:disabled) {
-    background-color: var(--primary-color-dark);
-    border-color: var(--primary-color-dark);
-  }
-`;
-
-const SecondaryButton = styled(Button)`
-  background-color: var(--surface-color);
-  color: var(--text-color);
-  border-color: var(--border-color);
-
-  &:hover:not(:disabled) {
-    background-color: var(--background-color); // Use a general background hover
-    border-color: var(--border-color-dark); // Darken border on hover
-  }
-`;
-
-const DangerButton = styled(Button)`
-  background-color: transparent;
-  color: var(--danger-color);
-  border: var(--border-width) solid var(--border-color);
-  padding: var(--space-xs) var(--space-sm);
-
-  &:hover:not(:disabled) {
-    background-color: rgba(239, 68, 68, 0.1); /* var(--danger-bg-hover) or similar */
-    color: var(--danger-color-dark);
-    border-color: var(--border-color-hover);
-  }
 `;
 
 const ActionButtonContainer = styled.div`
@@ -245,14 +207,14 @@ const IngredientEditTab: React.FC<IngredientEditTabProps> = ({ tab, onCloseTab }
   };
 
   if (isLoading) {
-    return <LoadingMessage>Carregant detalls de l'ingredient...</LoadingMessage>;
+    return <LoadingMessage aria-live="polite">Carregant detalls de l'ingredient...</LoadingMessage>;
   }
 
   return (
     <EditContainer>
       <PageTitle>{isEditMode ? 'Edita Ingredient' : 'Crea Ingredient Nou'}</PageTitle>
       {isEditMode && ingredientName && !error && <Subtitle>Editant: {ingredientName}</Subtitle>}
-      {error && <ErrorMessage>Error: {error}</ErrorMessage>}
+      {error && <ErrorMessage aria-live="polite" role="alert">Error: {error}</ErrorMessage>}
 
       <Form onSubmit={(e) => e.preventDefault()}>
         <FormGroup>
@@ -265,11 +227,12 @@ const IngredientEditTab: React.FC<IngredientEditTabProps> = ({ tab, onCloseTab }
             placeholder="Introdueix el nom de l'ingredient"
             disabled={isSaving}
             required
+            aria-required="true"
           />
         </FormGroup>
 
         <FormGroup>
-          <FormLabel>Àlies:</FormLabel>
+          <FormLabel id="aliases-label">Àlies:</FormLabel> {/* Added id for aria-labelledby */}
           {aliases.map((alias, index) => (
             <AliasInputContainer key={index}>
               <AliasInput
@@ -278,17 +241,19 @@ const IngredientEditTab: React.FC<IngredientEditTabProps> = ({ tab, onCloseTab }
                 onChange={(e) => handleAliasChange(index, e.target.value)}
                 placeholder="Introdueix àlies (opcional)"
                 disabled={isSaving}
+                aria-label={`Àlies ${index + 1}`} // Using aria-label for individual alias inputs
+                // aria-labelledby="aliases-label" // Can also be used if preferred
               />
               {aliases.length > 0 && (
-                <DangerButton type="button" onClick={() => handleRemoveAlias(index)} disabled={isSaving}>
+                <ReusableDangerButton type="button" onClick={() => handleRemoveAlias(index)} disabled={isSaving}>
                   Elimina
-                </DangerButton>
+                </ReusableDangerButton>
               )}
             </AliasInputContainer>
           ))}
-          <SecondaryButton type="button" onClick={handleAddAlias} disabled={isSaving} style={{ alignSelf: 'flex-start' }}>
+          <ReusableSecondaryButton type="button" onClick={handleAddAlias} disabled={isSaving} style={{ alignSelf: 'flex-start' }}>
             Afegeix Àlies
-          </SecondaryButton>
+          </ReusableSecondaryButton>
         </FormGroup>
 
         <FormGroup>
@@ -304,12 +269,12 @@ const IngredientEditTab: React.FC<IngredientEditTabProps> = ({ tab, onCloseTab }
         </FormGroup>
 
         <ActionButtonContainer>
-          <SecondaryButton type="button" onClick={handleCancel} disabled={isSaving}>
+          <ReusableSecondaryButton type="button" onClick={handleCancel} disabled={isSaving}>
             Cancel·la
-          </SecondaryButton>
-          <PrimaryButton type="button" onClick={handleSaveChanges} disabled={isSaving || (!isEditMode && !ingredientName.trim())}>
+          </ReusableSecondaryButton>
+          <ReusablePrimaryButton type="button" onClick={handleSaveChanges} disabled={isSaving || (!isEditMode && !ingredientName.trim())}>
             {isSaving ? 'Desant...' : (isEditMode ? 'Desa Canvis' : 'Crea Ingredient')}
-          </PrimaryButton>
+          </ReusablePrimaryButton>
         </ActionButtonContainer>
       </Form>
     </EditContainer>

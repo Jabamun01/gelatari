@@ -12,9 +12,10 @@ import {
   ItemName,
   ListItemActions,
   FooterActions,
-  ListItemPrimaryButton,
-  ListItemDangerButton,
+  // ListItemPrimaryButton, // No longer used
+  // ListItemDangerButton, // No longer used
 } from './DependencyModalStyles';
+import { PrimaryButton, DangerButton } from './Button'; // Import new buttons
 
 interface UnifiedDependencyModalProps {
   isOuterModalOpen: boolean;
@@ -165,19 +166,19 @@ export const UnifiedDependencyModal: React.FC<UnifiedDependencyModalProps> = ({
                   <ItemName>{item.name} ({getItemTypeDisplay(item.type, false)})</ItemName>
                   <ListItemActions>
                     {item.type.toLowerCase() !== 'recipe' && (
-                      <ListItemPrimaryButton
+                      <PrimaryButton // Use new PrimaryButton
                         onClick={() => onEditRecipeInOuterModal(item.id)}
                         disabled={isThisModalBusy}
                       >
                         Editar {getItemTypeDisplay(item.type, true)}
-                      </ListItemPrimaryButton>
+                      </PrimaryButton>
                     )}
-                    <ListItemDangerButton
+                    <DangerButton // Use new DangerButton
                       onClick={() => handleDeleteNestedItem(item)}
                       disabled={isThisModalBusy}
                     >
                       Esborrar {getItemTypeDisplay(item.type, true)}
-                    </ListItemDangerButton>
+                    </DangerButton>
                   </ListItemActions>
                 </DependentListItem>
               ))}

@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { styled } from '@linaria/react';
+import { PrimaryButton, SecondaryButton, DangerButton, TextButton } from '../common/Button';
 import Papa from 'papaparse';
 import { fetchRecipeById, fetchRecipes, RecipeSearchResult, createRecipe, updateRecipe } from '../../api/recipes';
 // Import specific API functions needed for resolving
@@ -95,35 +96,6 @@ const ButtonContainer = styled.div`
   justify-content: flex-end; /* Align buttons to the right */
 `;
 
-// Base button for this component - inherits global styles
-// Use specific variants like PrimaryButton, SecondaryButton below
-const Button = styled.button`
-  /* Inherits global styles */
-`;
-
-// Primary action button (e.g., Save)
-const PrimaryButton = styled(Button)`
-  background-color: var(--primary-color);
-  color: var(--text-on-primary);
-  border-color: var(--primary-color);
-
-  &:hover:not(:disabled) {
-    background-color: var(--primary-color-dark);
-    border-color: var(--primary-color-dark);
-  }
-`;
-
-// Secondary action button (e.g., Cancel, Add Step)
-const SecondaryButton = styled(Button)`
-  background-color: var(--surface-color);
-  color: var(--text-color);
-  border-color: var(--border-color);
-
-  &:hover:not(:disabled) {
-    background-color: var(--background-color);
-  }
-`;
-
 // Styles for the components list and add form
 const ComponentList = styled.ul`
   list-style: none;
@@ -163,37 +135,6 @@ const ComponentAmount = styled.span`
   margin-left: var(--space-sm); /* Use new spacing */
   font-size: var(--font-size-sm); /* Smaller font */
   white-space: nowrap; /* Prevent wrapping */
-`;
-
-// Subtle button for removing items - styled for text
-const RemoveButton = styled.button`
-  background: transparent;
-  border: var(--border-width) solid var(--border-color);
-  color: var(--danger-color);
-  cursor: pointer;
-  font-size: var(--font-size-sm);
-  padding: var(--space-xs) var(--space-sm); /* Adjusted padding for text */
-  margin-left: var(--space-md);
-  line-height: 1.2; /* Adjusted line-height for text */
-  border-radius: var(--border-radius); /* Standard border radius */
-  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
-  font-weight: 500; /* Slightly bolder */
-
-  &:hover:not(:disabled) {
-    color: var(--danger-color-dark);
-    background-color: rgba(239, 68, 68, 0.1); /* var(--danger-bg-hover) or similar */
-    border-color: var(--border-color-hover);
-  }
-
-  &:focus {
-      outline: none;
-      background-color: rgba(239, 68, 68, 0.15); /* Slightly darker hover for focus */
-      color: var(--danger-color-dark);
-      border-color: var(--border-color-hover);
-      box-shadow: 0 0 0 3px var(--focus-ring-color); /* Standard focus ring */
-  }
-
-  /* Remove explicit width/height and flex centering */
 `;
 
 const AddComponentForm = styled.div`
@@ -807,7 +748,7 @@ export const RecipeEditorTab = ({ recipeId, onClose, onOpenRecipeTab }: RecipeEd
           <SectionHeading>Informació Bàsica</SectionHeading>
           <FormGroup>
             <FormLabel htmlFor="recipe-name">Nom</FormLabel>
-            <FormInput type="text" id="recipe-name" name="name" value={recipeData.name || ''} onChange={handleInputChange} required disabled={isLoading} />
+            <FormInput type="text" id="recipe-name" name="name" value={recipeData.name || ''} onChange={handleInputChange} required aria-required="true" disabled={isLoading} />
           </FormGroup>
           <FormGroup>
             <FormLabel htmlFor="recipe-type">Tipus</FormLabel>
@@ -819,7 +760,7 @@ export const RecipeEditorTab = ({ recipeId, onClose, onOpenRecipeTab }: RecipeEd
           {recipeData.type === 'ice cream recipe' && (
             <FormGroup>
               <FormLabel htmlFor="recipe-category">Categoria</FormLabel>
-              <FormSelect id="recipe-category" name="category" value={recipeData.category || 'ice cream'} onChange={handleInputChange} required disabled={isLoading}>
+              <FormSelect id="recipe-category" name="category" value={recipeData.category || 'ice cream'} onChange={handleInputChange} required aria-required="true" disabled={isLoading}>
                 <option value="ice cream">Gelat</option>
                 <option value="sorbet">Sorbet</option>
               </FormSelect>
@@ -840,7 +781,7 @@ export const RecipeEditorTab = ({ recipeId, onClose, onOpenRecipeTab }: RecipeEd
                   <ComponentName>{item.ingredient.name}</ComponentName>
                   <ComponentAmount>({item.amountGrams}g - Ingredient)</ComponentAmount>
                 </div>
-                <RemoveButton onClick={() => handleRemoveRecipeComponent(item.ingredient._id, 'ingredient')} disabled={isLoading}>Elimina</RemoveButton>
+                <TextButton onClick={() => handleRemoveRecipeComponent(item.ingredient._id, 'ingredient')} disabled={isLoading} style={{color: 'var(--danger-color)'}}>Elimina</TextButton>
               </ComponentListItem>
             ))}
             {recipeData.linkedRecipes?.map((item) => (
@@ -849,7 +790,7 @@ export const RecipeEditorTab = ({ recipeId, onClose, onOpenRecipeTab }: RecipeEd
                   <ComponentName>{item.recipe.name}</ComponentName>
                   <ComponentAmount>({item.amountGrams}g - Recepta)</ComponentAmount>
                 </div>
-                <RemoveButton onClick={() => handleRemoveRecipeComponent(item.recipe._id, 'recipe')} disabled={isLoading}>Elimina</RemoveButton>
+                <TextButton onClick={() => handleRemoveRecipeComponent(item.recipe._id, 'recipe')} disabled={isLoading} style={{color: 'var(--danger-color)'}}>Elimina</TextButton>
               </ComponentListItem>
             ))}
           </ComponentList>
@@ -942,13 +883,16 @@ export const RecipeEditorTab = ({ recipeId, onClose, onOpenRecipeTab }: RecipeEd
             )}
             {recipeData.steps?.map((step, index) => (
               <StepListItem key={index}>
+                {/* Adding implicit label via aria-label for StepTextArea as visual label is just the number */}
                 <StepTextArea
+                  id={`step-description-${index}`}
+                  aria-label={`Descripció del pas ${index + 1}`}
                   value={step}
                   onChange={(e) => handleStepChange(index, e.target.value)}
                   rows={3} // Start with a reasonable height
                   disabled={isLoading}
                 />
-                <RemoveButton onClick={() => handleRemoveStep(index)} disabled={isLoading}>Elimina</RemoveButton>
+                <TextButton onClick={() => handleRemoveStep(index)} disabled={isLoading} style={{color: 'var(--danger-color)'}}>Elimina</TextButton>
               </StepListItem>
             ))}
           </StepList>
@@ -1109,7 +1053,7 @@ const ResolveUnmatchedIngredientModal: React.FC<ResolveModalProps> = ({
             title={`Resol Ingredient No Trobat (${itemNumber}/${totalItems})`}
             footer={
                 <>
-                    <SecondaryButton onClick={onSkip} disabled={isLoading}>Salta</SecondaryButton>
+                    <TextButton onClick={onSkip} disabled={isLoading}>Salta</TextButton>
                     <SecondaryButton onClick={onClose} disabled={isLoading}>Cancel·la Tot</SecondaryButton>
                     {/* Action buttons are within the sections */}
                 </>
@@ -1155,13 +1099,14 @@ const ResolveUnmatchedIngredientModal: React.FC<ResolveModalProps> = ({
                 <SectionSubHeading>Opció 2: Crea Ingredient Nou</SectionSubHeading>
                 <p>Afegeix "<strong>{unmatchedItem.name}</strong>" com a ingredient nou (o edita el nom a continuació).</p>
                 <FormGroup>
-                    <FormLabel htmlFor="new-ing-name">Nom de l'Ingredient</FormLabel>
+                    <FormLabel htmlFor={`new-ing-name-${unmatchedItem.originalRow}`}>Nom de l'Ingredient</FormLabel>
                     <FormInput
-                        id="new-ing-name"
+                        id={`new-ing-name-${unmatchedItem.originalRow}`}
                         type="text"
                         value={newIngredientName}
                         onChange={(e) => setNewIngredientName(e.target.value)}
                         disabled={isLoading}
+                        aria-required="true"
                     />
                      {newIngredientName.toLowerCase() !== unmatchedItem.name.toLowerCase() && (
                         <small style={{ color: 'var(--text-color-light)', marginTop: 'var(--space-xs)'}}>

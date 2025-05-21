@@ -53,22 +53,35 @@ const DefaultStepsTab: React.FC = () => {
   return (
     <TabContainer>
       <h2>Gestiona els Passos per Defecte</h2>
-      <CategorySelector>
+      <CategorySelector role="tablist" aria-label="Categories de passos per defecte">
         <CategoryButton
+          id="tab-ice-cream"
+          role="tab"
+          aria-controls="tabpanel-ice-cream-steps"
+          aria-selected={selectedCategory === 'ice cream'}
           isActive={selectedCategory === 'ice cream'}
           onClick={() => setSelectedCategory('ice cream')}
         >
           Gelat
         </CategoryButton>
         <CategoryButton
+          id="tab-sorbet"
+          role="tab"
+          aria-controls="tabpanel-sorbet-steps"
+          aria-selected={selectedCategory === 'sorbet'}
           isActive={selectedCategory === 'sorbet'}
           onClick={() => setSelectedCategory('sorbet')}
         >
           Sorbet
         </CategoryButton>
       </CategorySelector>
-      <EditorWrapper>
-        <DefaultStepsEditor key={selectedCategory} category={selectedCategory} />
+      <EditorWrapper
+        id={selectedCategory === 'ice cream' ? "tabpanel-ice-cream-steps" : "tabpanel-sorbet-steps"}
+        role="tabpanel"
+        aria-labelledby={selectedCategory === 'ice cream' ? "tab-ice-cream" : "tab-sorbet"}
+        key={selectedCategory} // Keep key for re-rendering DefaultStepsEditor on category change
+      >
+        <DefaultStepsEditor category={selectedCategory} />
       </EditorWrapper>
     </TabContainer>
   );

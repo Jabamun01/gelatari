@@ -136,13 +136,21 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, 
     };
   }, [isOpen, onClose]);
 
+  // Create a unique ID for the modal title to be used by aria-labelledby
+  const titleId = `modal-title-${React.useId()}`;
 
   return (
-    <ModalOverlay data-isopen={isOpen} onClick={onClose}>
+    <ModalOverlay
+      data-isopen={isOpen}
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby={titleId} // Associate the modal with its title
+    >
       {/* Stop propagation prevents closing modal when clicking inside content */}
       <ModalContent onClick={(e) => e.stopPropagation()}>
         <ModalHeader>
-          <ModalTitle>{title}</ModalTitle>
+          <ModalTitle id={titleId}>{title}</ModalTitle> {/* Add id to the title element */}
           <CloseButton onClick={onClose} aria-label="Tanca el modal">&times;</CloseButton>
         </ModalHeader>
         <ModalBody>

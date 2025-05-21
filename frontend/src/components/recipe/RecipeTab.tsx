@@ -1,6 +1,7 @@
 import { styled } from '@linaria/react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useCallback } from 'react';
+import { PrimaryButton, SecondaryButton, DangerButton, ActionButton } from '../common/Button';
 import { fetchRecipeById, finalizeRecipeProductionApi } from '../../api/recipes';
 import { RecipeDetails } from '../../types/recipe';
 import { TabData } from '../../types/tabs';
@@ -33,7 +34,7 @@ const RecipeContainer = styled.div`
   @media (min-width: 1024px) {
     display: grid;
     grid-template-columns: 1fr 1fr; /* Two equal columns */
-    grid-template-rows: auto auto 1fr auto; /* Header, Info, Ingredients (expand), Scaling */
+    grid-template-rows: auto auto minmax(0, 1fr) auto; /* Header, Info, Ingredients (expand), Scaling */
     grid-template-areas:
       "header header"
       "info   info"
@@ -41,11 +42,12 @@ const RecipeContainer = styled.div`
       "scaling steps"; /* Scaling below ingredients, steps span */
     gap: var(--space-lg) var(--space-xl); /* Row gap, Column gap */
     padding: var(--space-lg);
-    /* Attempt to make it take available height - might need adjustment based on parent */
-    height: calc(100vh - 150px); /* Example: Adjust 150px based on actual header/tab heights */
-    overflow: hidden; /* Prevent container itself from scrolling */
+    /* Let content determine height, container can scroll if needed */
+    overflow-y: auto; /* Allow vertical scrolling for the entire container if content overflows */
     max-width: none; /* Remove max-width for grid */
     margin: 0; /* Remove margin for grid */
+    /* Consider a max-height if you want to constrain it within viewport and scroll internally */
+    /* max-height: calc(100vh - var(--header-height, 100px)); */ /* Adjust header-height variable */
   }
 
   /* --- Flex Layout (Mobile & Smaller Tablets) --- */
@@ -69,7 +71,7 @@ const LoadingMessage = styled.div`
 
 const ErrorMessage = styled.div`
   grid-column: 1 / -1; /* Span full width in grid if error */
-  color: var(--danger-color); /* Use danger color */
+  color: var(--danger-color-dark); /* Changed to --danger-color-dark for better contrast */
   font-weight: 500; /* Slightly less bold */
   padding: var(--space-lg);
   background-color: rgba(239, 68, 68, 0.1); /* Light red background */
@@ -137,116 +139,18 @@ const ScalingWrapper = styled.div`
 `;
 
 
-// ControlsWrapper removed as controls are now in the header
+// Custom styled component for ProductionModeToggle to handle isActive prop
+const ProductionModeButton = styled(SecondaryButton)<{ isActive?: boolean }>`
+  ${props => props.isActive && `
+    background-color: var(--secondary-color);
+    color: var(--text-on-secondary);
+    border-color: var(--secondary-color);
 
-// Style as a toggle button, using secondary color when active
-// Slightly smaller padding than Edit/Delete, consistent font/border-radius
-const ProductionModeToggle = styled.button<{ isActive: boolean }>`
-  /* Base Styles */
-  padding: var(--space-sm) var(--space-md); /* Consistent padding with other action buttons */
-  font-size: var(--font-size-sm);
-  font-weight: 500; /* Consistent weight */
-  border-radius: var(--border-radius);
-  cursor: pointer;
-  text-align: center;
-  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
-
-  /* Conditional Styles */
-  border: var(--border-width) solid ${props => (props.isActive ? 'var(--secondary-color)' : 'var(--border-color)')};
-  background-color: ${props => (props.isActive ? 'var(--secondary-color)' : 'var(--surface-color)')};
-  color: ${props => (props.isActive ? 'var(--text-on-secondary)' : 'var(--secondary-color)')};
-
-  &:hover:not(:disabled) {
-    background-color: ${props => (props.isActive ? 'var(--secondary-color-dark)' : 'var(--surface-color-hover)')}; /* Consistent hover background */
-    border-color: ${props => (props.isActive ? 'var(--secondary-color-dark)' : 'var(--border-color-hover)')}; /* Consistent hover border */
-    color: ${props => (props.isActive ? 'var(--text-on-secondary)' : 'var(--secondary-color-dark)')};
-  }
-
-  &:disabled {
-    cursor: not-allowed;
-    opacity: 0.6;
-  }
-`;
-
-// Style as a standard action button
-// Larger padding, consistent font/border-radius
-const EditButton = styled.button`
-  /* Base Styles */
-  padding: var(--space-sm) var(--space-md); /* Larger padding */
-  font-size: var(--font-size-sm);
-  font-weight: 500; /* Consistent weight */
-  border-radius: var(--border-radius);
-  cursor: pointer;
-  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
-
-  /* Specific Styles */
-  background-color: var(--surface-color);
-  color: var(--text-color);
-  border: var(--border-width) solid var(--border-color);
-
-  &:hover:not(:disabled) {
-    background-color: var(--surface-color-hover); /* Consistent hover background */
-    border-color: var(--border-color-hover); /* Consistent hover border */
-  }
-
-  &:disabled {
-    cursor: not-allowed;
-    opacity: 0.6;
-  }
-`;
-
-// Style as a danger action button
-// Larger padding, consistent font/border-radius, danger colors
-const DeleteButton = styled.button`
-  /* Base Styles */
-  padding: var(--space-sm) var(--space-md); /* Larger padding */
-  font-size: var(--font-size-sm);
-  font-weight: 500; /* Consistent weight */
-  border-radius: var(--border-radius);
-  cursor: pointer;
-  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
-
-  /* Specific Styles */
-  background-color: transparent;
-  color: var(--danger-color);
-  border: var(--border-width) solid var(--border-color); /* Consistent border definition */
-
-  &:hover:not(:disabled) {
-    background-color: rgba(239, 68, 68, 0.1); /* Subtle danger background on hover */
-    color: var(--danger-color-dark);
-    border-color: var(--border-color-hover); /* Consistent hover border */
-  }
-
-  &:disabled {
-    cursor: not-allowed;
-    opacity: 0.6;
-  }
-`;
-
-// Style for the Finalize button, similar to EditButton
-const FinalizeButton = styled.button`
-  /* Base Styles */
-  padding: var(--space-sm) var(--space-md); /* Larger padding */
-  font-size: var(--font-size-sm);
-  font-weight: 500; /* Consistent weight */
-  border-radius: var(--border-radius);
-  cursor: pointer;
-  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
-
-  /* Specific Styles for a "primary" action, could be green or primary color */
-  background-color: var(--primary-color); /* Or a success color like var(--success-color) if defined */
-  color: var(--text-on-primary); /* Or var(--text-on-success) */
-  border: var(--border-width) solid var(--primary-color); /* Or var(--success-color) */
-
-  &:hover:not(:disabled) {
-    background-color: var(--primary-color-dark); /* Or var(--success-color-dark) */
-    border-color: var(--primary-color-dark); /* Or var(--success-color-dark) */
-  }
-
-  &:disabled {
-    cursor: not-allowed;
-    opacity: 0.6;
-  }
+    &:hover:not(:disabled) {
+      background-color: var(--secondary-color-dark);
+      border-color: var(--secondary-color-dark);
+    }
+  `}
 `;
 
 const SeparatorLine = styled.hr`
@@ -349,13 +253,13 @@ export const RecipeTab = ({
   };
 
   if (isLoading) {
-    return <RecipeContainer><LoadingMessage>Carregant detalls de la recepta...</LoadingMessage></RecipeContainer>;
+    return <RecipeContainer><LoadingMessage aria-live="polite">Carregant detalls de la recepta...</LoadingMessage></RecipeContainer>;
   }
 
   if (isError) {
     return (
       <RecipeContainer>
-        <ErrorMessage>Error en carregar la recepta: {error?.message || 'Error desconegut'}</ErrorMessage>
+        <ErrorMessage aria-live="polite">Error en carregar la recepta: {error?.message || 'Error desconegut'}</ErrorMessage>
       </RecipeContainer>
     );
   }
@@ -365,31 +269,33 @@ export const RecipeTab = ({
       <RecipeContainer>
         <RecipeHeader>
           <RecipeName>{recipe.name}</RecipeName>
-          <EditButton
+          <ActionButton
             onClick={() => onOpenEditor(recipeId, recipe.name)}
             disabled={itemDeletionHook.isProcessingDelete || itemDeletionHook.isLoadingDependencies}
           >
             Editar
-          </EditButton>
-          <DeleteButton
+          </ActionButton>
+          <DangerButton
             onClick={handleDeleteRecipe}
             disabled={!recipe || itemDeletionHook.isProcessingDelete || itemDeletionHook.isLoadingDependencies}
           >
             {itemDeletionHook.isProcessingDelete ? 'Eliminant...' : (itemDeletionHook.isLoadingDependencies ? 'Comprovant...' : 'Eliminar recepta')}
-          </DeleteButton>
-          <ProductionModeToggle
+          </DangerButton>
+          <ProductionModeButton
             isActive={isProductionMode}
             onClick={onToggleProductionMode}
+            aria-pressed={isProductionMode} // Added aria-pressed
+            title={isProductionMode ? "Desactivar mode producció" : "Activar mode producció"} // More specific title
           >
             {isProductionMode ? 'Mode producció: ACTIU' : 'Mode producció: INACTIU'}
-          </ProductionModeToggle>
+          </ProductionModeButton>
           {isProductionMode && (
-            <FinalizeButton
+            <PrimaryButton
               onClick={() => finalizeProductionMutation.mutate(recipeId)}
               disabled={finalizeProductionMutation.isPending || itemDeletionHook.isProcessingDelete || itemDeletionHook.isLoadingDependencies}
             >
               {finalizeProductionMutation.isPending ? 'Finalitzant...' : 'Finalitzar (gastar ingredients)'}
-            </FinalizeButton>
+            </PrimaryButton>
           )}
         </RecipeHeader>
 
