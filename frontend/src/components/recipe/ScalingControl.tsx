@@ -20,12 +20,7 @@ const ControlContainer = styled.div`
   /* These are now handled by the parent ControlsWrapper in RecipeTab */
 `;
 
-const Label = styled.label`
-  font-weight: 500;
-  color: var(--text-color-light);
-  font-size: var(--font-size-sm); /* Use smaller font size */
-  /* display: block; - Not needed with flex in InputRow */
-`;
+
 
 const YieldDisplay = styled.div`
   font-size: var(--font-size-lg);
@@ -129,72 +124,104 @@ export const ScalingControl = ({
   scaleFactor,
   onScaleChange,
   baseYieldGrams,
-  disabled = false, // Destructure disabled prop with default
+  disabled = false,
 }: ScalingControlProps) => {
   const minScale = 0.1;
-  const maxScale = 50; // Adjust max scale as needed
+  const maxScale = 50;
   const step = 0.1;
 
-  // Calculate snap points in terms of scale factor
-  const snapPoint5kg = 5000 / baseYieldGrams;
-  const snapPoint10kg = 10000 / baseYieldGrams;
-  const snapPoint30kg = 30000 / baseYieldGrams;
+  // Local state for the number input to allow free typing
+  const [inputValue, setInputValue] = React.useState(scaleFactor.toFixed(2));
+
+  // Update local state when the external scaleFactor changes (e.g., from slider)
+  React.useEffect(() => {
+    // Update input only if it's not currently focused
+    // to avoid interrupting user typing.
+    // Format to 2 decimal places for more precision.
+    setInputValue(scaleFactor.toFixed(2));
+  }, [scaleFactor]);
+
+  const getSnapPoint = (grams: number) => grams / baseYieldGrams;
 
   const handleSliderChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    onScaleChange(parseFloat(event.target.value));
+    const newScale = parseFloat(event.target.value);
+    onScaleChange(newScale);
   };
 
-  const handleNumberChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const value = parseFloat(event.target.value);
-    // Prevent NaN or invalid numbers, clamp within bounds
-    if (!isNaN(value) && value >= minScale && value <= maxScale) {
-      onScaleChange(value);
-    } else if (!isNaN(value) && value < minScale) {
-        onScaleChange(minScale); // Clamp to min
-    } else if (!isNaN(value) && value > maxScale) {
-        onScaleChange(maxScale); // Clamp to max
+  // Update the input value as the user types
+  const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setInputValue(event.target.value);
+  };
+
+  // Process the input when it loses focus or Enter is pressed
+  const processInputValue = () => {
+    let value = parseFloat(inputValue);
+    if (isNaN(value)) {
+      // If input is not a number, revert to the last valid scaleFactor
+      setInputValue(scaleFactor.toFixed(2));
+      return;
     }
-    // If input is empty or invalid, don't change (or reset to previous valid?)
+    // Clamp the value within the allowed range
+    value = Math.max(minScale, Math.min(maxScale, value));
+    onScaleChange(value);
+    // Update the input to show the clamped/formatted value
+    setInputValue(value.toFixed(2));
+  };
+
+  const handleInputBlur = () => {
+    processInputValue();
+  };
+
+  const handleInputKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Enter') {
+      processInputValue();
+      event.currentTarget.blur();
+    }
   };
 
   const scaledYield = baseYieldGrams * scaleFactor;
-  // Removed console.log
 
   return (
-    <React.Fragment> {/* Use Fragment instead of div */}
+    <React.Fragment>
       <ControlContainer>
-      <YieldDisplay>Rendiment: {formatAmount(scaledYield)}</YieldDisplay>
-      <InputRow>
-        <Label htmlFor="scaleSlider">Escala:</Label>
-        <SliderInput
-          id="scaleSlider"
-          type="range"
-          min={minScale}
-          max={maxScale}
-          step={step}
-          value={scaleFactor}
-          onChange={handleSliderChange}
-          list="scaleMarks" // Link to datalist
-          disabled={disabled} // Apply disabled prop
-        />
-        <NumberInput
-          type="number"
-          min={minScale}
-          max={maxScale}
-          step={step}
-          value={scaleFactor.toFixed(1)} // Display with one decimal
-          onChange={handleNumberChange}
-          aria-label="Scale Factor Input"
-          disabled={disabled} // Apply disabled prop
-        />
-      </InputRow>
-      {/* Datalist for slider snap points */}
-      <datalist id="scaleMarks">
-        <option value={snapPoint5kg.toFixed(1)} label="5kg"></option>
-        <option value={snapPoint10kg.toFixed(1)} label="10kg"></option>
-        <option value={snapPoint30kg.toFixed(1)} label="30kg"></option>
-        {/* Add more marks if needed */}
-      </datalist>
+        <YieldDisplay>Rendiment: {formatAmount(scaledYield)}</YieldDisplay>
+
+        <InputRow>
+          <SliderInput
+            id="scaleSlider"
+            type="range"
+            min={minScale}
+            max={maxScale}
+            step={step}
+            value={scaleFactor}
+            onChange={handleSliderChange}
+            list="scaleMarks"
+            disabled={disabled}
+            aria-label="Scale Slider"
+          />
+          <NumberInput
+            id="scaleInput"
+            type="number"
+            min={minScale}
+            max={maxScale}
+            step={step}
+            value={inputValue} // Use local state for value
+            onChange={handleInputChange} // Update local state on change
+            onBlur={handleInputBlur} // Process value on blur
+            onKeyDown={handleInputKeyDown} // Process value on Enter
+            aria-label="Scale Factor Input"
+            disabled={disabled}
+          />
+        </InputRow>
+
+        <datalist id="scaleMarks">
+          <option value={getSnapPoint(2500).toFixed(1)} label="2.5kg"></option>
+          <option value={getSnapPoint(5000).toFixed(1)} label="5kg"></option>
+          <option value={getSnapPoint(7500).toFixed(1)} label="7.5kg"></option>
+          <option value={getSnapPoint(10000).toFixed(1)} label="10kg"></option>
+          <option value={getSnapPoint(12500).toFixed(1)} label="12.5kg"></option>
+          <option value={getSnapPoint(15000).toFixed(1)} label="15kg"></option>
+        </datalist>
       </ControlContainer>
     </React.Fragment>
   );

@@ -206,7 +206,7 @@ export const SearchableSelector = <T extends SelectableItem>({
     // Ensure onAdd exists before calling
     if (onAdd) {
         const amountString = itemAmounts[item.id] || ''; // Get amount string
-        const amountNumber = parseInt(amountString, 10); // Parse it
+        const amountNumber = parseFloat(amountString); // Parse it as float
 
         if (!isNaN(amountNumber) && amountNumber > 0) { // Check if valid number > 0
             onAdd(item, amountNumber); // Call the callback
@@ -316,7 +316,8 @@ export const SearchableSelector = <T extends SelectableItem>({
                     <AmountInputContainer>
                       <AmountInput
                         type="number"
-                        min="1"
+                        min="0"
+                        step="any"
                         placeholder="g"  // Unit remains 'g' (grams) as it's standard
                         value={currentAmount}
                         onChange={(e) => handleAmountChange(item.id, e.target.value)}

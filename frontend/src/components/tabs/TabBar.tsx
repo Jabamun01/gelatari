@@ -1,18 +1,14 @@
 import React from 'react';
 import { styled } from '@linaria/react';
 import { TabData } from '../../types/tabs';
-import { ActionButton, PrimaryButton } from '../common/Button';
 
 interface TabBarProps {
   tabs: TabData[];
   activeTabId: string;
   onTabClick: (tabId: string) => void;
   onTabClose: (tabId: string) => void;
-  onOpenNewRecipeEditor: () => void;
-  onOpenIngredientsTab: () => void; // Add prop for opening ingredients tab
-  // onOpenNewRecipeEditor: () => void; // Removed
-  // onOpenIngredientsTab: () => void; // Removed
-  // onOpenDefaultStepsTab: () => void; // Removed
+  // Props for actions like onOpenNewRecipeEditor, onOpenIngredientsTab,
+  // and onOpenDefaultStepsTab have been moved to GlobalActionBar.tsx
 }
 
 const NavContainer = styled.nav`
@@ -108,15 +104,7 @@ const TabButton = styled.button<TabButtonProps>`
   }
 `;
 
-const RightAlignedActionsContainer = styled.div`
-  display: flex;
-  align-items: center; /* Align buttons vertically */
-  margin-left: auto; /* Push this container to the right */
-  gap: var(--space-sm); /* Space between buttons */
-  padding: var(--space-sm) 0; 
-`;
-
-export const TabBar = ({ tabs, activeTabId, onTabClick, onTabClose }: TabBarProps) => { // Removed action button props
+export const TabBar = ({ tabs, activeTabId, onTabClick, onTabClose }: TabBarProps) => {
   return (
     <NavContainer aria-label="Main navigation">
       <div role="tablist" style={{ display: 'flex', alignItems: 'stretch', gap: 'var(--space-xs)'}}>
@@ -156,7 +144,7 @@ export const TabBar = ({ tabs, activeTabId, onTabClick, onTabClose }: TabBarProp
           </TabButton>
         ))}
       </div>
-      {/* RightAlignedActionsContainer is removed */}
+      {/* Action buttons are now in GlobalActionBar.tsx */}
     </NavContainer>
   );
 };

@@ -3,9 +3,9 @@ import { v4 as uuidv4 } from 'uuid';
 import { styled } from '@linaria/react';
 import { TabData, RecipeTabData, RecipeEditorTabData, IngredientsTabData, SearchTabData, IngredientEditTabData, DefaultStepsTabData } from './types/tabs';
 import { TabBar } from './components/tabs/TabBar';
-import { GlobalActionBar } from './components/common/GlobalActionBar'; // Import GlobalActionBar
 import { TabContent } from './components/tabs/TabContent';
-import FloatingAddTimerButton from './components/timers/FloatingAddTimerButton';
+// FloatingAddTimerButton is no longer used directly
+import { FloatingActionButtonsGroup } from './components/common/FloatingActionButtonsGroup';
 import { FloatingTimersDisplay } from './components/timers/FloatingTimersDisplay';
 import AlarmSoundHandler from './components/timers/AlarmSoundHandler';
 // Global styles are imported and applied automatically by Linaria
@@ -412,11 +412,7 @@ const activeTab: TabData | undefined = tabs.find(tab => tab.id === activeTabId);
         onTabClose={handleCloseTab}
         // Removed action button props from TabBar
       />
-      <GlobalActionBar
-        onOpenNewRecipeEditor={handleOpenNewRecipeEditor}
-        onOpenIngredientsTab={handleOpenIngredientsTab}
-        onOpenDefaultStepsTab={handleOpenDefaultStepsTab}
-      />
+      {/* GlobalActionBar removed */}
       <TabContentContainer>
         <TabContent
           activeTab={activeTab}
@@ -434,7 +430,11 @@ const activeTab: TabData | undefined = tabs.find(tab => tab.id === activeTabId);
           onScaleChange={handleScaleChange}
         />
       </TabContentContainer>
-      <FloatingAddTimerButton />
+      <FloatingActionButtonsGroup
+        onOpenDefaultStepsTab={handleOpenDefaultStepsTab}
+        onOpenIngredientsTab={handleOpenIngredientsTab}
+        onOpenNewRecipeEditor={handleOpenNewRecipeEditor}
+      />
       <FloatingTimersDisplay />
       <AlarmSoundHandler />
     </AppContainer>

@@ -1,9 +1,9 @@
 import { styled } from '@linaria/react';
 import React from 'react';
 
-interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  // No custom props needed for now, can be extended later
-}
+type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement>;
+// No custom props needed for now, can be extended later
+// } // Removed closing brace of the interface
 
 const BaseButton = styled.button<ButtonProps>`
   display: inline-flex;
@@ -32,7 +32,7 @@ const BaseButton = styled.button<ButtonProps>`
   }
 `;
 
-export const PrimaryButton = styled(BaseButton)`
+const _PrimaryButton = styled(BaseButton)`
   background-color: var(--primary-color);
   color: var(--text-on-primary);
   border-color: var(--primary-color);
@@ -46,8 +46,11 @@ export const PrimaryButton = styled(BaseButton)`
     box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.4); /* Primary focus ring */
   }
 `;
+export const PrimaryButton: React.FC<ButtonProps> = ({ type = 'button', ...props }) => (
+  <_PrimaryButton type={type} {...props} />
+);
 
-export const SecondaryButton = styled(BaseButton)`
+const _SecondaryButton = styled(BaseButton)`
   background-color: var(--surface-color);
   color: var(--primary-color);
   border-color: var(--primary-color);
@@ -61,8 +64,11 @@ export const SecondaryButton = styled(BaseButton)`
     box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3); /* Primary focus ring for consistency */
   }
 `;
+export const SecondaryButton: React.FC<ButtonProps> = ({ type = 'button', ...props }) => (
+  <_SecondaryButton type={type} {...props} />
+);
 
-export const DangerButton = styled(BaseButton)`
+const _DangerButton = styled(BaseButton)`
   background-color: var(--danger-color);
   color: var(--text-on-primary);
   border-color: var(--danger-color);
@@ -76,9 +82,12 @@ export const DangerButton = styled(BaseButton)`
     box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.4); /* Danger focus ring */
   }
 `;
+export const DangerButton: React.FC<ButtonProps> = ({ type = 'button', ...props }) => (
+  <_DangerButton type={type} {...props} />
+);
 
 // Generic button, similar to current ActionButton but using BaseButton
-export const ActionButton = styled(BaseButton)`
+const _ActionButton = styled(BaseButton)`
   background-color: var(--surface-color);
   color: var(--text-color);
   border-color: var(--border-color);
@@ -92,9 +101,12 @@ export const ActionButton = styled(BaseButton)`
      box-shadow: 0 0 0 3px rgba(107, 114, 128, 0.3); /* Gray focus ring */
   }
 `;
+export const ActionButton: React.FC<ButtonProps> = ({ type = 'button', ...props }) => (
+  <_ActionButton type={type} {...props} />
+);
 
 // Example of a TextButton or minimal button if needed for "Remove" in RecipeEditorTab
-export const TextButton = styled(BaseButton)`
+const _TextButton = styled(BaseButton)`
   background-color: transparent;
   color: var(--primary-color);
   border-color: transparent;
@@ -110,12 +122,9 @@ export const TextButton = styled(BaseButton)`
     box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3); // Subtle focus
   }
 `;
+export const TextButton: React.FC<ButtonProps> = ({ type = 'button', ...props }) => (
+  <_TextButton type={type} {...props} />
+);
 
-// Adding defaultProps for button type
-PrimaryButton.defaultProps = { type: 'button' };
-SecondaryButton.defaultProps = { type: 'button' };
-DangerButton.defaultProps = { type: 'button' };
-ActionButton.defaultProps = { type: 'button' };
-TextButton.defaultProps = { type: 'button' };
 
 export default BaseButton;

@@ -141,7 +141,7 @@ const ScalingWrapper = styled.div`
 
 // Custom styled component for ProductionModeToggle to handle isActive prop
 const ProductionModeButton = styled(SecondaryButton)<{ isActive?: boolean }>`
-  ${props => props.isActive && `
+  ${props => props.isActive ? `
     background-color: var(--secondary-color);
     color: var(--text-on-secondary);
     border-color: var(--secondary-color);
@@ -150,7 +150,7 @@ const ProductionModeButton = styled(SecondaryButton)<{ isActive?: boolean }>`
       background-color: var(--secondary-color-dark);
       border-color: var(--secondary-color-dark);
     }
-  `}
+  ` : ''}
 `;
 
 const SeparatorLine = styled.hr`

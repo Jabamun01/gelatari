@@ -43,7 +43,7 @@ export const createRecipe = async (
       if (dataToSave.ingredients) {
         dataToSave.ingredients = dataToSave.ingredients.map(ing => ({
           ...ing,
-          amountGrams: Math.round(ing.amountGrams * scalingFactor), // Round to nearest gram
+          amountGrams: ing.amountGrams * scalingFactor, // Retain precision
         }));
       }
 
@@ -51,7 +51,7 @@ export const createRecipe = async (
       if (dataToSave.linkedRecipes) {
         dataToSave.linkedRecipes = dataToSave.linkedRecipes.map(linked => ({
           ...linked,
-          amountGrams: Math.round(linked.amountGrams * scalingFactor), // Round to nearest gram
+          amountGrams: linked.amountGrams * scalingFactor, // Retain precision
         }));
       }
 
@@ -188,11 +188,11 @@ export const updateRecipe = async (
       const scalingFactor = 1000 / currentTotalYield;
 
       ingredients.forEach(ing => {
-        ing.amountGrams = Math.round((ing.amountGrams || 0) * scalingFactor);
+        ing.amountGrams = (ing.amountGrams || 0) * scalingFactor; // Retain precision
       });
 
       linkedRecipes.forEach(linked => {
-        linked.amountGrams = Math.round((linked.amountGrams || 0) * scalingFactor);
+        linked.amountGrams = (linked.amountGrams || 0) * scalingFactor; // Retain precision
       });
 
       updatedRecipe.baseYieldGrams = 1000;

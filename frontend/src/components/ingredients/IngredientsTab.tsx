@@ -273,7 +273,7 @@ export const IngredientsTab = ({ onOpenIngredientEditTab, onOpenRecipeEditTab }:
   // Removed deleteListedRecipeDependencyMutation
 
   const handleStockQuantityChange = (ingredientId: string, value: string) => {
-    const quantity = parseInt(value, 10);
+    const quantity = parseFloat(value); // Use parseFloat for precision
     setAddStockQuantities(prev => ({
       ...prev,
       [ingredientId]: isNaN(quantity) || quantity < 0 ? 0 : quantity,
@@ -446,6 +446,7 @@ export const IngredientsTab = ({ onOpenIngredientEditTab, onOpenRecipeEditTab }:
                             onChange={(e) => handleStockQuantityChange(ingredient._id, e.target.value)}
                             placeholder="Quant."
                             min="0"
+                            step="any" // Allow decimal input
                             aria-label={`Quantitat a afegir per ${ingredient.name}`} // aria-label is fine here
                             disabled={(addStockMutation.isPending && addStockMutation.variables?.ingredientId === ingredient._id) || itemDeletionHook.isProcessingDelete || itemDeletionHook.isLoadingDependencies}
                           />

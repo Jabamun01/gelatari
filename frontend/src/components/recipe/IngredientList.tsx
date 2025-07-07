@@ -253,7 +253,7 @@ const ProductionIngredientItem: React.FC<ProductionIngredientItemProps> = ({
     if (!isFullyAdded) {
       setIsPartialInputVisible(true);
       // Pre-fill input with current tracked amount if partial, otherwise empty
-      setPartialInputValue(isPartiallyAdded ? String(Math.round(trackedAmountGrams)) : '');
+      setPartialInputValue(isPartiallyAdded ? String(trackedAmountGrams) : '');
     }
     // If fully added, clicking does nothing for now (could potentially reset?)
   }, [isFullyAdded, isPartiallyAdded, trackedAmountGrams]);
@@ -286,36 +286,19 @@ const ProductionIngredientItem: React.FC<ProductionIngredientItemProps> = ({
 
 
   const renderQuantityDisplay = () => {
-    const useKg = targetAmountGrams >= 1000; // Determine unit based on target
-    const unit = useKg ? 'kg' : 'g';
-    const divisor = useKg ? 1000 : 1;
-    const decimalPlaces = useKg ? 1 : 0;
-
-    // Helper to format a gram value based on the determined unit (kg or g)
-    const formatValue = (grams: number) => {
-        const value = grams / divisor;
-        // Use toFixed for kg, Math.round for g
-        return useKg ? value.toFixed(decimalPlaces) : String(Math.round(value));
-    };
-
-    const formattedTracked = formatValue(trackedAmountGrams);
-    const formattedTargetDisplay = formatValue(targetAmountGrams); // Consistently formatted target
-
-    // For remaining amount, format based on its own value using the original helper
+    const formattedTarget = formatAmount(targetAmountGrams);
+    const formattedTracked = formatAmount(trackedAmountGrams);
     const remainingRaw = Math.max(0, targetAmountGrams - trackedAmountGrams);
     const formattedRemaining = formatAmount(remainingRaw);
 
     switch (state) {
       case 'full':
-        // Use the consistently formatted target for the display
-        return `${formattedTargetDisplay}${unit} ✔️`;
+        return `${formattedTarget} ✔️`;
       case 'partial':
-        // Display consistently formatted tracked and target amounts
-        return `${formattedTracked} / ${formattedTargetDisplay} ${unit} (restants: ${formattedRemaining})`;
+        return `${formattedTracked} / ${formattedTarget} (restants: ${formattedRemaining})`;
       case 'not-added':
       default:
-        // Use the consistently formatted target for the display
-        return `${formattedTargetDisplay}${unit}`;
+        return formattedTarget;
     }
   };
 
@@ -339,7 +322,7 @@ const ProductionIngredientItem: React.FC<ProductionIngredientItemProps> = ({
             onKeyDown={handlePartialInputKeyDown} // Handle Enter/Escape
             onClick={(e: React.MouseEvent) => e.stopPropagation()} // Prevent click from bubbling to ProdItemWrapper
             min="0"
-            step="1" // Or adjust step based on ingredient type if needed
+            step="any" // Or adjust step based on ingredient type if needed
             aria-label={`Enter added amount for ${itemName}`}
             autoFocus // Focus the input when it appears
           />
