@@ -31,8 +31,8 @@ export const fetchRecipes = async (
   limit: number,
   searchTerm?: string
 ): Promise<RecipeApiResponse> => {
-  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-  const apiUrl = new URL(`${API_BASE_URL}/recipes`);
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
+  const apiUrl = new URL(`${API_BASE_URL}/recipes`, window.location.origin);
 
   apiUrl.searchParams.append('page', page.toString());
   apiUrl.searchParams.append('limit', limit.toString());
