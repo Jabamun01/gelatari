@@ -8,6 +8,8 @@ import { TabContent } from './components/tabs/TabContent';
 import { FloatingActionButtonsGroup } from './components/common/FloatingActionButtonsGroup';
 import { FloatingTimersDisplay } from './components/timers/FloatingTimersDisplay';
 import AlarmSoundHandler from './components/timers/AlarmSoundHandler';
+import { useAuth } from './contexts/AuthContext';
+import ChangePasswordModal from './components/auth/ChangePasswordModal';
 // Global styles are imported and applied automatically by Linaria
 // import { globalStyles } from './styles/global'; // No longer needed here
 
@@ -147,6 +149,9 @@ const loadAppState = (): { tabs: TabData[]; activeTabId: string } | null => {
 
 
 const App = () => {
+  const { username, logout } = useAuth();
+  const [showChangePassword, setShowChangePassword] = useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
   const [tabs, setTabs] = useState<TabData[]>(() => { // Use TabData[]
     const loadedState = loadAppState();
     return loadedState?.tabs || [
@@ -411,6 +416,11 @@ const activeTab: TabData | undefined = tabs.find(tab => tab.id === activeTabId);
         onTabClick={handleTabClick}
         onTabClose={handleCloseTab}
         // Removed action button props from TabBar
+        username={username}
+        onUserMenuToggle={() => setShowUserMenu(!showUserMenu)}
+        showUserMenu={showUserMenu}
+        onChangePassword={() => { setShowUserMenu(false); setShowChangePassword(true); }}
+        onLogout={() => { setShowUserMenu(false); logout(); }}
       />
       {/* GlobalActionBar removed */}
       <TabContentContainer>
@@ -437,6 +447,10 @@ const activeTab: TabData | undefined = tabs.find(tab => tab.id === activeTabId);
       />
       <FloatingTimersDisplay />
       <AlarmSoundHandler />
+      <ChangePasswordModal
+        isOpen={showChangePassword}
+        onClose={() => setShowChangePassword(false)}
+      />
     </AppContainer>
   );
 };

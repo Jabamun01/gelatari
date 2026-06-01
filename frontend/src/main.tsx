@@ -3,6 +3,8 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { TimerProvider } from './contexts/TimerContext';
+import { AuthProvider } from './contexts/AuthContext';
+import AuthGate from './components/auth/AuthGate';
 import App from './App.tsx';
 
 // Create a client
@@ -11,9 +13,13 @@ const queryClient = new QueryClient();
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
-      <TimerProvider>
-        <App />
-      </TimerProvider>
+      <AuthProvider>
+        <AuthGate>
+          <TimerProvider>
+            <App />
+          </TimerProvider>
+        </AuthGate>
+      </AuthProvider>
     </QueryClientProvider>
   </StrictMode>,
 );

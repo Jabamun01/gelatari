@@ -1,5 +1,6 @@
 import { Ingredient, CreateIngredientDto, UpdateIngredientDto } from '../types/ingredient';
 import { RecipeDetails } from '../types/recipe';
+import { authFetch } from './auth-header';
 
 // Define the structure for the paginated response
 export interface PaginatedIngredientsResponse {
@@ -55,7 +56,7 @@ export const getAllIngredients = async (
         url.searchParams.append('searchTerm', searchTerm.trim());
     }
 
-    const response = await fetch(url.toString());
+    const response = await authFetch(url.toString());
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
@@ -79,7 +80,7 @@ export const getAllIngredients = async (
 export const getIngredientById = async (ingredientId: string): Promise<Ingredient> => {
   const apiUrl = `${ingredientsApiUrl}/${ingredientId}`;
   try {
-    const response = await fetch(apiUrl);
+    const response = await authFetch(apiUrl);
 
     if (!response.ok) {
       if (response.status === 404) {
@@ -106,7 +107,7 @@ export const getIngredientById = async (ingredientId: string): Promise<Ingredien
  */
 export const createIngredient = async (ingredientData: CreateIngredientDto): Promise<Ingredient> => {
   try {
-    const response = await fetch(ingredientsApiUrl, {
+    const response = await authFetch(ingredientsApiUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -138,7 +139,7 @@ export const createIngredient = async (ingredientData: CreateIngredientDto): Pro
 export const updateIngredient = async (id: string, updates: UpdateIngredientDto): Promise<Ingredient> => {
   const apiUrl = `${ingredientsApiUrl}/${id}`;
   try {
-    const response = await fetch(apiUrl, {
+    const response = await authFetch(apiUrl, {
       method: 'PUT', // Or PATCH if the backend supports it for partial updates
       headers: {
         'Content-Type': 'application/json',
@@ -170,7 +171,7 @@ export const updateIngredient = async (id: string, updates: UpdateIngredientDto)
 export const addAliasToIngredient = async (id: string, alias: string): Promise<Ingredient> => {
     const apiUrl = `${ingredientsApiUrl}/${id}/aliases`;
     try {
-        const response = await fetch(apiUrl, {
+        const response = await authFetch(apiUrl, {
             method: 'PATCH',
             headers: {
                 'Content-Type': 'application/json',
@@ -201,7 +202,7 @@ export const addAliasToIngredient = async (id: string, alias: string): Promise<I
 export const deleteIngredient = async (id: string): Promise<void> => {
   const apiUrl = `${ingredientsApiUrl}/${id}`;
   try {
-    const response = await fetch(apiUrl, {
+    const response = await authFetch(apiUrl, {
       method: 'DELETE',
     });
 
@@ -238,7 +239,7 @@ export const deleteIngredient = async (id: string): Promise<void> => {
 export const addStockToIngredientApi = async (ingredientId: string, quantityToAdd: number): Promise<Ingredient> => {
   const apiUrl = `${ingredientsApiUrl}/${ingredientId}/stock`;
   try {
-    const response = await fetch(apiUrl, {
+    const response = await authFetch(apiUrl, {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
@@ -269,7 +270,7 @@ export const addStockToIngredientApi = async (ingredientId: string, quantityToAd
 export const getIngredientDependencies = async (ingredientId: string): Promise<RecipeDetails[]> => {
   const apiUrl = `${ingredientsApiUrl}/${ingredientId}/dependencies`; // Assuming this endpoint exists
   try {
-    const response = await fetch(apiUrl);
+    const response = await authFetch(apiUrl);
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
       throw new Error(

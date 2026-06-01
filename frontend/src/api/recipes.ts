@@ -1,3 +1,4 @@
+import { authFetch } from './auth-header';
 import { RecipeDetails, CreateRecipeDto, UpdateRecipeDto } from '../types/recipe';
 
 // Define the type for the recipe search results
@@ -46,7 +47,7 @@ export const fetchRecipes = async (
   // a separate function or re-adding it as an optional parameter.
 
   try {
-    const response = await fetch(apiUrl.toString());
+    const response = await authFetch(apiUrl.toString());
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
@@ -89,7 +90,7 @@ export const fetchRecipeById = async (recipeId: string): Promise<RecipeDetails> 
   const apiUrl = `${API_BASE_URL}/recipes/${recipeId}`;
 
   try {
-    const response = await fetch(apiUrl);
+    const response = await authFetch(apiUrl);
 
     if (!response.ok) {
       // Attempt to read error message from backend if available
@@ -118,7 +119,7 @@ export const createRecipe = async (recipeData: CreateRecipeDto): Promise<RecipeD
   const apiUrl = `${API_BASE_URL}/recipes`;
 
   try {
-    const response = await fetch(apiUrl, {
+    const response = await authFetch(apiUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -152,7 +153,7 @@ export const updateRecipe = async (id: string, recipeData: UpdateRecipeDto): Pro
   const apiUrl = `${API_BASE_URL}/recipes/${id}`;
 
   try {
-    const response = await fetch(apiUrl, {
+    const response = await authFetch(apiUrl, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -196,7 +197,7 @@ export const deleteRecipe = async (id: string): Promise<DeleteRecipeResult> => {
   const apiUrl = `${API_BASE_URL}/recipes/${id}`;
 
   try {
-    const response = await fetch(apiUrl, {
+    const response = await authFetch(apiUrl, {
       method: 'DELETE',
     });
 
@@ -250,7 +251,7 @@ export const getRecipeDependencies = async (recipeId: string): Promise<RecipeDet
   const apiUrl = `${API_BASE_URL}/recipes/${recipeId}/dependencies`;
 
   try {
-    const response = await fetch(apiUrl);
+    const response = await authFetch(apiUrl);
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
@@ -277,7 +278,7 @@ export const finalizeRecipeProductionApi = async (recipeId: string): Promise<voi
   const apiUrl = `${API_BASE_URL}/recipes/${recipeId}/finalize-production`;
 
   try {
-    const response = await fetch(apiUrl, {
+    const response = await authFetch(apiUrl, {
       method: 'POST', // Or 'PATCH' if that's what the backend expects
       headers: {
         'Content-Type': 'application/json',

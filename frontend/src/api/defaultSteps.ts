@@ -1,9 +1,10 @@
+import { authFetch } from './auth-header';
 // API function to fetch default steps for a given category
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 export const fetchDefaultSteps = async (category: 'ice cream' | 'sorbet'): Promise<string[]> => {
-  const response = await fetch(`${API_BASE_URL}/default-steps/${category}`);
+  const response = await authFetch(`${API_BASE_URL}/default-steps/${category}`);
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({ message: 'Failed to parse error response' }));
@@ -16,7 +17,7 @@ export const fetchDefaultSteps = async (category: 'ice cream' | 'sorbet'): Promi
 
 // API function to update default steps for a given category
 export const updateDefaultSteps = async (category: string, steps: string[]): Promise<string[]> => {
-  const response = await fetch(`${API_BASE_URL}/default-steps/${category}`, {
+  const response = await authFetch(`${API_BASE_URL}/default-steps/${category}`, {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
