@@ -1,22 +1,29 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import User, { IUser } from '../models/User';
-
-const JWT_SECRET = process.env.JWT_SECRET || 'gelatari-dev-secret-change-in-production';
-const SALT_ROUNDS = 12;
+import User from '../models/User';
+import { JWT_SECRET, SALT_ROUNDS, TOKEN_EXPIRY, MIN_PASSWORD_LENGTH } from '../config/auth';
 
 /**
  * Seed the default user if no users exist in the database.
+ * Uses findOneAndUpdate with upsert to prevent race conditions on concurrent startup.
  */
 export const seedDefaultUser = async (): Promise<void> => {
   try {
     const userCount = await User.countDocuments();
     if (userCount === 0) {
-      const defaultUsername = process.env.DEFAULT_USERNAME || 'tresxalats';
+      const defaultUsername = (process.env.DEFAULT_USERNAME || 'tresxalats').toLowerCase();
       const defaultPassword = process.env.DEFAULT_PASSWORD || 'placeholder';
 
+      if (!process.env.DEFAULT_PASSWORD || process.env.DEFAULT_PASSWORD === 'placeholder') {
+        console.warn('WARNING: Using default password "placeholder". Set DEFAULT_PASSWORD in .env for production.');
+      }
+
       const passwordHash = await bcrypt.hash(defaultPassword, SALT_ROUNDS);
-      await User.create({ username: defaultUsername, passwordHash });
+      await User.findOneAndUpdate(
+        { username: defaultUsername },
+        { $setOnInsert: { username: defaultUsername, passwordHash } },
+        { upsert: true },
+      );
       console.log(`Default user '${defaultUsername}' created.`);
     }
   } catch (error) {
@@ -25,7 +32,7 @@ export const seedDefaultUser = async (): Promise<void> => {
 };
 
 /**
- * Authenticate a user and return a JWT token.
+ * Authenticate a user and return a JWT token (with tokenVersion).
  */
 export const login = async (
   username: string,
@@ -43,9 +50,9 @@ export const login = async (
   }
 
   const token = jwt.sign(
-    { userId: String(user._id), username: user.username },
+    { userId: String(user._id), username: user.username, tokenVersion: user.tokenVersion },
     JWT_SECRET,
-    { expiresIn: '7d' },
+    { expiresIn: TOKEN_EXPIRY } as jwt.SignOptions,
   );
 
   return { token, username: user.username };
@@ -58,9 +65,13 @@ export const verifyToken = async (
   token: string,
 ): Promise<{ userId: string; username: string } | null> => {
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as { userId: string; username: string };
+    const decoded = jwt.verify(token, JWT_SECRET) as { userId: string; username: string; tokenVersion?: number };
     const user = await User.findById(decoded.userId);
     if (!user) return null;
+    // Check token version (invalidated on password change)
+    if (decoded.tokenVersion !== undefined && user.tokenVersion !== decoded.tokenVersion) {
+      return null;
+    }
     return { userId: decoded.userId, username: decoded.username };
   } catch {
     return null;
@@ -68,7 +79,7 @@ export const verifyToken = async (
 };
 
 /**
- * Change the password for a user.
+ * Change the password for a user. Increments tokenVersion to invalidate existing sessions.
  */
 export const changePassword = async (
   userId: string,
@@ -81,10 +92,11 @@ export const changePassword = async (
   const currentValid = await bcrypt.compare(currentPassword, user.passwordHash);
   if (!currentValid) return false;
 
-  if (!newPassword || newPassword.length < 4) return false;
+  if (!newPassword || newPassword.length < MIN_PASSWORD_LENGTH) return false;
 
   const newHash = await bcrypt.hash(newPassword, SALT_ROUNDS);
   user.passwordHash = newHash;
+  user.tokenVersion = (user.tokenVersion || 0) + 1;
   await user.save();
   return true;
 };

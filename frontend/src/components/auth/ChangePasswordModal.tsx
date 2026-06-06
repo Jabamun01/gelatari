@@ -19,24 +19,17 @@ const Input = styled.input`
   width: 100%;
 `;
 
-const ErrorMessage = styled.div`
+const MessageBanner = styled.div<{ variant: 'error' | 'success' }>`
   padding: var(--space-sm) var(--space-md);
-  background-color: var(--danger-color-light);
-  border: 1px solid var(--danger-color);
   border-radius: var(--border-radius);
-  color: var(--danger-color-dark);
   font-size: var(--font-size-sm);
   text-align: center;
-`;
-
-const SuccessMessage = styled.div`
-  padding: var(--space-sm) var(--space-md);
-  background-color: var(--success-color-light);
-  border: 1px solid var(--success-color);
-  border-radius: var(--border-radius);
-  color: var(--success-color-dark);
-  font-size: var(--font-size-sm);
-  text-align: center;
+  background-color: ${({ variant }) =>
+    variant === 'error' ? 'var(--danger-color-light)' : 'var(--success-color-light)'};
+  border: 1px solid ${({ variant }) =>
+    variant === 'error' ? 'var(--danger-color)' : 'var(--secondary-color)'};
+  color: ${({ variant }) =>
+    variant === 'error' ? 'var(--danger-color-dark)' : 'var(--secondary-color-dark)'};
 `;
 
 const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ isOpen, onClose }) => {
@@ -70,8 +63,8 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ isOpen, onClo
       return;
     }
 
-    if (newPassword.length < 4) {
-      setError('La contrasenya nova ha de tenir almenys 4 caràcters.');
+    if (newPassword.length < 8) {
+      setError('La contrasenya nova ha de tenir almenys 8 caràcters.');
       return;
     }
 
@@ -111,8 +104,8 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ isOpen, onClo
       }
     >
       <Form id="change-password-form" onSubmit={handleSubmit}>
-        {error && <ErrorMessage role="alert">{error}</ErrorMessage>}
-        {success && <SuccessMessage role="status">{success}</SuccessMessage>}
+        {error && <MessageBanner variant="error" role="alert">{error}</MessageBanner>}
+        {success && <MessageBanner variant="success" role="status">{success}</MessageBanner>}
 
         <Input
           type="password"

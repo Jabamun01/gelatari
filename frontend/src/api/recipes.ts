@@ -1,4 +1,5 @@
 import { authFetch } from './auth-header';
+import { API_BASE_URL } from './config';
 import { RecipeDetails, CreateRecipeDto, UpdateRecipeDto } from '../types/recipe';
 
 // Define the type for the recipe search results
@@ -32,7 +33,6 @@ export const fetchRecipes = async (
   limit: number,
   searchTerm?: string
 ): Promise<RecipeApiResponse> => {
-  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
   const apiUrl = new URL(`${API_BASE_URL}/recipes`, window.location.origin);
 
   apiUrl.searchParams.append('page', page.toString());
@@ -86,7 +86,6 @@ export const fetchRecipes = async (
  */
 export const fetchRecipeById = async (recipeId: string): Promise<RecipeDetails> => {
   // Ensure the backend base URL is correct. Adjust if necessary.
-  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL; // Make sure this matches your backend setup
   const apiUrl = `${API_BASE_URL}/recipes/${recipeId}`;
 
   try {
@@ -115,7 +114,6 @@ export const fetchRecipeById = async (recipeId: string): Promise<RecipeDetails> 
  * @returns A promise that resolves to the created RecipeDetails.
  */
 export const createRecipe = async (recipeData: CreateRecipeDto): Promise<RecipeDetails> => {
-  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
   const apiUrl = `${API_BASE_URL}/recipes`;
 
   try {
@@ -149,7 +147,6 @@ export const createRecipe = async (recipeData: CreateRecipeDto): Promise<RecipeD
  * @returns A promise that resolves to the updated RecipeDetails.
  */
 export const updateRecipe = async (id: string, recipeData: UpdateRecipeDto): Promise<RecipeDetails> => {
-  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
   const apiUrl = `${API_BASE_URL}/recipes/${id}`;
 
   try {
@@ -193,7 +190,6 @@ export interface DeleteRecipeResult {
  * @returns A promise that resolves to a DeleteRecipeResult.
  */
 export const deleteRecipe = async (id: string): Promise<DeleteRecipeResult> => {
-  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
   const apiUrl = `${API_BASE_URL}/recipes/${id}`;
 
   try {
@@ -247,7 +243,6 @@ export const deleteRecipe = async (id: string): Promise<DeleteRecipeResult> => {
  * @returns A promise that resolves to an array of RecipeDetails representing the parent recipes that depend on this recipe.
  */
 export const getRecipeDependencies = async (recipeId: string): Promise<RecipeDetails[]> => {
-  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
   const apiUrl = `${API_BASE_URL}/recipes/${recipeId}/dependencies`;
 
   try {
@@ -274,7 +269,6 @@ export const getRecipeDependencies = async (recipeId: string): Promise<RecipeDet
  * @returns A promise that resolves when the finalization is successful.
  */
 export const finalizeRecipeProductionApi = async (recipeId: string): Promise<void> => {
-  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
   const apiUrl = `${API_BASE_URL}/recipes/${recipeId}/finalize-production`;
 
   try {

@@ -1,29 +1,27 @@
-import { Router } from 'express'; // RequestHandler is no longer needed directly here
-import asyncHandler from 'express-async-handler'; // Import asyncHandler
+import { Router } from 'express';
 import {
   createRecipeHandler,
   getAllRecipesHandler,
   getRecipeByIdHandler,
   updateRecipeHandler,
   deleteRecipeHandler,
-  finalizeRecipeProductionHandler, // Added import
-  getRecipeDependenciesHandler, // Added import for the new handler
+  finalizeRecipeProductionHandler,
+  getRecipeDependenciesHandler,
 } from '../controllers/recipeController';
 
 const router = Router();
 
-// Define recipe routes
-// Define recipe routes, wrapped with asyncHandler for proper error handling
-router.post('/', asyncHandler(createRecipeHandler));
-router.get('/', asyncHandler(getAllRecipesHandler));
-router.get('/:id', asyncHandler(getRecipeByIdHandler));
-router.put('/:id', asyncHandler(updateRecipeHandler)); // Or PATCH
-router.delete('/:id', asyncHandler(deleteRecipeHandler));
+// Define recipe routes (Express 5 handles async errors natively)
+router.post('/', createRecipeHandler);
+router.get('/', getAllRecipesHandler);
+router.get('/:id', getRecipeByIdHandler);
+router.put('/:id', updateRecipeHandler);
+router.delete('/:id', deleteRecipeHandler);
 
 // Route for finalizing recipe production
-router.post('/:recipeId/finalize-production', asyncHandler(finalizeRecipeProductionHandler));
+router.post('/:recipeId/finalize-production', finalizeRecipeProductionHandler);
 
 // Route for getting recipes that depend on a specific recipe
-router.get('/:id/dependencies', asyncHandler(getRecipeDependenciesHandler));
+router.get('/:id/dependencies', getRecipeDependenciesHandler);
 
 export default router;

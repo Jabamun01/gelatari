@@ -1,8 +1,8 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, ReactNode } from 'react';
 import { login as loginApi, verifyToken } from '../api/auth';
 import { setAuthToken, clearAuthToken, getAuthToken } from '../api/auth-header';
 
-interface AuthState {
+export interface AuthState {
   isAuthenticated: boolean;
   isLoading: boolean;
   username: string | null;
@@ -21,17 +21,21 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [username, setUsername] = useState<string | null>(null);
 
-  // On mount, check if there's an existing valid token
+  // On mount, check if there's an existing valid token.
+  // Uses cancelled flag for StrictMode safety (prevents state updates after unmount).
   useEffect(() => {
+    let cancelled = false;
+
     const checkAuth = async () => {
       const token = getAuthToken();
       if (!token) {
-        setIsLoading(false);
+        if (!cancelled) setIsLoading(false);
         return;
       }
 
       try {
         const result = await verifyToken();
+        if (cancelled) return;
         if (result.valid && result.username) {
           setIsAuthenticated(true);
           setUsername(result.username);
@@ -39,13 +43,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           clearAuthToken();
         }
       } catch {
-        clearAuthToken();
+        if (!cancelled) clearAuthToken();
       } finally {
-        setIsLoading(false);
+        if (!cancelled) setIsLoading(false);
       }
     };
 
     checkAuth();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const login = useCallback(async (inputUsername: string, password: string) => {
@@ -61,8 +69,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setUsername(null);
   }, []);
 
+  // Memoize context value to prevent unnecessary re-renders
+  const value = useMemo<AuthState>(
+    () => ({ isAuthenticated, isLoading, username, login, logout }),
+    [isAuthenticated, isLoading, username, login, logout],
+  );
+
   return (
-    <AuthContext.Provider value={{ isAuthenticated, isLoading, username, login, logout }}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );

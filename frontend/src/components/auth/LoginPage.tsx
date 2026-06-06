@@ -103,7 +103,7 @@ const LoginPage: React.FC = () => {
     try {
       await login(username, password);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Login failed');
+      setError(err instanceof Error ? err.message : 'Error d\'inici de sessió');
     } finally {
       setIsSubmitting(false);
     }

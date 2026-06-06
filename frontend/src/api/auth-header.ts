@@ -20,21 +20,24 @@ export const getAuthHeaders = (): Record<string, string> => {
   return {};
 };
 
-export const getAuthHeader = (): Record<string, string> => getAuthHeaders(); // alias
-
 /**
  * Wrapper around fetch that automatically includes the auth token.
  * Use this instead of raw fetch() in API functions.
+ * Note: init.headers can be a plain object or Headers instance.
  */
-export const authFetch = (
+export const authFetch = async (
   input: RequestInfo | URL,
   init?: RequestInit,
 ): Promise<Response> => {
+  // Merge auth headers with provided headers, supporting Headers objects
+  const authHeaders = getAuthHeaders();
+  const mergedHeaders = new Headers(init?.headers);
+  for (const [key, value] of Object.entries(authHeaders)) {
+    mergedHeaders.set(key, value);
+  }
+
   return fetch(input, {
     ...init,
-    headers: {
-      ...getAuthHeaders(),
-      ...(init?.headers as Record<string, string> | undefined),
-    },
+    headers: mergedHeaders,
   });
 };

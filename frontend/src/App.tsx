@@ -152,16 +152,15 @@ const App = () => {
   const { username, logout } = useAuth();
   const [showChangePassword, setShowChangePassword] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
-  const [tabs, setTabs] = useState<TabData[]>(() => { // Use TabData[]
-    const loadedState = loadAppState();
-    return loadedState?.tabs || [
-      { id: 'search', title: 'Gelatari', type: 'search', isCloseable: false } as SearchTabData, // Default search tab
-    ];
-  });
-  const [activeTabId, setActiveTabId] = useState<string>(() => {
-     const loadedState = loadAppState(); // Load again or pass from above useState
-     return loadedState?.activeTabId || 'search';
-  });
+  const [initialState] = useState(loadAppState);
+  const [tabs, setTabs] = useState<TabData[]>(() =>
+    initialState?.tabs || [
+      { id: 'search', title: 'Gelatari', type: 'search', isCloseable: false } as SearchTabData,
+    ],
+  );
+  const [activeTabId, setActiveTabId] = useState<string>(() =>
+    initialState?.activeTabId || 'search',
+  );
 
   // Effect to save state to localStorage whenever tabs or activeTabId change
   useEffect(() => {

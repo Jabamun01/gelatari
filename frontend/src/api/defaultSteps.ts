@@ -1,7 +1,6 @@
 import { authFetch } from './auth-header';
+import { API_BASE_URL } from './config';
 // API function to fetch default steps for a given category
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 export const fetchDefaultSteps = async (category: 'ice cream' | 'sorbet'): Promise<string[]> => {
   const response = await authFetch(`${API_BASE_URL}/default-steps/${category}`);
