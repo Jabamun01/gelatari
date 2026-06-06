@@ -3,6 +3,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useCallback } from 'react';
 import { PrimaryButton, SecondaryButton, DangerButton, ActionButton } from '../common/Button';
 import { fetchRecipeById, finalizeRecipeProductionApi } from '../../api/recipes';
+import { getAllFlavors } from '../../api/iceCreamFlavors';
+import { IceCreamFlavor } from '../../types/iceCreamFlavor';
 import { RecipeDetails } from '../../types/recipe';
 import { TabData } from '../../types/tabs';
 import { IngredientList } from './IngredientList';
@@ -200,10 +202,21 @@ export const RecipeTab = ({
     }
   }, [itemDeletionHook.error]);
 
+  // Flavor selection for finalization
+  const { data: flavors } = useQuery<IceCreamFlavor[], Error>({
+    queryKey: ['iceCreamFlavors'],
+    queryFn: getAllFlavors,
+    enabled: isProductionMode && recipe?.type === 'ice cream recipe',
+  });
+
+  const [selectedFlavorId, setSelectedFlavorId] = useState<string | undefined>(undefined);
+
   const finalizeProductionMutation = useMutation({
-    mutationFn: (id: string) => finalizeRecipeProductionApi(id),
+    mutationFn: ({ recipeId, flavorId }: { recipeId: string; flavorId?: string }) =>
+      finalizeRecipeProductionApi(recipeId, flavorId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['ingredients'] });
+      queryClient.invalidateQueries({ queryKey: ['iceCreamDashboard'] });
       onClose();
     },
     onError: (err: Error) => {
@@ -293,18 +306,54 @@ export const RecipeTab = ({
                 : 'Mode producció: INACTIU'}
             </ProductionModeButton>
             {isProductionMode && (
-              <PrimaryButton
-                onClick={() => finalizeProductionMutation.mutate(recipeId)}
-                disabled={
-                  finalizeProductionMutation.isPending ||
-                  itemDeletionHook.isProcessingDelete ||
-                  itemDeletionHook.isLoadingDependencies
-                }
-              >
-                {finalizeProductionMutation.isPending
-                  ? 'Finalitzant...'
-                  : 'Finalitzar (gastar ingredients)'}
-              </PrimaryButton>
+              <>
+                {recipe.type === 'ice cream recipe' && (
+                  <select
+                    value={selectedFlavorId || ''}
+                    onChange={(e) =>
+                      setSelectedFlavorId(e.target.value || undefined)
+                    }
+                    style={{
+                      padding: 'var(--space-sm)',
+                      border: 'var(--border-width) solid var(--border-color)',
+                      borderRadius: 'var(--border-radius)',
+                      fontSize: 'var(--font-size-sm)',
+                      background: 'var(--surface-color)',
+                      color: 'var(--text-color)',
+                      minWidth: 140,
+                    }}
+                    disabled={
+                      finalizeProductionMutation.isPending ||
+                      itemDeletionHook.isProcessingDelete ||
+                      itemDeletionHook.isLoadingDependencies
+                    }
+                  >
+                    <option value="">Sense gust...</option>
+                    {(flavors || []).map((f) => (
+                      <option key={f._id} value={f._id}>
+                        {f.name}
+                      </option>
+                    ))}
+                  </select>
+                )}
+                <PrimaryButton
+                  onClick={() =>
+                    finalizeProductionMutation.mutate({
+                      recipeId,
+                      flavorId: selectedFlavorId,
+                    })
+                  }
+                  disabled={
+                    finalizeProductionMutation.isPending ||
+                    itemDeletionHook.isProcessingDelete ||
+                    itemDeletionHook.isLoadingDependencies
+                  }
+                >
+                  {finalizeProductionMutation.isPending
+                    ? 'Finalitzant...'
+                    : 'Finalitzar (gastar ingredients)'}
+                </PrimaryButton>
+              </>
             )}
           </HeaderActions>
         </RecipeHeader>

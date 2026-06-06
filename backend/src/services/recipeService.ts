@@ -1,7 +1,8 @@
 import Recipe, { IRecipe, IRecipeIngredient } from '../models/Recipe';
 import { Types } from 'mongoose';
-import { updateIngredientStock } from './ingredientService'; // Added import
-// import { IIngredient } from '../models/Ingredient'; // Removed unused import
+import { updateIngredientStock } from './ingredientService';
+import IceCreamFlavor from '../models/IceCreamFlavor';
+import * as iceCreamEventService from './iceCreamEventService';
 
 // Type for recipe creation data (excluding auto-generated fields)
 type CreateRecipeData = Omit<IRecipe, '_id' | 'createdAt' | 'updatedAt'>;
@@ -286,12 +287,15 @@ export const deleteRecipe = async (
 
 /**
  * Finalizes the production of a recipe, deducting ingredient stock.
+ * Optionally increments the ice-cream mix for the specified flavor.
  * @param recipeId - The ID of the recipe to finalize.
- * @returns The recipe document, possibly with an updated status.
- * @throws Throws an error if the recipe is not found or if a critical error occurs during stock update.
+ * @param flavorId - Optional ID of the ice-cream flavor to add mix to.
+ * @returns The recipe document.
+ * @throws Throws an error if the recipe is not found or if a critical error occurs.
  */
 export const finalizeRecipeProduction = async (
   recipeId: string,
+  flavorId?: string,
 ): Promise<IRecipe | null> => {
   try {
     const recipe = await getRecipeById(recipeId);
@@ -301,12 +305,12 @@ export const finalizeRecipeProduction = async (
       throw new Error(`Recipe not found with ID: ${recipeId}`);
     }
 
+    // --- Step 1: Deduct ingredient stock ---
     if (recipe.ingredients && recipe.ingredients.length > 0) {
       for (const recipeIngredient of recipe.ingredients) {
-        // Ensure recipeIngredient.ingredient is populated and has an _id
         if (
           !recipeIngredient.ingredient ||
-          typeof recipeIngredient.ingredient === 'string' || // if not populated, it's an ObjectId string
+          typeof recipeIngredient.ingredient === 'string' ||
           !recipeIngredient.ingredient._id
         ) {
           console.warn(
@@ -328,7 +332,6 @@ export const finalizeRecipeProduction = async (
             console.warn(
               `Ingredient with ID ${ingredientId} not found during stock update for recipe ${recipeId}. Stock not deducted.`,
             );
-            // Decide if this should be a critical error or just a warning
           } else {
             console.log(
               `Stock for ingredient ${updatedIngredient.name} (ID: ${ingredientId}) updated by ${changeInQuantity}. New stock: ${updatedIngredient.quantityInStock}`,
@@ -344,8 +347,6 @@ export const finalizeRecipeProduction = async (
             `Failed to update stock for ingredient ID ${ingredientId} in recipe ${recipeId}:`,
             stockUpdateError,
           );
-          // Depending on requirements, you might want to re-throw or collect errors
-          // For now, log and continue to attempt to update other ingredients
         }
       }
     } else {
@@ -354,18 +355,40 @@ export const finalizeRecipeProduction = async (
       );
     }
 
-    // TODO: Update recipe status if applicable (e.g., recipe.status = 'PRODUCTION_FINALIZED')
-    // const updatedRecipe = await updateRecipe(recipeId, { status: 'FINALIZED' });
-    // For now, return the original recipe fetched, as status update is secondary
-    // If a status update is implemented and returns the updated recipe, return that instead.
+    // --- Step 2: Increment ice-cream mix (if flavorId provided) ---
+    if (flavorId) {
+      const mixKg = recipe.baseYieldGrams / 1000;
 
-    // Re-fetch the recipe to ensure all populated fields are fresh if no direct status update is made here
-    // or if the recipe object itself needs to reflect some change not covered by ingredient updates.
-    // However, getRecipeById already populates. If no direct changes to the recipe doc itself, this might be redundant.
-    return getRecipeById(recipeId); // Return the recipe, potentially for the controller to send back
+      if (mixKg > 0) {
+        const updatedFlavor = await IceCreamFlavor.findByIdAndUpdate(
+          flavorId,
+          { $inc: { iceCreamMixKg: mixKg } },
+          { new: true },
+        );
+
+        if (!updatedFlavor) {
+          console.warn(
+            `Ice-cream flavor with ID ${flavorId} not found. Mix not added.`,
+          );
+        } else {
+          console.log(
+            `Added ${mixKg.toFixed(3)} kg of mix to flavor "${updatedFlavor.name}". New mix: ${updatedFlavor.iceCreamMixKg.toFixed(3)} kg.`,
+          );
+
+          // Log the production event
+          await iceCreamEventService.logProduction(
+            updatedFlavor,
+            recipeId,
+            recipe.name,
+            mixKg,
+          );
+        }
+      }
+    }
+
+    return getRecipeById(recipeId);
   } catch (error) {
     console.error(`Error finalizing recipe production for ID ${recipeId}:`, error);
-    // Re-throw the error to be handled by the controller
     if (error instanceof Error) {
       throw error;
     }

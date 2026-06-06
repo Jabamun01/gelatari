@@ -40,6 +40,18 @@ export interface DefaultStepsTabData extends BaseTabConfig {
   type: 'defaultSteps';
 }
 
+// New tab type for the ice-cream stock dashboard
+export interface IceCreamDashboardTabData extends BaseTabConfig {
+  type: 'iceCreamDashboard';
+}
+
+// New tab type for editing a single ice-cream flavor
+export interface IceCreamFlavorEditTabData extends BaseTabConfig {
+  type: 'iceCreamFlavorEdit';
+  flavorId?: string;
+  flavorName?: string;
+}
+
 // Union type for all possible tab data structures
 export type TabData =
   | SearchTabData
@@ -47,7 +59,9 @@ export type TabData =
   | RecipeTabData
   | RecipeEditorTabData
   | IngredientEditTabData
-  | DefaultStepsTabData; // Added DefaultStepsTabData
+  | DefaultStepsTabData
+  | IceCreamDashboardTabData
+  | IceCreamFlavorEditTabData;
 
-// Update TabType to be derived from TabData. This will now include 'ingredientEdit' and 'defaultSteps'.
+// Update TabType to be derived from TabData
 export type TabType = TabData['type'];

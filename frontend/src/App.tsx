@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { styled } from '@linaria/react';
-import { TabData, RecipeTabData, RecipeEditorTabData, IngredientsTabData, SearchTabData, IngredientEditTabData, DefaultStepsTabData } from './types/tabs';
+import { TabData, RecipeTabData, RecipeEditorTabData, IngredientsTabData, SearchTabData, IngredientEditTabData, DefaultStepsTabData, IceCreamDashboardTabData, IceCreamFlavorEditTabData } from './types/tabs';
 import { TabBar } from './components/tabs/TabBar';
 import { TabContent } from './components/tabs/TabContent';
 // FloatingAddTimerButton is no longer used directly
@@ -120,6 +120,25 @@ const loadAppState = (): { tabs: TabData[]; activeTabId: string } | null => {
                 title: (loadedTab as DefaultStepsTabData).title || 'Passos per Defecte',
                 isCloseable: (loadedTab as DefaultStepsTabData).isCloseable ?? true,
               } as DefaultStepsTabData;
+              break;
+            }
+            case 'iceCreamDashboard': {
+              processedTab = {
+                ...loadedTab,
+                type: 'iceCreamDashboard',
+                id: (loadedTab as IceCreamDashboardTabData).id || 'iceCreamDashboard',
+                title: (loadedTab as IceCreamDashboardTabData).title || 'Estoc Gelats',
+                isCloseable: (loadedTab as IceCreamDashboardTabData).isCloseable ?? true,
+              } as IceCreamDashboardTabData;
+              break;
+            }
+            case 'iceCreamFlavorEdit': {
+              const temp = loadedTab as IceCreamFlavorEditTabData;
+              processedTab = {
+                ...temp,
+                type: 'iceCreamFlavorEdit',
+                isCloseable: temp.isCloseable ?? true,
+              } as IceCreamFlavorEditTabData;
               break;
             }
             default:
@@ -404,6 +423,55 @@ const App = () => {
     setActiveTabId(defaultStepsTabId);
   };
 
+  // Ice-cream dashboard tab
+  const handleOpenIceCreamDashboardTab = () => {
+    const tabId = 'iceCreamDashboard';
+    const existing = tabs.find(t => t.id === tabId);
+    if (existing) {
+      setActiveTabId(tabId);
+      return;
+    }
+    const newTab: IceCreamDashboardTabData = {
+      id: tabId,
+      title: 'Estoc Gelats',
+      type: 'iceCreamDashboard',
+      isCloseable: true,
+    };
+    setTabs(prev => [...prev, newTab]);
+    setActiveTabId(tabId);
+  };
+
+  // Ice-cream flavor edit tab
+  const handleOpenIceCreamFlavorEditTab = (flavorName: string, flavorId?: string) => {
+    let editTabId: string;
+    let title: string;
+
+    if (flavorId) {
+      editTabId = `edit-flavor-${flavorId}`;
+      title = `Edita: ${flavorName}`;
+    } else {
+      editTabId = `new-flavor-${Date.now()}`;
+      title = 'Nou Gust';
+    }
+
+    const existing = tabs.find(t => t.id === editTabId);
+    if (existing) {
+      setActiveTabId(editTabId);
+      return;
+    }
+
+    const newTab: IceCreamFlavorEditTabData = {
+      id: editTabId,
+      title,
+      type: 'iceCreamFlavorEdit',
+      flavorId,
+      flavorName,
+      isCloseable: true,
+    };
+    setTabs(prev => [...prev, newTab]);
+    setActiveTabId(editTabId);
+  };
+
 
 // Calculate activeTab based on the current state *after* potential updates
 const activeTab: TabData | undefined = tabs.find(tab => tab.id === activeTabId);
@@ -429,7 +497,9 @@ const activeTab: TabData | undefined = tabs.find(tab => tab.id === activeTabId);
           onOpenRecipeTab={handleOpenRecipeTab}
           onCloseTab={handleCloseTab}
           onOpenRecipeEditor={handleOpenRecipeEditor}
-          onOpenIngredientEditTab={handleOpenIngredientEditTab} // Pass the new handler
+          onOpenIngredientEditTab={handleOpenIngredientEditTab}
+          onOpenIceCreamDashboardTab={handleOpenIceCreamDashboardTab}
+          onOpenIceCreamFlavorEditTab={handleOpenIceCreamFlavorEditTab}
           // Production mode and scale factor are specific to RecipeTabData
           isProductionMode={activeTab?.type === 'recipe' ? (activeTab.isProductionMode ?? false) : false}
           trackedAmounts={activeTab?.type === 'recipe' ? (activeTab.trackedAmounts ?? {}) : {}}
@@ -443,6 +513,7 @@ const activeTab: TabData | undefined = tabs.find(tab => tab.id === activeTabId);
         onOpenDefaultStepsTab={handleOpenDefaultStepsTab}
         onOpenIngredientsTab={handleOpenIngredientsTab}
         onOpenNewRecipeEditor={handleOpenNewRecipeEditor}
+        onOpenIceCreamDashboardTab={handleOpenIceCreamDashboardTab}
       />
       <FloatingTimersDisplay />
       <AlarmSoundHandler />
