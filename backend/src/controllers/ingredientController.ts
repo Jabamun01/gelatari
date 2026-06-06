@@ -63,14 +63,14 @@ export const createIngredientHandler = async (req: Request, res: Response) => {
         ingredientData.quantityInStock
     );
     res.status(201).json(newIngredient);
-  } catch (error: any) {
-    console.error('Caught error during ingredient creation:', error); // Log the full error
+  } catch (error: unknown) {
+    console.error('Caught error during ingredient creation:', error);
     // Handle potential duplicate key error from MongoDB (code 11000) as a fallback, return 409
-    if (error && error.code === 11000) { // Add null check for error
-        // This might still happen in rare race conditions
+    const mongoError = error as { code?: number };
+    if (mongoError.code === 11000) {
         return res.status(409).json({ message: `Ingredient creation failed due to a conflict (e.g., name or alias already exists).` });
     }
-    console.error('Error creating ingredient (unhandled):', error); // Log if not duplicate
+    console.error('Error creating ingredient (unhandled):', error);
     res.status(500).json({ message: 'Internal server error while creating ingredient.' });
   }
 };
@@ -100,7 +100,7 @@ export const getAllIngredientsHandler = async (req: Request, res: Response) => {
             limit: limit,
         },
     });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error fetching ingredients:', error);
     res.status(500).json({ message: 'Internal server error while fetching ingredients.' });
   }
@@ -119,7 +119,7 @@ export const getIngredientByIdHandler = async (req: Request, res: Response) => {
       return res.status(404).json({ message: 'Ingredient not found.' });
     }
     res.status(200).json(ingredient);
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error fetching ingredient by ID:', error);
     res.status(500).json({ message: 'Internal server error while fetching ingredient by ID.' });
   }
@@ -179,21 +179,19 @@ export const updateIngredientHandler = async (req: Request, res: Response, next:
 
     res.status(200).json(updatedIngredient);
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error(`Error in updateIngredientHandler for ID ${req.params.id}:`, error);
 
-    // Specific error handling based on service layer exceptions
-    if (error.message.includes('already exists')) { // From duplicate name check
-      return res.status(409).json({ message: error.message }); // 409 Conflict
+    if (error instanceof Error) {
+      // Specific error handling based on service layer exceptions
+      if (error.message.includes('already exists')) {
+        return res.status(409).json({ message: error.message });
+      }
+      if (error.message.startsWith('Validation failed')) {
+        return res.status(400).json({ message: error.message });
+      }
     }
-    if (error.message.startsWith('Validation failed')) { // From Mongoose validation
-      return res.status(400).json({ message: error.message });
-    }
-    
-    // Pass to generic error handler
-    // For other errors, or if you want a centralized error handling middleware:
-    // next(error);
-    // For now, returning a generic 500 for unhandled cases here:
+
     return res.status(500).json({ message: 'Internal server error while updating ingredient.' });
   }
 };
@@ -214,27 +212,26 @@ export const deleteIngredientHandler = async (req: Request, res: Response) => {
       return res.status(404).json({ message: 'Ingredient not found for deletion.' });
     }
     res.status(200).json({ message: 'Ingredient deleted successfully.', ingredient: deletedIngredient });
-  } catch (error: any) {
-    console.error('Error deleting ingredient:', error.message);
+  } catch (error: unknown) {
+    console.error('Error deleting ingredient:', error instanceof Error ? error.message : error);
     // Handle specific operational errors thrown by the service
-    if (error.isOperational) {
-      if (error.statusCode === 409) { // Conflict - ingredient in use
+    const operationalError = error as { isOperational?: boolean; statusCode?: number; details?: unknown; message?: string };
+    if (operationalError.isOperational) {
+      if (operationalError.statusCode === 409) {
         return res.status(409).json({
-          message: error.message,
-          details: error.details, // Contains the list of recipes
+          message: operationalError.message,
+          details: operationalError.details,
         });
       }
-      if (error.statusCode === 404) { // Not Found
-        return res.status(404).json({ message: error.message });
+      if (operationalError.statusCode === 404) {
+        return res.status(404).json({ message: operationalError.message });
       }
-      // Handle other operational errors if any are defined
     }
-    // Handle invalid ID format error (if service throws it with a specific message/code)
-    if (error.message.startsWith('Invalid ingredient ID format')) {
+    if (error instanceof Error && error.message.startsWith('Invalid ingredient ID format')) {
         return res.status(400).json({ message: error.message });
     }
-    // Generic server error for unhandled cases
-    res.status(500).json({ message: error.message || 'Internal server error while deleting ingredient.' });
+    const errMsg = error instanceof Error ? error.message : 'Internal server error while deleting ingredient.';
+    res.status(500).json({ message: errMsg });
   }
 };
 
@@ -273,10 +270,9 @@ export const addAliasToIngredientHandler = async (req: Request, res: Response) =
         }
 
         res.status(200).json(updatedIngredient);
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('Error adding alias to ingredient:', error);
-        // Handle specific error from service (alias conflict with another ingredient)
-        if (error.message.startsWith('Alias') && error.message.includes('already associated with')) {
+        if (error instanceof Error && error.message.startsWith('Alias') && error.message.includes('already associated with')) {
             return res.status(409).json({ message: error.message });
         }
         res.status(500).json({ message: 'Internal server error while adding alias.' });
@@ -310,13 +306,15 @@ export const addStockToIngredientHandler = async (req: Request, res: Response) =
     }
 
     res.status(200).json(updatedIngredient);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error(`Error in addStockToIngredientHandler for ID ${req.params.ingredientId}:`, error);
-    if (error.message.includes('Validation failed')) {
-        return res.status(400).json({ message: error.message });
-    }
-    if (error.message.includes('Failed to update ingredient stock')) { // Generic from service
-        return res.status(500).json({ message: error.message });
+    if (error instanceof Error) {
+      if (error.message.includes('Validation failed')) {
+          return res.status(400).json({ message: error.message });
+      }
+      if (error.message.includes('Failed to update ingredient stock')) {
+          return res.status(500).json({ message: error.message });
+      }
     }
     res.status(500).json({ message: 'Internal server error while updating ingredient stock.' });
   }
@@ -335,10 +333,8 @@ export const getIngredientDependencies = async (req: Request, res: Response) => 
     // So, we can directly return the result.
     res.status(200).json(recipes);
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error(`Error fetching ingredient dependencies for ID ${req.params.ingredientId}:`, error);
-    // Handle specific errors if the service layer were to throw them differently,
-    // but for now, a generic 500 is appropriate for unexpected service errors.
     res.status(500).json({ message: 'Internal server error while fetching ingredient dependencies.' });
   }
 };

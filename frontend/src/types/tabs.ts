@@ -49,5 +49,3 @@ export type TabData =
   | IngredientEditTabData
   | DefaultStepsTabData; // Added DefaultStepsTabData
 
-// Update TabType to be derived from TabData. This will now include 'ingredientEdit' and 'defaultSteps'.
-export type TabType = TabData['type'];

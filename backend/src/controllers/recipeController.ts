@@ -81,23 +81,27 @@ export const createRecipeHandler = async (req: Request<{}, {}, CreateRecipeReque
     // Service layer handles population, return the result
     res.status(201).json(newRecipe);
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     // Log the detailed error for server-side debugging
     console.error('Error in createRecipeHandler:', error);
 
-    // Check for specific Mongoose validation errors
-    if (error.name === 'ValidationError') {
-        // Extract meaningful messages from Mongoose validation error
-        const errors = Object.values(error.errors).map((el: any) => el.message);
-        res.status(400).json({ message: 'Validation failed.', errors });
-    }
-    // Check for errors thrown by the service layer
-    if (error.message.includes('Failed to create recipe')) {
-        res.status(400).json({ message: 'Failed to create recipe. Check input data.', details: error.message });
+    if (error instanceof Error) {
+      // Check for specific Mongoose validation errors
+      if (error.name === 'ValidationError') {
+          // Extract meaningful messages from Mongoose validation error
+          const mongooseError = error as any;
+          const errors = Object.values(mongooseError.errors).map((el: any) => el.message);
+          res.status(400).json({ message: 'Validation failed.', errors });
+          return;
+      }
+      // Check for errors thrown by the service layer
+      if (error.message.includes('Failed to create recipe')) {
+          res.status(400).json({ message: 'Failed to create recipe. Check input data.', details: error.message });
+          return;
+      }
     }
     // Generic internal server error
-    // Let asyncHandler forward the error
-    // res.status(500).json({ message: 'Internal server error during recipe creation' });
+    res.status(500).json({ message: 'Internal server error during recipe creation' });
   }
 };
 
@@ -108,6 +112,14 @@ export const getAllRecipesHandler = async (req: Request, res: Response): Promise
   try {
     // Extract and validate query parameters
     const { type, searchTerm } = req.query;
+    const page = parseInt(req.query.page as string, 10) || 1;
+    const limit = parseInt(req.query.limit as string, 10) || 0;
+
+    // Validate page and limit
+    if (page < 1 || limit < 0) {
+        res.status(400).json({ message: 'Page must be a positive integer and limit must be a non-negative integer.' });
+        return;
+    }
 
     const filter: recipeService.RecipeFilter = {};
 
@@ -129,14 +141,15 @@ export const getAllRecipesHandler = async (req: Request, res: Response): Promise
         filter.searchTerm = searchTerm.trim();
     }
 
-    const recipes = await recipeService.getAllRecipes(filter);
+    const { recipes, totalCount } = await recipeService.getAllRecipes(filter, page, limit);
+    // Set pagination header for frontend
+    res.setHeader('x-total-count', totalCount.toString());
     // Service returns populated recipes
     res.status(200).json(recipes);
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error in getAllRecipesHandler:', error);
-    // Let asyncHandler forward the error
-    // res.status(500).json({ message: 'Internal server error fetching recipes' });
+    res.status(500).json({ message: 'Internal server error fetching recipes' });
   }
 };
 
@@ -165,11 +178,9 @@ export const getRecipeByIdHandler = async (req: Request<{ id: string }>, res: Re
     // Service returns populated recipe
     res.status(200).json(recipe);
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error(`Error in getRecipeByIdHandler for ID ${req.params.id}:`, error);
-    // Catch potential errors not handled by the service's null return (e.g., DB connection issues)
-    // Let asyncHandler forward the error
-    // res.status(500).json({ message: 'Internal server error fetching recipe' });
+    res.status(500).json({ message: 'Internal server error fetching recipe' });
   }
 };
 
@@ -249,16 +260,20 @@ export const updateRecipeHandler = async (req: Request<{ id: string }, {}, Updat
     // Service returns populated updated recipe
     res.status(200).json(updatedRecipe);
 
-  } catch (error: any) {
+  } catch (error: unknown) {
      console.error(`Error in updateRecipeHandler for ID ${req.params.id}:`, error);
-     // Check for specific Mongoose validation errors
-    if (error.name === 'ValidationError') {
-        const errors = Object.values(error.errors).map((el: any) => el.message);
-        res.status(400).json({ message: 'Validation failed during update.', errors });
-    }
+
+     if (error instanceof Error) {
+      // Check for specific Mongoose validation errors
+      if (error.name === 'ValidationError') {
+          const mongooseError = error as any;
+          const errors = Object.values(mongooseError.errors).map((el: any) => el.message);
+          res.status(400).json({ message: 'Validation failed during update.', errors });
+          return;
+      }
+     }
     // Generic internal server error
-    // Let asyncHandler forward the error
-    // res.status(500).json({ message: 'Internal server error updating recipe' });
+    res.status(500).json({ message: 'Internal server error updating recipe' });
   }
 };
 
@@ -293,21 +308,25 @@ export const deleteRecipeHandler = async (req: Request<{ id: string }>, res: Res
       return; // Explicit return void
     }
 
-    // If it's not null and not a dependency object, it's the deleted IRecipe document
-    const deletedRecipeDocument = result as IRecipe; // Cast to IRecipe
+    // If result is null, it was already handled above (not found)
+    if (!result) {
+      res.status(404).json({ message: 'Recipe not found for deletion or invalid ID' });
+      return;
+    }
+
+    // Here result must be the deleted IRecipe document (not null, not dependencies)
+    const deletedRecipeDocument = result;
 
     // Send back a success message with the ID of the deleted recipe
     res.status(200).json({ message: 'Recipe deleted successfully', deletedRecipeId: deletedRecipeDocument._id });
     // Alternatively, for 204 No Content:
     // res.status(204).send();
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error(`Error in deleteRecipeHandler for ID ${req.params.id}:`, error);
-    // Handle errors thrown by the service, e.g., "Failed to delete recipe"
-    if (error.message && error.message.includes('Failed to delete recipe')) {
+    if (error instanceof Error && error.message.includes('Failed to delete recipe')) {
         res.status(500).json({ message: 'Internal server error during recipe deletion.', details: error.message });
     } else {
-        // Let asyncHandler forward other errors or provide a generic message
         res.status(500).json({ message: 'An unexpected error occurred while deleting the recipe.' });
     }
   }
@@ -336,15 +355,18 @@ export const finalizeRecipeProductionHandler = async (req: Request<{ recipeId: s
 
     res.status(200).json({ message: 'Recipe production finalized successfully. Ingredient stock updated.', recipe: finalizedRecipe });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error(`Error in finalizeRecipeProductionHandler for recipe ID ${req.params.recipeId}:`, error);
-    if (error.message.includes('Recipe not found')) {
-      res.status(404).json({ message: error.message });
-    } else if (error.message.includes('Failed to finalize recipe production')) {
-        res.status(500).json({ message: 'Failed to finalize recipe production.', details: error.message });
-    } else {
-      res.status(500).json({ message: 'Internal server error during recipe finalization.' });
+    if (error instanceof Error) {
+      if (error.message.includes('Recipe not found')) {
+        res.status(404).json({ message: error.message });
+        return;
+      } else if (error.message.includes('Failed to finalize recipe production')) {
+          res.status(500).json({ message: 'Failed to finalize recipe production.', details: error.message });
+          return;
+      }
     }
+    res.status(500).json({ message: 'Internal server error during recipe finalization.' });
   }
 };
 
@@ -372,13 +394,11 @@ export const getRecipeDependenciesHandler = async (req: Request<{ id: string }>,
 
     res.status(200).json(dependentRecipes);
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error(`Error in getRecipeDependenciesHandler for recipe ID ${req.params.id}:`, error);
-    // Check if the error is one thrown by the service layer for "Failed to fetch..."
-    if (error.message && error.message.includes('Failed to fetch dependent parent recipes')) {
+    if (error instanceof Error && error.message.includes('Failed to fetch dependent parent recipes')) {
         res.status(500).json({ message: 'Internal server error fetching recipe dependencies.', details: error.message });
     } else {
-        // Generic internal server error for other unexpected issues
         res.status(500).json({ message: 'An unexpected error occurred while fetching recipe dependencies.' });
     }
   }

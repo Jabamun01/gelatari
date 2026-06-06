@@ -4,7 +4,6 @@ import { styled } from '@linaria/react';
 import { TabData, RecipeTabData, RecipeEditorTabData, IngredientsTabData, SearchTabData, IngredientEditTabData, DefaultStepsTabData } from './types/tabs';
 import { TabBar } from './components/tabs/TabBar';
 import { TabContent } from './components/tabs/TabContent';
-// FloatingAddTimerButton is no longer used directly
 import { FloatingActionButtonsGroup } from './components/common/FloatingActionButtonsGroup';
 import { FloatingTimersDisplay } from './components/timers/FloatingTimersDisplay';
 import AlarmSoundHandler from './components/timers/AlarmSoundHandler';
@@ -254,19 +253,32 @@ const App = () => {
     setActiveTabId(ingredientsTabId);
   };
 
+  // Helper to update a recipe tab's properties (DRY: avoids repeated map/spread pattern)
+  const updateRecipeTab = (
+    tabId: string,
+    updater: (tab: RecipeTabData) => Partial<RecipeTabData>,
+  ) => {
+    setTabs(prevTabs =>
+      prevTabs.map(tab =>
+        tab.id === tabId && tab.type === 'recipe'
+          ? { ...tab, ...updater(tab as RecipeTabData) }
+          : tab,
+      ),
+    );
+  };
+
   // Handler to toggle production mode for a specific tab with confirmation
   const handleToggleProductionMode = (tabId: string) => {
     const tabToToggle = tabs.find(tab => tab.id === tabId);
 
-    if (!tabToToggle || tabToToggle.type !== 'recipe') return; // Ensure tab exists and is a recipe tab
+    if (!tabToToggle || tabToToggle.type !== 'recipe') return;
 
-    // Now tabToToggle is confirmed to be RecipeTabData
     const recipeTabToToggle = tabToToggle as RecipeTabData;
 
-    const turningOff = recipeTabToToggle.isProductionMode; // Current state is ON, so next is OFF
+    const turningOff = recipeTabToToggle.isProductionMode;
     const hasTrackedItems = recipeTabToToggle.trackedAmounts && Object.values(recipeTabToToggle.trackedAmounts).some(amount => typeof amount === 'number' && amount > 0);
 
-    let proceed = true; // Assume we proceed unless confirmation is needed and denied
+    let proceed = true;
 
     if (turningOff && hasTrackedItems) {
       proceed = window.confirm(
@@ -275,51 +287,29 @@ const App = () => {
     }
 
     if (proceed) {
-      setTabs(prevTabs =>
-        prevTabs.map(tab => {
-          if (tab.id === tabId && tab.type === 'recipe') {
-            const nextIsProductionMode = !tab.isProductionMode;
-            return {
-              ...tab,
-              isProductionMode: nextIsProductionMode,
-              // Reset tracked amounts only if turning production mode OFF
-              trackedAmounts: nextIsProductionMode ? tab.trackedAmounts : {},
-            };
-          }
-          return tab;
-        })
-      );
+      updateRecipeTab(tabId, (tab) => {
+        const nextIsProductionMode = !tab.isProductionMode;
+        return {
+          isProductionMode: nextIsProductionMode,
+          trackedAmounts: nextIsProductionMode ? tab.trackedAmounts : {},
+        };
+      });
     }
-    // If proceed is false, do nothing (state remains unchanged)
   };
 
   // Handler to track ingredient amount for a specific tab
   const handleAmountTracked = (tabId: string, ingredientId: string, addedAmountGrams: number) => {
-    setTabs(prevTabs =>
-      prevTabs.map(tab => {
-        if (tab.id === tabId && tab.type === 'recipe') {
-          return {
-            ...tab,
-            trackedAmounts: {
-              ...(tab.trackedAmounts ?? {}), // Ensure trackedAmounts exists
-              [ingredientId]: addedAmountGrams,
-            },
-          };
-        }
-        return tab;
-      })
-    );
+    updateRecipeTab(tabId, (tab) => ({
+      trackedAmounts: {
+        ...(tab.trackedAmounts ?? {}),
+        [ingredientId]: addedAmountGrams,
+      },
+    }));
   };
 
   // Handler to update scale factor for a specific tab
   const handleScaleChange = (tabId: string, newScaleFactor: number) => {
-    setTabs(prevTabs =>
-      prevTabs.map(tab =>
-        tab.id === tabId && tab.type === 'recipe'
-          ? { ...tab, scaleFactor: newScaleFactor }
-          : tab
-      )
-    );
+    updateRecipeTab(tabId, () => ({ scaleFactor: newScaleFactor }));
   };
 
   // Handler to open an editor tab for a specific recipe

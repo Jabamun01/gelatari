@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { styled } from '@linaria/react';
 import { ActionButton, DangerButton, SecondaryButton } from '../common/Button';
+import { PaginationControls } from '../common/PaginationControls';
 import {
   getAllIngredients,
   updateIngredient,
@@ -124,21 +125,6 @@ const ButtonContainer = styled.div`
   display: flex;
   gap: var(--space-sm);
   flex-shrink: 0;
-`;
-
-const PaginationControls = styled.div`
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: var(--space-md);
-  margin-top: var(--space-lg);
-  margin-bottom: var(--space-lg);
-  flex-wrap: wrap;
-
-  span {
-    font-size: var(--font-size-sm);
-    color: var(--text-color-light);
-  }
 `;
 
 const ControlsContainer = styled.div`
@@ -450,25 +436,12 @@ export const IngredientsTab = ({ onOpenIngredientEditTab, onOpenRecipeEditTab }:
               )}
             </IngredientList>
 
-            {pagination.totalPages > 1 && (
-              <PaginationControls>
-                <ActionButton
-                  onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-                  disabled={currentPage === 1 || isLoading || isFetching}
-                >
-                  Anterior
-                </ActionButton>
-                <span>
-                  Pàgina {pagination.currentPage} de {pagination.totalPages}
-                </span>
-                <ActionButton
-                  onClick={() => setCurrentPage((prev) => Math.min(prev + 1, pagination.totalPages))}
-                  disabled={currentPage === pagination.totalPages || isLoading || isFetching}
-                >
-                  Següent
-                </ActionButton>
-              </PaginationControls>
-            )}
+            <PaginationControls
+              currentPage={currentPage}
+              totalPages={pagination.totalPages}
+              onPageChange={setCurrentPage}
+              isLoading={isLoading || isFetching}
+            />
           </>
         )}
       </IngredientsContainer>

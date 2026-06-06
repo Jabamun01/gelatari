@@ -4,12 +4,13 @@ import { styled } from '@linaria/react';
 import { PrimaryButton, SecondaryButton, TextButton } from '../common/Button';
 import Papa from 'papaparse';
 import { fetchRecipeById, fetchRecipes, RecipeSearchResult, createRecipe, updateRecipe } from '../../api/recipes';
-import { getAllIngredients, addAliasToIngredient, createIngredient as createIngredientApi } from '../../api/ingredients';
+import { getAllIngredients } from '../../api/ingredients';
 import { fetchDefaultSteps } from '../../api/defaultSteps';
 import { RecipeDetails, RecipeIngredient, LinkedRecipeInfo, CreateRecipeDto, UpdateRecipeDto } from '../../types/recipe';
-import { Ingredient, CreateIngredientDto as CreateIngredientApiDto } from '../../types/ingredient';
+import { Ingredient } from '../../types/ingredient';
 import { SearchableSelector, SelectableItem } from '../common/SearchableSelector';
-import { Modal } from '../common/Modal';
+import { ResolveUnmatchedIngredientModal } from './ResolveUnmatchedIngredientModal';
+import { FormGroup, FormLabel, FormInput, FormSelect } from './RecipeEditorFormStyles';
 
 interface ParsedCsvIngredient {
   name: string;
@@ -48,33 +49,6 @@ const SectionHeading = styled.h3`
     border-top: none;
     padding-top: 0;
   }
-`;
-
-const FormGroup = styled.div`
-  margin-bottom: var(--space-lg);
-  display: flex;
-  flex-direction: column;
-`;
-
-const FormLabel = styled.label`
-  margin-bottom: var(--space-xs);
-  font-weight: 500;
-  color: var(--text-color);
-  font-size: var(--font-size-sm);
-  display: block;
-`;
-
-const FormInput = styled.input`
-  width: 100%;
-
-  &[type='number'] {
-    max-width: 150px;
-  }
-`;
-
-const FormSelect = styled.select`
-  cursor: pointer;
-  min-height: 44px;
 `;
 
 const ButtonContainer = styled.div`
@@ -232,23 +206,6 @@ const UnmatchedText = styled.p`
   margin: 0 0 var(--space-md) 0;
   font-size: var(--font-size-sm);
   color: var(--text-color);
-`;
-
-const ResolveSection = styled.div`
-  margin-top: var(--space-xl);
-  padding-top: var(--space-lg);
-  border-top: 1px dashed var(--border-color-light);
-
-  &:first-of-type {
-    margin-top: var(--space-lg);
-    padding-top: 0;
-    border-top: none;
-  }
-`;
-
-const SectionSubHeading = styled.h4`
-  margin: 0 0 var(--space-md) 0;
-  color: var(--primary-color);
 `;
 
 const initialRecipeState: Omit<RecipeDetails, '_id' | 'baseYieldGrams'> = {
@@ -893,184 +850,4 @@ export const RecipeEditorTab = ({ recipeId, onClose, onOpenRecipeTab }: RecipeEd
   );
 };
 
-interface ResolveModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  unmatchedItem: ParsedCsvIngredient;
-  itemNumber: number;
-  totalItems: number;
-  onResolveSuccess: (resolvedIngredient: Ingredient, originalCsvAmount: number) => void;
-  onSkip: () => void;
-  existingIngredientsQueryKeyBase: (string | undefined)[];
-  fetchExistingIngredientsFn: (term: string) => Promise<SelectableItem[]>;
-}
 
-const ResolveUnmatchedIngredientModal: React.FC<ResolveModalProps> = ({
-  isOpen,
-  onClose,
-  unmatchedItem,
-  itemNumber,
-  totalItems,
-  onResolveSuccess,
-  onSkip,
-  existingIngredientsQueryKeyBase,
-  fetchExistingIngredientsFn,
-}) => {
-  const queryClient = useQueryClient();
-  const [selectedDbIngredient, setSelectedDbIngredient] = useState<SelectableItem | null>(null);
-  const [newIngredientName, setNewIngredientName] = useState(unmatchedItem.name);
-  const [isSubmittingAlias, setIsSubmittingAlias] = useState(false);
-  const [isSubmittingNew, setIsSubmittingNew] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    setSelectedDbIngredient(null);
-    setNewIngredientName(unmatchedItem.name);
-    setError(null);
-    setIsSubmittingAlias(false);
-    setIsSubmittingNew(false);
-  }, [unmatchedItem]);
-
-  const handleAddAlias = async () => {
-    if (!selectedDbIngredient) return;
-    setError(null);
-    setIsSubmittingAlias(true);
-    const dbIngredientId = selectedDbIngredient.id.substring(4);
-
-    try {
-      const updatedIngredient = await addAliasToIngredient(dbIngredientId, unmatchedItem.name);
-      queryClient.invalidateQueries({ queryKey: ['ingredients'] });
-      queryClient.invalidateQueries({ queryKey: existingIngredientsQueryKeyBase });
-      onResolveSuccess(updatedIngredient, unmatchedItem.amountGrams);
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Error desconegut';
-      setError(`Error afegint àlies: ${message}`);
-    } finally {
-      setIsSubmittingAlias(false);
-    }
-  };
-
-  const handleCreateNew = async () => {
-    setError(null);
-    setIsSubmittingNew(true);
-    const trimmedNewName = newIngredientName.trim();
-    if (!trimmedNewName) {
-      setError('El nom de l\'ingredient no pot estar buit.');
-      setIsSubmittingNew(false);
-      return;
-    }
-
-    const createDto: CreateIngredientApiDto = {
-      name: trimmedNewName,
-      aliases: trimmedNewName.toLowerCase() !== unmatchedItem.name.toLowerCase() ? [unmatchedItem.name] : [],
-    };
-
-    try {
-      const createdIngredient = await createIngredientApi(createDto);
-      queryClient.invalidateQueries({ queryKey: ['ingredients'] });
-      queryClient.invalidateQueries({ queryKey: existingIngredientsQueryKeyBase });
-      onResolveSuccess(createdIngredient, unmatchedItem.amountGrams);
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Error desconegut';
-      setError(`Error creant ingredient: ${message}`);
-    } finally {
-      setIsSubmittingNew(false);
-    }
-  };
-
-  const filterIngredientsOnly = useCallback(async (term: string): Promise<SelectableItem[]> => {
-    const results = await fetchExistingIngredientsFn(term);
-    return results.filter((item) => item.type === 'ingredient');
-  }, [fetchExistingIngredientsFn]);
-
-  const isLoading = isSubmittingAlias || isSubmittingNew;
-
-  return (
-    <Modal
-      isOpen={isOpen}
-      onClose={onClose}
-      title={`Resol Ingredient No Trobat (${itemNumber}/${totalItems})`}
-      footer={
-        <>
-          <TextButton onClick={onSkip} disabled={isLoading}>
-            Salta
-          </TextButton>
-          <SecondaryButton onClick={onClose} disabled={isLoading}>
-            Cancel·la Tot
-          </SecondaryButton>
-        </>
-      }
-    >
-      <div style={{ fontSize: 'var(--font-size-sm)', marginBottom: 'var(--space-lg)' }}>
-        <p>
-          Ingredient del CSV (Fila {unmatchedItem.originalRow}):{' '}
-          <strong>{unmatchedItem.name}</strong> ({unmatchedItem.amountGrams}g)
-        </p>
-        <p style={{ color: 'var(--text-color-light)' }}>
-          Aquest ingredient no s'ha trobat a la base de dades per nom o àlies.
-        </p>
-      </div>
-
-      {error && (
-        <p style={{ color: 'var(--danger-color)', fontWeight: 500, fontSize: 'var(--font-size-sm)', marginBottom: 'var(--space-md)' }}>
-          Error: {error}
-        </p>
-      )}
-
-      <ResolveSection>
-        <SectionSubHeading>Opció 1: Afegeix com a Àlies</SectionSubHeading>
-        <p style={{ fontSize: 'var(--font-size-sm)', marginBottom: 'var(--space-md)' }}>
-          Vincula &ldquo;<strong>{unmatchedItem.name}</strong>&rdquo; a un ingredient existent.
-        </p>
-        <FormGroup>
-          <FormLabel>Cerca Ingredient Existent</FormLabel>
-          <SearchableSelector<SelectableItem>
-            queryKeyBase={[...existingIngredientsQueryKeyBase, 'aliasSearch']}
-            queryFn={filterIngredientsOnly}
-            onSelect={(item) => setSelectedDbIngredient(item)}
-            placeholder="Cerca ingredients a la base de dades..."
-            minSearchLength={2}
-            disabled={isLoading}
-            showAddControls={false}
-          />
-        </FormGroup>
-        {selectedDbIngredient && (
-          <div style={{ marginTop: 'var(--space-sm)', padding: 'var(--space-sm)', backgroundColor: 'var(--surface-color-light)', borderRadius: 'var(--border-radius)', display: 'flex', alignItems: 'center', gap: 'var(--space-md)' }}>
-            <span style={{ fontSize: 'var(--font-size-sm)' }}>
-              Seleccionat: <strong>{selectedDbIngredient.name}</strong>
-            </span>
-            <PrimaryButton onClick={handleAddAlias} disabled={isLoading}>
-              {isSubmittingAlias ? 'Afegint Àlies...' : `Afegeix com a Àlies`}
-            </PrimaryButton>
-          </div>
-        )}
-      </ResolveSection>
-
-      <ResolveSection>
-        <SectionSubHeading>Opció 2: Crea Ingredient Nou</SectionSubHeading>
-        <p style={{ fontSize: 'var(--font-size-sm)', marginBottom: 'var(--space-md)' }}>
-          Afegeix &ldquo;<strong>{unmatchedItem.name}</strong>&rdquo; com a ingredient nou.
-        </p>
-        <FormGroup>
-          <FormLabel htmlFor={`new-ing-name-${unmatchedItem.originalRow}`}>Nom de l'Ingredient</FormLabel>
-          <FormInput
-            id={`new-ing-name-${unmatchedItem.originalRow}`}
-            type="text"
-            value={newIngredientName}
-            onChange={(e) => setNewIngredientName(e.target.value)}
-            disabled={isLoading}
-            aria-required="true"
-          />
-          {newIngredientName.toLowerCase() !== unmatchedItem.name.toLowerCase() && (
-            <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--text-color-light)', marginTop: 'var(--space-xs)' }}>
-              El nom original del CSV &ldquo;{unmatchedItem.name}&rdquo; s'afegirà com a àlies.
-            </span>
-          )}
-        </FormGroup>
-        <PrimaryButton onClick={handleCreateNew} disabled={isLoading || !newIngredientName.trim()}>
-          {isSubmittingNew ? 'Creant...' : 'Crea Ingredient Nou'}
-        </PrimaryButton>
-      </ResolveSection>
-    </Modal>
-  );
-};

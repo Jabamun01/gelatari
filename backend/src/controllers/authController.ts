@@ -22,7 +22,7 @@ export const loginHandler = async (req: Request, res: Response): Promise<void> =
     }
 
     res.status(200).json(result);
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error in loginHandler:', error);
     res.status(500).json({ message: 'Internal server error.' });
   }
@@ -46,7 +46,7 @@ export const verifyHandler = async (req: AuthRequest, res: Response): Promise<vo
     }
 
     res.status(200).json({ valid: true, ...result });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error in verifyHandler:', error);
     res.status(500).json({ message: 'Internal server error.' });
   }
@@ -82,7 +82,7 @@ export const changePasswordHandler = async (req: AuthRequest, res: Response): Pr
     }
 
     res.status(200).json({ message: 'Password changed successfully.' });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error in changePasswordHandler:', error);
     res.status(500).json({ message: 'Internal server error.' });
   }
