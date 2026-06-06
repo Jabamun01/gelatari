@@ -16,6 +16,13 @@ const EditContainer = styled.div`
   background-color: var(--surface-color);
   border-radius: var(--border-radius-lg);
   box-shadow: var(--shadow-md);
+
+  @media (max-width: 640px) {
+    margin: var(--space-md) auto;
+    padding: var(--space-lg);
+    box-shadow: none;
+    border-radius: 0;
+  }
 `;
 
 const PageTitle = styled.h2`
@@ -80,6 +87,14 @@ const AliasInputContainer = styled.div`
   align-items: center;
   gap: var(--space-md);
   margin-bottom: var(--space-sm);
+
+  @media (max-width: 640px) {
+    flex-wrap: wrap;
+
+    button {
+      flex-shrink: 0;
+    }
+  }
 `;
 
 const ActionButtonContainer = styled.div`
@@ -90,6 +105,12 @@ const ActionButtonContainer = styled.div`
   padding-top: var(--space-xl);
   border-top: var(--border-width) solid var(--border-color-light);
   flex-wrap: wrap;
+
+  @media (max-width: 640px) {
+    button {
+      flex: 1;
+    }
+  }
 `;
 
 interface IngredientEditTabProps {

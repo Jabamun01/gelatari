@@ -28,6 +28,10 @@ const ContentContainer = styled.div`
   background-color: var(--tab-active-bg);
   flex-grow: 1;
   overflow-y: auto;
+
+  @media (max-width: 640px) {
+    padding: var(--space-md);
+  }
 `;
 
 const TabPanelWrapper = styled.div`

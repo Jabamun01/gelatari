@@ -20,12 +20,21 @@ const YieldDisplay = styled.div`
   font-weight: 600;
   color: var(--primary-color);
   text-align: center;
+
+  @media (max-width: 900px) {
+    font-size: var(--font-size-base);
+  }
 `;
 
 const InputRow = styled.div`
   display: flex;
   align-items: center;
   gap: var(--space-md);
+
+  @media (max-width: 640px) {
+    flex-direction: column;
+    gap: var(--space-sm);
+  }
 `;
 
 const SliderInput = styled.input`
@@ -41,8 +50,8 @@ const SliderInput = styled.input`
   &::-webkit-slider-thumb {
     appearance: none;
     -webkit-appearance: none;
-    width: 22px;
-    height: 22px;
+    width: 28px;
+    height: 28px;
     background: var(--primary-color);
     border-radius: 50%;
     cursor: pointer;
@@ -52,8 +61,8 @@ const SliderInput = styled.input`
   }
 
   &::-moz-range-thumb {
-    width: 22px;
-    height: 22px;
+    width: 28px;
+    height: 28px;
     background: var(--primary-color);
     border-radius: 50%;
     cursor: pointer;
@@ -92,10 +101,24 @@ const SliderInput = styled.input`
     background: var(--text-color-lighter);
     cursor: not-allowed;
   }
+
+  @media (max-width: 640px) {
+    width: 100%;
+
+    &::-webkit-slider-thumb {
+      width: 32px;
+      height: 32px;
+    }
+
+    &::-moz-range-thumb {
+      width: 32px;
+      height: 32px;
+    }
+  }
 `;
 
 const NumberInput = styled.input`
-  width: 76px;
+  width: 80px;
   padding: var(--space-xs) var(--space-sm);
   text-align: center;
   font-size: var(--font-size-sm);
@@ -112,6 +135,10 @@ const NumberInput = styled.input`
     color: var(--text-color-lighter);
     cursor: not-allowed;
     border-color: var(--border-color);
+  }
+
+  @media (max-width: 640px) {
+    width: 100px;
   }
 `;
 

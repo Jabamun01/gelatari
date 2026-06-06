@@ -23,6 +23,10 @@ const NavContainer = styled.nav`
   position: relative;
   z-index: 10;
   min-height: 52px;
+
+  @media (max-width: 640px) {
+    min-height: 48px;
+  }
 `;
 
 const TabsWrapper = styled.div`
@@ -30,6 +34,7 @@ const TabsWrapper = styled.div`
   align-items: stretch;
   gap: 0;
   flex: 1;
+  min-width: 0;
   overflow-x: auto;
   overflow-y: hidden;
   scrollbar-width: none;
@@ -41,7 +46,7 @@ const TabsWrapper = styled.div`
 `;
 
 const CloseIcon = styled.button`
-  margin-left: var(--space-sm);
+  margin-left: var(--space-xs);
   padding: var(--space-xs);
   border: none;
   background: transparent;
@@ -71,10 +76,16 @@ const CloseIcon = styled.button`
     color: var(--text-on-primary);
     outline: none;
   }
+
+  @media (max-width: 640px) {
+    min-width: 36px;
+    min-height: 36px;
+    font-size: 0.75em;
+  }
 `;
 
 const TabButton = styled.button<{ isActive: boolean }>`
-  padding: 0 var(--space-lg);
+  padding: 0 var(--space-md);
   border: none;
   border-bottom: 3px solid transparent;
   background-color: ${({ isActive }) =>
@@ -117,6 +128,12 @@ const TabButton = styled.button<{ isActive: boolean }>`
   &:active:not(:disabled) {
     transform: none;
   }
+
+  @media (max-width: 640px) {
+    padding: 0 var(--space-sm);
+    font-size: var(--font-size-xs);
+    min-height: 48px;
+  }
 `;
 
 const UserMenuContainer = styled.div`
@@ -125,13 +142,17 @@ const UserMenuContainer = styled.div`
   align-items: center;
   flex-shrink: 0;
   padding: 0 var(--space-sm);
+
+  @media (max-width: 640px) {
+    padding: 0 var(--space-xs);
+  }
 `;
 
 const UserButton = styled.button`
   display: flex;
   align-items: center;
   gap: var(--space-xs);
-  padding: var(--space-md) var(--space-md);
+  padding: var(--space-sm) var(--space-md);
   border: var(--border-width) solid var(--border-color-light);
   border-radius: var(--border-radius);
   background-color: var(--surface-color);
@@ -152,6 +173,12 @@ const UserButton = styled.button`
     outline: none;
     box-shadow: 0 0 0 2px var(--focus-ring-color);
   }
+
+  @media (max-width: 640px) {
+    padding: var(--space-xs) var(--space-sm);
+    font-size: var(--font-size-xs);
+    gap: var(--space-xs);
+  }
 `;
 
 const Dropdown = styled.div`
@@ -166,6 +193,11 @@ const Dropdown = styled.div`
   z-index: 1000;
   min-width: 200px;
   overflow: hidden;
+
+  @media (max-width: 640px) {
+    right: var(--space-xs);
+    min-width: 180px;
+  }
 `;
 
 const DropdownItem = styled.button`

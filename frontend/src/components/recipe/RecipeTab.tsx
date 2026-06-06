@@ -47,8 +47,13 @@ const RecipeContainer = styled.div`
     padding: var(--space-lg) 0;
   }
 
-  @media (max-width: 1023px) {
+  @media (max-width: 1023px) and (min-width: 769px) {
+    padding: var(--space-md) var(--space-lg);
+  }
+
+  @media (max-width: 768px) {
     padding: var(--space-md) 0;
+    gap: var(--space-md);
   }
 `;
 
@@ -81,6 +86,11 @@ const RecipeHeader = styled.div`
   flex-wrap: wrap;
   padding-bottom: var(--space-md);
   border-bottom: var(--border-width) solid var(--border-color-light);
+
+  @media (max-width: 640px) {
+    flex-direction: column;
+    align-items: stretch;
+  }
 `;
 
 const RecipeName = styled.h2`
@@ -94,6 +104,22 @@ const HeaderActions = styled.div`
   gap: var(--space-sm);
   flex-wrap: wrap;
   align-items: center;
+
+  @media (max-width: 900px) {
+    button {
+      font-size: var(--font-size-xs);
+      padding: var(--space-xs) var(--space-sm);
+      min-height: 36px;
+    }
+  }
+
+  @media (max-width: 640px) {
+    width: 100%;
+
+    button {
+      flex: 1;
+    }
+  }
 `;
 
 const ContentSection = styled.div<{ area: string }>`
@@ -106,7 +132,11 @@ const ContentSection = styled.div<{ area: string }>`
   overflow-y: auto;
   min-height: 200px;
 
-  @media (max-width: 1023px) {
+  @media (max-width: 1023px) and (min-width: 769px) {
+    min-height: 0;
+  }
+
+  @media (max-width: 768px) {
     border: none;
     padding: 0;
     background-color: transparent;
@@ -123,7 +153,11 @@ const ScalingSection = styled.div<{ area: string }>`
   background-color: var(--surface-color);
   box-shadow: var(--shadow-xs);
 
-  @media (max-width: 1023px) {
+  @media (max-width: 1023px) and (min-width: 769px) {
+    /* Keep card styling on tablet */
+  }
+
+  @media (max-width: 768px) {
     border: none;
     padding: 0;
     background-color: transparent;
@@ -138,7 +172,11 @@ const SeparatorLine = styled.hr`
   margin: 0;
   width: 100%;
 
-  @media (max-width: 1023px) {
+  @media (max-width: 1023px) and (min-width: 769px) {
+    display: block;
+  }
+
+  @media (max-width: 768px) {
     display: none;
   }
 `;
@@ -157,6 +195,16 @@ const ProductionModeButton = styled(SecondaryButton)<{ isActive?: boolean }>`
     }
   `
       : ''}
+
+  @media (max-width: 900px) {
+    font-size: var(--font-size-xs);
+    padding: var(--space-xs) var(--space-sm);
+    min-height: 36px;
+  }
+
+  @media (max-width: 640px) {
+    flex: 1;
+  }
 `;
 
 export const RecipeTab = ({

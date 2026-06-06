@@ -35,6 +35,12 @@ const EditorContainer = styled.div`
   max-width: 900px;
   margin: var(--space-lg) auto;
   overflow-x: hidden;
+
+  @media (max-width: 640px) {
+    margin: var(--space-md) auto;
+    gap: var(--space-xl);
+    padding: 0 var(--space-sm);
+  }
 `;
 
 const SectionHeading = styled.h3`
@@ -70,6 +76,12 @@ const FormInput = styled.input`
   &[type='number'] {
     max-width: 150px;
   }
+
+  @media (max-width: 640px) {
+    &[type='number'] {
+      max-width: 100%;
+    }
+  }
 `;
 
 const FormSelect = styled.select`
@@ -85,6 +97,12 @@ const ButtonContainer = styled.div`
   border-top: var(--border-width) solid var(--border-color-light);
   justify-content: flex-end;
   flex-wrap: wrap;
+
+  @media (max-width: 640px) {
+    button {
+      flex: 1;
+    }
+  }
 `;
 
 const ComponentList = styled.ul`
@@ -112,6 +130,17 @@ const ComponentListItem = styled.li`
 
   &:hover {
     background-color: var(--surface-color-light);
+  }
+
+  @media (max-width: 640px) {
+    padding: var(--space-sm) var(--space-md);
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-xs);
+
+    button {
+      align-self: flex-end;
+    }
   }
 `;
 
@@ -144,6 +173,10 @@ const AddComponentForm = styled.div`
   border: var(--border-width) solid var(--border-color-light);
   border-radius: var(--border-radius-lg);
   background-color: var(--surface-color-light);
+
+  @media (max-width: 640px) {
+    padding: var(--space-md);
+  }
 `;
 
 const StepList = styled.ol`
@@ -179,6 +212,15 @@ const StepListItem = styled.li`
     font-size: var(--font-size-base);
     line-height: var(--line-height-base);
   }
+
+  @media (max-width: 640px) {
+    flex-direction: column;
+    gap: var(--space-sm);
+
+    button {
+      align-self: flex-end;
+    }
+  }
 `;
 
 const StepTextArea = styled.textarea`
@@ -193,6 +235,14 @@ const StepButtonContainer = styled.div`
   gap: var(--space-md);
   margin-top: var(--space-lg);
   align-items: center;
+
+  @media (max-width: 640px) {
+    flex-direction: column;
+
+    button {
+      width: 100%;
+    }
+  }
 `;
 
 const EmptyState = styled(ComponentListItem)`
@@ -207,6 +257,15 @@ const FileInputRow = styled.div`
   gap: var(--space-md);
   align-items: center;
   flex-wrap: wrap;
+
+  @media (max-width: 640px) {
+    flex-direction: column;
+    align-items: stretch;
+
+    button {
+      width: 100%;
+    }
+  }
 `;
 
 const FileInfo = styled.p`

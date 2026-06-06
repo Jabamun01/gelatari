@@ -18,6 +18,11 @@ const SearchContainer = styled.div`
   gap: var(--space-lg);
   max-width: 800px;
   margin: var(--space-lg) auto;
+
+  @media (max-width: 640px) {
+    margin: var(--space-md) auto;
+    gap: var(--space-md);
+  }
 `;
 
 const SearchInput = styled.input`
@@ -27,6 +32,15 @@ const SearchInput = styled.input`
   padding-bottom: var(--space-md);
   box-shadow: var(--shadow-sm);
   border-radius: var(--border-radius-lg);
+
+  @media (max-width: 900px) {
+    font-size: var(--font-size-base);
+  }
+
+  @media (max-width: 640px) {
+    padding-top: var(--space-sm);
+    padding-bottom: var(--space-sm);
+  }
 `;
 
 const ControlsContainer = styled.div`
@@ -34,6 +48,10 @@ const ControlsContainer = styled.div`
   align-items: center;
   gap: var(--space-lg);
   flex-wrap: wrap;
+
+  @media (max-width: 640px) {
+    gap: var(--space-md);
+  }
 `;
 
 const LimitSelector = styled.div`
@@ -86,6 +104,13 @@ const ResultItem = styled.li`
   &:hover {
     background-color: var(--surface-color-light);
   }
+
+  @media (max-width: 640px) {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-sm);
+    padding: var(--space-sm) var(--space-md);
+  }
 `;
 
 const RecipeName = styled.span`
@@ -106,6 +131,15 @@ const ActionButtons = styled.div`
   gap: var(--space-sm);
   margin-left: var(--space-md);
   flex-shrink: 0;
+
+  @media (max-width: 640px) {
+    margin-left: 0;
+    width: 100%;
+
+    button {
+      flex: 1;
+    }
+  }
 `;
 
 const StatusMessage = styled.div`

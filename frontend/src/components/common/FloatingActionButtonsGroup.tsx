@@ -25,6 +25,12 @@ const ActionButtonsContainer = styled.div`
   flex-direction: column;
   gap: var(--space-sm);
   z-index: 900;
+
+  @media (max-width: 640px) {
+    bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+    right: 1rem;
+    gap: var(--space-xs);
+  }
 `;
 
 const ActionButton = styled.button`
@@ -59,6 +65,12 @@ const ActionButton = styled.button`
     transform: none;
     opacity: 0.7;
     box-shadow: var(--shadow-sm);
+  }
+
+  @media (max-width: 640px) {
+    width: 48px;
+    height: 48px;
+    font-size: 1.2rem;
   }
 `;
 
