@@ -46,6 +46,11 @@ const timerVisualsStyle = css`
       }
     }
   }
+
+  @media (max-width: 640px) {
+    width: 200px;
+    padding: var(--space-md);
+  }
 `;
 
 const timeDisplay = css`
@@ -56,6 +61,10 @@ const timeDisplay = css`
   background-color: var(--surface-color-light);
   border-radius: var(--border-radius);
   margin-bottom: var(--space-sm);
+
+  @media (max-width: 640px) {
+    font-size: var(--font-size-lg);
+  }
 `;
 
 const buttonGroup = css`

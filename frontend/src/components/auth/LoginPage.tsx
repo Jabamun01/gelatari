@@ -7,9 +7,14 @@ const LoginContainer = styled.div`
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  height: 100vh;
+  min-height: 100vh;
+  height: 100%;
   background: linear-gradient(135deg, var(--primary-color-xlight) 0%, var(--surface-color) 50%, var(--primary-color-xlight) 100%);
   padding: var(--space-lg);
+
+  @media (max-width: 640px) {
+    padding: var(--space-md);
+  }
 `;
 
 const LoginCard = styled.div`
@@ -20,6 +25,10 @@ const LoginCard = styled.div`
   width: 100%;
   max-width: 400px;
   text-align: center;
+
+  @media (max-width: 640px) {
+    padding: var(--space-xl) var(--space-lg);
+  }
 `;
 
 const Logo = styled.div`

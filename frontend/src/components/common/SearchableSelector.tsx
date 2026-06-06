@@ -45,6 +45,11 @@ const ResultItem = styled.li`
   &:last-child {
     border-bottom: none;
   }
+
+  @media (max-width: 640px) {
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+  }
 `;
 
 const ItemDetails = styled.div`
@@ -84,6 +89,10 @@ const AmountInput = styled.input`
   &::-webkit-inner-spin-button {
     -webkit-appearance: none;
     margin: 0;
+  }
+
+  @media (max-width: 640px) {
+    width: 56px;
   }
 `;
 

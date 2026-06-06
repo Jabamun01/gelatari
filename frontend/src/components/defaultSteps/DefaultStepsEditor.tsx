@@ -39,6 +39,10 @@ const StepItem = styled.li`
   background-color: var(--surface-color-light);
   border-radius: var(--border-radius);
   border: var(--border-width) solid var(--border-color-light);
+
+  @media (max-width: 640px) {
+    flex-wrap: wrap;
+  }
 `;
 
 const StepNumber = styled.span`
@@ -72,6 +76,14 @@ const ButtonRow = styled.div`
   gap: var(--space-md);
   flex-wrap: wrap;
   align-items: center;
+
+  @media (max-width: 640px) {
+    flex-direction: column;
+
+    button {
+      width: 100%;
+    }
+  }
 `;
 
 const MessageArea = styled.p<{ type?: 'success' | 'error' }>`

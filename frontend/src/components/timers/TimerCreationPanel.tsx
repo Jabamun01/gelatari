@@ -109,8 +109,8 @@ const Slider = styled.input`
   &::-webkit-slider-thumb {
     -webkit-appearance: none;
     appearance: none;
-    width: 22px;
-    height: 22px;
+    width: 28px;
+    height: 28px;
     border-radius: 50%;
     background: var(--primary-color);
     cursor: pointer;
@@ -120,8 +120,8 @@ const Slider = styled.input`
   }
 
   &::-moz-range-thumb {
-    width: 22px;
-    height: 22px;
+    width: 28px;
+    height: 28px;
     border-radius: 50%;
     background: var(--primary-color);
     cursor: pointer;
@@ -145,6 +145,17 @@ const Slider = styled.input`
       box-shadow: 0 0 0 3px var(--focus-ring-color);
     }
   }
+
+  @media (max-width: 640px) {
+    &::-webkit-slider-thumb {
+      width: 32px;
+      height: 32px;
+    }
+    &::-moz-range-thumb {
+      width: 32px;
+      height: 32px;
+    }
+  }
 `;
 
 const ColorSwatchContainer = styled.div`
@@ -154,6 +165,10 @@ const ColorSwatchContainer = styled.div`
   flex-wrap: wrap;
   justify-content: space-around;
   padding: var(--space-md) 0;
+
+  @media (max-width: 640px) {
+    gap: var(--space-md);
+  }
 `;
 
 const ColorSwatch = styled.button<{ $color: string }>`
@@ -175,6 +190,11 @@ const ColorSwatch = styled.button<{ $color: string }>`
     outline: none;
     box-shadow: 0 0 0 3px var(--focus-ring-color);
   }
+
+  @media (max-width: 640px) {
+    width: 48px;
+    height: 48px;
+  }
 `;
 
 const ButtonGroup = styled.div`
@@ -182,6 +202,12 @@ const ButtonGroup = styled.div`
   gap: var(--space-sm);
   margin-top: var(--space-xl);
   align-items: center;
+
+  @media (max-width: 640px) {
+    button {
+      flex: 1;
+    }
+  }
 `;
 
 const Button = styled.button`

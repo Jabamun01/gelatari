@@ -10,6 +10,10 @@ const TabContainer = styled.div`
   gap: var(--space-lg);
   max-width: 800px;
   margin: 0 auto;
+
+  @media (max-width: 640px) {
+    padding: var(--space-xs);
+  }
 `;
 
 const PageTitle = styled.h2`

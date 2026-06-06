@@ -30,6 +30,11 @@ const IngredientsContainer = styled.div`
   gap: var(--space-xl);
   max-width: 900px;
   margin: var(--space-lg) auto;
+
+  @media (max-width: 640px) {
+    margin: var(--space-md) auto;
+    gap: var(--space-lg);
+  }
 `;
 
 const IngredientList = styled.ul`
@@ -59,6 +64,10 @@ const IngredientItem = styled.li`
 
   &:hover {
     background-color: var(--surface-color-light);
+  }
+
+  @media (max-width: 640px) {
+    padding: var(--space-sm) var(--space-md);
   }
 `;
 
@@ -102,6 +111,12 @@ const AddStockForm = styled.div`
       margin: 0;
     }
   }
+
+  @media (max-width: 640px) {
+    input[type='number'] {
+      width: 60px;
+    }
+  }
 `;
 
 const StatusMessage = styled.div`
@@ -124,6 +139,14 @@ const ButtonContainer = styled.div`
   display: flex;
   gap: var(--space-sm);
   flex-shrink: 0;
+
+  @media (max-width: 640px) {
+    width: 100%;
+
+    button {
+      flex: 1;
+    }
+  }
 `;
 
 const PaginationControls = styled.div`
@@ -146,6 +169,10 @@ const ControlsContainer = styled.div`
   align-items: center;
   gap: var(--space-lg);
   flex-wrap: wrap;
+
+  @media (max-width: 640px) {
+    gap: var(--space-md);
+  }
 `;
 
 const SearchInput = styled.input`

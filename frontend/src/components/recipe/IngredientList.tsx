@@ -59,6 +59,11 @@ const BaseIngredientName = styled.span`
   color: var(--text-color);
   font-weight: 500;
   font-size: var(--font-size-sm);
+
+  @media (max-width: 640px) {
+    margin: 0 var(--space-xs);
+    font-size: var(--font-size-xs);
+  }
 `;
 
 const IngredientAmount = styled.span`
@@ -68,6 +73,11 @@ const IngredientAmount = styled.span`
   font-size: var(--font-size-sm);
   min-width: 60px;
   text-align: right;
+
+  @media (max-width: 640px) {
+    font-size: var(--font-size-xs);
+    min-width: 50px;
+  }
 `;
 
 const LinkedRecipeButton = styled.button`
@@ -104,6 +114,10 @@ const ProdItemWrapper = styled.div`
   width: 100%;
   cursor: pointer;
   gap: var(--space-sm);
+
+  @media (max-width: 640px) {
+    gap: var(--space-xs);
+  }
 `;
 
 const LargeCheckbox = styled.input`
@@ -142,6 +156,15 @@ const LargeCheckbox = styled.input`
     outline: none;
     box-shadow: 0 0 0 2px var(--focus-ring-color);
   }
+
+  @media (max-width: 640px) {
+    width: 24px;
+    height: 24px;
+
+    &:checked::after {
+      font-size: 14px;
+    }
+  }
 `;
 
 const QuantityDisplay = styled.button<{
@@ -175,6 +198,11 @@ const QuantityDisplay = styled.button<{
     border-color: var(--border-color-hover);
     background-color: var(--surface-color-hover);
   }
+
+  @media (max-width: 640px) {
+    min-width: 75px;
+    font-size: 0.7rem;
+  }
 `;
 
 const PartialInputWrapper = styled.div`
@@ -184,7 +212,7 @@ const PartialInputWrapper = styled.div`
 `;
 
 const PartialInput = styled.input`
-  width: 72px;
+  width: 64px;
   padding: var(--space-xs) var(--space-sm);
   text-align: right;
   font-size: var(--font-size-sm);
@@ -203,6 +231,10 @@ const PartialInput = styled.input`
     outline: none;
     border-color: var(--primary-color);
     box-shadow: 0 0 0 1px var(--focus-ring-color);
+  }
+
+  @media (max-width: 640px) {
+    width: 56px;
   }
 `;
 

@@ -53,6 +53,14 @@ export const ListItemActions = styled.div`
   display: flex;
   gap: var(--space-sm);
   flex-shrink: 0;
+
+  @media (max-width: 640px) {
+    width: 100%;
+
+    button {
+      flex: 1;
+    }
+  }
 `;
 
 export const FooterActions = styled.div`
