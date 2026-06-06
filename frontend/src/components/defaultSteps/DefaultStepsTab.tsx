@@ -8,43 +8,56 @@ const TabContainer = styled.div`
   height: 100%;
   padding: var(--space-md);
   gap: var(--space-lg);
+  max-width: 800px;
+  margin: 0 auto;
+`;
+
+const PageTitle = styled.h2`
+  text-align: center;
+  margin-bottom: var(--space-md);
 `;
 
 const CategorySelector = styled.div`
   display: flex;
   justify-content: center;
-  gap: var(--space-md);
-  padding: var(--space-sm);
+  gap: 0;
+  padding: 0;
   background-color: var(--surface-color);
   border-radius: var(--border-radius);
-  box-shadow: var(--shadow-xs);
+  border: var(--border-width) solid var(--border-color);
+  overflow: hidden;
 `;
 
 const CategoryButton = styled.button<{ isActive: boolean }>`
+  flex: 1;
   padding: var(--space-md) var(--space-lg);
-  border: 2px solid transparent;
-  border-bottom-color: ${({ isActive }) => isActive ? 'var(--primary-color)' : 'transparent'};
-  background-color: ${({ isActive }) => isActive ? 'var(--primary-color-light)' : 'transparent'};
-  color: ${({ isActive }) => isActive ? 'var(--primary-color-dark)' : 'var(--text-color)'};
-  font-weight: ${({ isActive }) => isActive ? '600' : '500'};
-  border-radius: var(--border-radius) var(--border-radius) 0 0;
+  border: none;
+  background-color: ${({ isActive }) =>
+    isActive ? 'var(--primary-color)' : 'transparent'};
+  color: ${({ isActive }) =>
+    isActive ? 'var(--text-on-primary)' : 'var(--text-color)'};
+  font-weight: ${({ isActive }) => (isActive ? '600' : '500')};
   cursor: pointer;
-  transition: all 0.2s ease-in-out;
+  font-size: var(--font-size-sm);
+  transition: all 0.15s ease;
+  min-height: 44px;
+  box-shadow: none;
+  border-radius: 0;
 
   &:hover:not(:disabled) {
-    background-color: var(--primary-color-xlight);
-    border-bottom-color: var(--primary-color-light);
+    background-color: ${({ isActive }) =>
+      isActive ? 'var(--primary-color-dark)' : 'var(--surface-color-hover)'};
   }
 
   &:focus {
     outline: none;
-    box-shadow: 0 0 0 2px var(--primary-color-light);
+    box-shadow: inset 0 0 0 2px var(--focus-ring-color);
   }
 `;
 
 const EditorWrapper = styled.div`
   flex-grow: 1;
-  overflow-y: auto; /* Allow editor content to scroll if it's too long */
+  overflow-y: auto;
 `;
 
 const DefaultStepsTab: React.FC = () => {
@@ -52,7 +65,7 @@ const DefaultStepsTab: React.FC = () => {
 
   return (
     <TabContainer>
-      <h2>Gestiona els Passos per Defecte</h2>
+      <PageTitle>Gestiona els Passos per Defecte</PageTitle>
       <CategorySelector role="tablist" aria-label="Categories de passos per defecte">
         <CategoryButton
           id="tab-ice-cream"
@@ -76,10 +89,16 @@ const DefaultStepsTab: React.FC = () => {
         </CategoryButton>
       </CategorySelector>
       <EditorWrapper
-        id={selectedCategory === 'ice cream' ? "tabpanel-ice-cream-steps" : "tabpanel-sorbet-steps"}
+        id={
+          selectedCategory === 'ice cream'
+            ? 'tabpanel-ice-cream-steps'
+            : 'tabpanel-sorbet-steps'
+        }
         role="tabpanel"
-        aria-labelledby={selectedCategory === 'ice cream' ? "tab-ice-cream" : "tab-sorbet"}
-        key={selectedCategory} // Keep key for re-rendering DefaultStepsEditor on category change
+        aria-labelledby={
+          selectedCategory === 'ice cream' ? 'tab-ice-cream' : 'tab-sorbet'
+        }
+        key={selectedCategory}
       >
         <DefaultStepsEditor category={selectedCategory} />
       </EditorWrapper>

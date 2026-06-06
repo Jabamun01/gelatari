@@ -6,7 +6,7 @@ interface ModalProps {
   onClose: () => void;
   title: string;
   children: React.ReactNode;
-  footer?: React.ReactNode; // Optional footer for buttons
+  footer?: React.ReactNode;
 }
 
 const ModalOverlay = styled.div`
@@ -15,14 +15,14 @@ const ModalOverlay = styled.div`
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.6); /* Darker overlay */
+  background-color: rgba(0, 0, 0, 0.5);
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 1000; /* Ensure it's above other content */
+  z-index: 1000;
   opacity: 0;
   visibility: hidden;
-  transition: opacity 0.3s ease, visibility 0.3s ease;
+  transition: opacity 0.25s ease, visibility 0.25s ease;
 
   &[data-isopen='true'] {
     opacity: 1;
@@ -31,20 +31,20 @@ const ModalOverlay = styled.div`
 `;
 
 const ModalContent = styled.div`
-  background-color: var(--background-color);
+  background-color: var(--surface-color);
   padding: var(--space-xl);
-  border-radius: var(--border-radius-lg); /* Larger radius */
-  box-shadow: var(--shadow-lg); /* More prominent shadow */
-  width: 90%;
-  max-width: 600px; /* Limit max width */
-  max-height: 80vh; /* Limit max height */
+  border-radius: var(--border-radius-xl);
+  box-shadow: var(--shadow-xl);
+  width: 92%;
+  max-width: 560px;
+  max-height: 85vh;
   display: flex;
   flex-direction: column;
-  transform: scale(0.95);
-  transition: transform 0.3s ease;
+  transform: scale(0.95) translateY(8px);
+  transition: transform 0.25s ease;
 
   ${ModalOverlay}[data-isopen='true'] & {
-      transform: scale(1);
+    transform: scale(1) translateY(0);
   }
 `;
 
@@ -59,67 +59,67 @@ const ModalHeader = styled.div`
 
 const ModalTitle = styled.h3`
   margin: 0;
-  font-size: var(--font-size-xl); /* Larger title */
+  font-size: var(--font-size-xl);
   color: var(--text-color-strong);
 `;
 
-// Reusing RemoveButton style for Close button, but adjusting color/hover
 const CloseButton = styled.button`
   background: transparent;
-  border: var(--border-width) solid var(--border-color);
+  border: none;
   color: var(--text-color-light);
-  font-size: var(--font-size-xl); /* Larger close icon */
+  font-size: var(--font-size-xl);
   cursor: pointer;
-  padding: var(--space-xs);
-  line-height: 1;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   border-radius: var(--border-radius);
-  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  transition: background-color 0.15s ease, color 0.15s ease;
+  padding: 0;
+  box-shadow: none;
 
   &:hover {
     color: var(--text-color);
     background-color: var(--surface-color-hover);
-    border-color: var(--border-color-hover);
   }
 
   &:focus {
-      outline: none;
-      color: var(--text-color);
-      background-color: var(--surface-color-hover);
-      border-color: var(--border-color-hover);
-      box-shadow: 0 0 0 3px var(--focus-ring-color);
+    outline: none;
+    box-shadow: 0 0 0 2px var(--focus-ring-color);
   }
 `;
 
-
 const ModalBody = styled.div`
   flex-grow: 1;
-  overflow-y: auto; /* Allow body content to scroll if needed */
-  margin-bottom: var(--space-lg); /* Add space before footer */
+  overflow-y: auto;
+  margin-bottom: var(--space-lg);
+  scrollbar-gutter: stable;
 `;
 
 const ModalFooter = styled.div`
   border-top: var(--border-width) solid var(--border-color-light);
   padding-top: var(--space-lg);
   display: flex;
-  justify-content: flex-end; /* Align buttons to the right */
+  justify-content: flex-end;
   gap: var(--space-md);
+  flex-wrap: wrap;
 `;
 
 export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, footer }) => {
-  // Prevent background scroll when modal is open
+  const titleId = React.useId();
+
   React.useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = '';
     }
-    // Cleanup function to reset overflow when component unmounts
     return () => {
       document.body.style.overflow = '';
     };
   }, [isOpen]);
 
-  // Handle Escape key press to close modal
   React.useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
@@ -136,22 +136,20 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, 
     };
   }, [isOpen, onClose]);
 
-  // Create a unique ID for the modal title to be used by aria-labelledby
-  const titleId = `modal-title-${React.useId()}`;
-
   return (
     <ModalOverlay
       data-isopen={isOpen}
       onClick={onClose}
       role="dialog"
       aria-modal="true"
-      aria-labelledby={titleId} // Associate the modal with its title
+      aria-labelledby={titleId}
     >
-      {/* Stop propagation prevents closing modal when clicking inside content */}
       <ModalContent onClick={(e) => e.stopPropagation()}>
         <ModalHeader>
-          <ModalTitle id={titleId}>{title}</ModalTitle> {/* Add id to the title element */}
-          <CloseButton onClick={onClose} aria-label="Tanca el modal">&times;</CloseButton>
+          <ModalTitle id={titleId}>{title}</ModalTitle>
+          <CloseButton onClick={onClose} aria-label="Tanca el modal">
+            &times;
+          </CloseButton>
         </ModalHeader>
         <ModalBody>
           {children}

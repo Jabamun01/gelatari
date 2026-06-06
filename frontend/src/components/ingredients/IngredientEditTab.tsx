@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { styled } from '@linaria/react';
 import { IngredientEditTabData } from '../../types/tabs';
-import { PrimaryButton as ReusablePrimaryButton, SecondaryButton as ReusableSecondaryButton, DangerButton as ReusableDangerButton } from '../common/Button';
+import { PrimaryButton, SecondaryButton, DangerButton } from '../common/Button';
 import { updateIngredient, getIngredientById, createIngredient } from '../../api/ingredients';
 import { UpdateIngredientDto, CreateIngredientDto, Ingredient } from '../../types/ingredient';
 import { useQueryClient } from '@tanstack/react-query';
 
-// --- Styled Components ---
 const EditContainer = styled.div`
   display: flex;
   flex-direction: column;
@@ -21,31 +20,30 @@ const EditContainer = styled.div`
 
 const PageTitle = styled.h2`
   text-align: center;
-  margin-bottom: var(--space-lg);
+  margin-bottom: var(--space-md);
   color: var(--text-color-strong);
-  font-size: var(--font-size-xl);
 `;
 
-const Subtitle = styled.h3`
+const Subtitle = styled.p`
   text-align: center;
-  margin-bottom: var(--space-md);
-  color: var(--text-color);
-  font-size: var(--font-size-lg);
-  font-weight: 500;
+  margin-bottom: var(--space-lg);
+  color: var(--text-color-light);
+  font-size: var(--font-size-sm);
 `;
 
 const ErrorMessage = styled.div`
-  color: var(--danger-color-dark); // Darker text for better readability on light bg
+  color: var(--danger-color-dark);
   background-color: var(--danger-color-light);
   border: 1px solid var(--danger-color);
   padding: var(--space-md);
   border-radius: var(--border-radius);
   margin-bottom: var(--space-lg);
   text-align: center;
+  font-size: var(--font-size-sm);
 `;
 
 const LoadingMessage = styled.div`
-  padding: var(--space-xl);
+  padding: var(--space-2xl);
   text-align: center;
   font-size: var(--font-size-lg);
   color: var(--text-color-light);
@@ -66,14 +64,13 @@ const FormGroup = styled.div`
 const FormLabel = styled.label`
   font-weight: 500;
   color: var(--text-color);
-  font-size: var(--font-size-base);
+  font-size: var(--font-size-sm);
 `;
 
 const FormInput = styled.input`
-  /* Base styles are inherited from global.ts */
   width: 100%;
 
-  &[type="number"] {
+  &[type='number'] {
     max-width: 150px;
   }
 `;
@@ -85,10 +82,6 @@ const AliasInputContainer = styled.div`
   margin-bottom: var(--space-sm);
 `;
 
-const AliasInput = styled(FormInput)`
-  flex-grow: 1;
-`;
-
 const ActionButtonContainer = styled.div`
   display: flex;
   justify-content: flex-end;
@@ -96,15 +89,14 @@ const ActionButtonContainer = styled.div`
   margin-top: var(--space-xl);
   padding-top: var(--space-xl);
   border-top: var(--border-width) solid var(--border-color-light);
+  flex-wrap: wrap;
 `;
 
-// --- Component Props ---
 interface IngredientEditTabProps {
   tab: IngredientEditTabData;
   onCloseTab: (tabId: string) => void;
 }
 
-// --- Component ---
 const IngredientEditTab: React.FC<IngredientEditTabProps> = ({ tab, onCloseTab }) => {
   const { id: tabId, ingredientId } = tab;
   const isEditMode = !!ingredientId;
@@ -132,7 +124,7 @@ const IngredientEditTab: React.FC<IngredientEditTabProps> = ({ tab, onCloseTab }
         .catch((err) => {
           console.error('Failed to fetch ingredient details:', err);
           setError(err instanceof Error ? err.message : "Error en carregar les dades de l'ingredient.");
-          setIngredientName('Error en carregar'); // Placeholder on error
+          setIngredientName('');
           setAliases(['']);
           setStockQuantity(0);
           setIsLoading(false);
@@ -166,14 +158,14 @@ const IngredientEditTab: React.FC<IngredientEditTabProps> = ({ tab, onCloseTab }
 
     const commonData = {
       name: ingredientName.trim(),
-      aliases: aliases.filter(alias => alias.trim() !== '').map(alias => alias.trim()),
+      aliases: aliases.filter((alias) => alias.trim() !== '').map((alias) => alias.trim()),
       quantityInStock: stockQuantity,
     };
 
     if (!commonData.name) {
-        setError("El nom de l'ingredient no pot estar buit.");
-        setIsSaving(false);
-        return;
+      setError("El nom de l'ingredient no pot estar buit.");
+      setIsSaving(false);
+      return;
     }
 
     try {
@@ -195,7 +187,10 @@ const IngredientEditTab: React.FC<IngredientEditTabProps> = ({ tab, onCloseTab }
       }
     } catch (err) {
       console.error(`Failed to ${isEditMode ? 'update' : 'create'} ingredient:`, err);
-      const errorMessage = err instanceof Error ? err.message : `S'ha produït un error desconegut durant ${isEditMode ? "l'actualització" : "la creació"}.`;
+      const errorMessage =
+        err instanceof Error
+          ? err.message
+          : `S'ha produït un error desconegut durant ${isEditMode ? "l'actualització" : 'la creació'}.`;
       setError(errorMessage);
     } finally {
       setIsSaving(false);
@@ -207,14 +202,26 @@ const IngredientEditTab: React.FC<IngredientEditTabProps> = ({ tab, onCloseTab }
   };
 
   if (isLoading) {
-    return <LoadingMessage aria-live="polite">Carregant detalls de l'ingredient...</LoadingMessage>;
+    return (
+      <LoadingMessage aria-live="polite">
+        Carregant detalls de l'ingredient...
+      </LoadingMessage>
+    );
   }
 
   return (
     <EditContainer>
-      <PageTitle>{isEditMode ? 'Edita Ingredient' : 'Crea Ingredient Nou'}</PageTitle>
-      {isEditMode && ingredientName && !error && <Subtitle>Editant: {ingredientName}</Subtitle>}
-      {error && <ErrorMessage aria-live="polite" role="alert">Error: {error}</ErrorMessage>}
+      <PageTitle>
+        {isEditMode ? 'Edita Ingredient' : 'Crea Ingredient Nou'}
+      </PageTitle>
+      {isEditMode && ingredientName && !error && (
+        <Subtitle>Editant: {ingredientName}</Subtitle>
+      )}
+      {error && (
+        <ErrorMessage aria-live="polite" role="alert">
+          Error: {error}
+        </ErrorMessage>
+      )}
 
       <Form onSubmit={(e) => e.preventDefault()}>
         <FormGroup>
@@ -232,28 +239,36 @@ const IngredientEditTab: React.FC<IngredientEditTabProps> = ({ tab, onCloseTab }
         </FormGroup>
 
         <FormGroup>
-          <FormLabel id="aliases-label">Àlies:</FormLabel> {/* Added id for aria-labelledby */}
+          <FormLabel>Àlies:</FormLabel>
           {aliases.map((alias, index) => (
             <AliasInputContainer key={index}>
-              <AliasInput
+              <FormInput
                 type="text"
                 value={alias}
                 onChange={(e) => handleAliasChange(index, e.target.value)}
                 placeholder="Introdueix àlies (opcional)"
                 disabled={isSaving}
-                aria-label={`Àlies ${index + 1}`} // Using aria-label for individual alias inputs
-                // aria-labelledby="aliases-label" // Can also be used if preferred
+                aria-label={`Àlies ${index + 1}`}
               />
               {aliases.length > 0 && (
-                <ReusableDangerButton type="button" onClick={() => handleRemoveAlias(index)} disabled={isSaving}>
+                <DangerButton
+                  type="button"
+                  onClick={() => handleRemoveAlias(index)}
+                  disabled={isSaving}
+                >
                   Elimina
-                </ReusableDangerButton>
+                </DangerButton>
               )}
             </AliasInputContainer>
           ))}
-          <ReusableSecondaryButton type="button" onClick={handleAddAlias} disabled={isSaving} style={{ alignSelf: 'flex-start' }}>
+          <SecondaryButton
+            type="button"
+            onClick={handleAddAlias}
+            disabled={isSaving}
+            style={{ alignSelf: 'flex-start' }}
+          >
             Afegeix Àlies
-          </ReusableSecondaryButton>
+          </SecondaryButton>
         </FormGroup>
 
         <FormGroup>
@@ -269,12 +284,20 @@ const IngredientEditTab: React.FC<IngredientEditTabProps> = ({ tab, onCloseTab }
         </FormGroup>
 
         <ActionButtonContainer>
-          <ReusableSecondaryButton type="button" onClick={handleCancel} disabled={isSaving}>
+          <SecondaryButton type="button" onClick={handleCancel} disabled={isSaving}>
             Cancel·la
-          </ReusableSecondaryButton>
-          <ReusablePrimaryButton type="button" onClick={handleSaveChanges} disabled={isSaving || (!isEditMode && !ingredientName.trim())}>
-            {isSaving ? 'Desant...' : (isEditMode ? 'Desa Canvis' : 'Crea Ingredient')}
-          </ReusablePrimaryButton>
+          </SecondaryButton>
+          <PrimaryButton
+            type="button"
+            onClick={handleSaveChanges}
+            disabled={isSaving || (!isEditMode && !ingredientName.trim())}
+          >
+            {isSaving
+              ? 'Desant...'
+              : isEditMode
+                ? 'Desa Canvis'
+                : 'Crea Ingredient'}
+          </PrimaryButton>
         </ActionButtonContainer>
       </Form>
     </EditContainer>

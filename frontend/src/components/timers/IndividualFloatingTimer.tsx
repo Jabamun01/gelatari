@@ -3,7 +3,7 @@ import { css } from '@linaria/core';
 import { Play, Pause, RotateCcw, X, BellOff } from 'lucide-react';
 import { FloatingTimer } from '../../types/timer';
 import { useTimers } from '../../contexts/TimerContext';
-import Draggable, { DraggableData } from 'react-draggable';
+import Draggable, { DraggableData, DraggableEvent } from 'react-draggable';
 
 interface IndividualFloatingTimerProps {
   timer: FloatingTimer;
@@ -18,51 +18,44 @@ const formatTime = (totalSeconds: number): string => {
 const draggableRootStyle = css`
   position: fixed;
   z-index: 999;
-  /* Draggable applies transform for positioning. Width/height are determined by child. */
 `;
 
 const timerVisualsStyle = css`
   display: flex;
   flex-direction: column;
-  gap: var(--space-md); /* Increased gap */
-  padding: var(--space-lg); /* Increased padding */
-  border-radius: var(--border-radius-lg); /* Softer radius */
-  background-color: rgba(255, 255, 255, 0.95); /* Slightly less transparent */
-  backdrop-filter: blur(5px); /* Slightly more blur */
-  box-shadow: var(--shadow-lg); /* Softer, larger shadow */
-  border: 1px solid var(--border-color); /* Thinner border, more subtle */
-  width: 240px; /* Increased width */
+  gap: var(--space-md);
+  padding: var(--space-lg);
+  border-radius: var(--border-radius-lg);
+  background-color: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(8px);
+  box-shadow: var(--shadow-lg);
+  border: 2px solid var(--border-color);
+  width: 240px;
   overflow: hidden;
-  transition: border-color 0.3s ease; /* For smooth color change if not pulsing */
+  transition: border-color 0.3s ease;
 
-  &[data-alarm-playing="true"] {
+  &[data-alarm-playing='true'] {
     animation: pulse 0.5s infinite alternate;
-    /* The border-color is handled by inline style for alarm state or specific timer color */
 
     @keyframes pulse {
       0% {
-        transform: scale(1); /* This scale is now on the inner div */
         box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
       }
-      50% {
-        transform: scale(1.02);
-      }
       100% {
-        transform: scale(1);
-        box-shadow: 0 0 0 10px rgba(239, 68, 68, 0);
+        box-shadow: 0 0 0 12px rgba(239, 68, 68, 0);
       }
     }
   }
 `;
 
 const timeDisplay = css`
-  font-size: var(--font-size-xl); /* Larger font for time */
+  font-size: var(--font-size-xl);
   font-weight: 600;
   text-align: center;
-  padding: var(--space-sm); /* Increased padding */
-  background-color: rgba(255, 255, 255, 0.8); /* Match container style a bit more */
+  padding: var(--space-sm);
+  background-color: var(--surface-color-light);
   border-radius: var(--border-radius);
-  margin-bottom: var(--space-sm); /* Increased margin */
+  margin-bottom: var(--space-sm);
 `;
 
 const buttonGroup = css`
@@ -73,33 +66,34 @@ const buttonGroup = css`
 
 const timerButton = css`
   flex: 1;
-  padding: var(--space-sm); /* Increased padding for touch */
+  padding: var(--space-sm);
   min-width: 0;
-  height: 44px; /* Explicit height for touch target */
+  height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
   border: 1px solid var(--border-color);
-  border-radius: var(--border-radius); /* Consistent radius */
-  background-color: var(--surface-color-light);
-  transition: all 0.2s ease;
+  border-radius: var(--border-radius);
+  background-color: var(--surface-color);
+  box-shadow: none;
+  transition: all 0.15s ease;
+  cursor: pointer;
 
   &:hover {
-    background-color: var(--background-color-hover); /* Use theme variable if available */
-    border-color: var(--border-color-strong);
-    transform: translateY(-1px);
-    box-shadow: var(--shadow-sm);
+    background-color: var(--surface-color-hover);
+    border-color: var(--border-color-hover);
   }
 
   &:active {
-    transform: translateY(0);
-    box-shadow: none;
+    transform: scale(0.95);
   }
 `;
 
 const stopAlarmButton = css`
-  background-color: var(--danger-color) !important; /* Ensure override if combined */
+  background-color: var(--danger-color) !important;
   color: var(--text-on-primary) !important;
+  border-color: var(--danger-color) !important;
+  flex-grow: 1;
 
   &:hover {
     background-color: var(--danger-color-dark) !important;
@@ -145,10 +139,10 @@ export const IndividualFloatingTimer: React.FC<IndividualFloatingTimerProps> = (
     <Draggable
       nodeRef={nodeRef as React.RefObject<HTMLElement>}
       position={{ x: timer.x, y: timer.y }}
-      onStop={(_, data: DraggableData) => {
+      onStop={(_: DraggableEvent, data: DraggableData) => {
         dispatch({
           type: 'UPDATE_TIMER_POSITION',
-          payload: { id: timer.id, x: data.x, y: data.y }
+          payload: { id: timer.id, x: data.x, y: data.y },
         });
       }}
       cancel="button, .timer-button"
@@ -163,22 +157,19 @@ export const IndividualFloatingTimer: React.FC<IndividualFloatingTimerProps> = (
           data-alarm-playing={timer.alarmPlaying}
         >
           <div className={timeDisplay} style={{ color: timer.color, fontSize: '1.6rem' }}>
-            {timer.isFinished ? (
-              'Acabat!'
-            ) : (
-              `${formatTime(timer.duration - timer.elapsedTime)}`
-            )}
+            {timer.isFinished
+              ? 'Acabat!'
+              : `${formatTime(timer.duration - timer.elapsedTime)}`}
           </div>
 
           <div className={buttonGroup}>
             {timer.isFinished && timer.alarmPlaying ? (
               <button
-                className={`${timerButton} ${stopAlarmButton}`} // Combine classes for consistent styling
+                className={`${timerButton} ${stopAlarmButton}`}
                 onClick={handleStopAlarm}
                 onTouchEnd={handleStopAlarm}
-                style={{ flexGrow: 1 }} // Make it take full width of the group
               >
-                <BellOff size={22} /> {/* Slightly larger icon for primary action */}
+                <BellOff size={22} />
               </button>
             ) : (
               <>

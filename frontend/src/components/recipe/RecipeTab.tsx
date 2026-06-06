@@ -10,138 +10,143 @@ import { StepList } from './StepList';
 import { ScalingControl } from './ScalingControl';
 import { UnifiedDependencyModal } from '../common/UnifiedDependencyModal';
 import { ConfirmationModal } from '../common/ConfirmationModal';
-import { useItemDeletion, ItemToDelete } from '../../utils/useItemDeletion'; // Import the new hook and type
+import { useItemDeletion, ItemToDelete } from '../../utils/useItemDeletion';
 
 interface RecipeTabProps {
   recipeId: string;
   tabs: TabData[];
   handleOpenRecipeTab: (recipeId: string, recipeName: string, initialScaleFactor?: number) => void;
-  // Add props for lifted state and handlers
   isProductionMode: boolean;
   trackedAmounts: Record<string, number>;
-  onToggleProductionMode: () => void; // Handler now takes no args as tabId is known in parent
-  onAmountTracked: (ingredientId: string, addedAmountGrams: number) => void; // Handler now takes no tabId
-  // Add prop for opening the editor
+  onToggleProductionMode: () => void;
+  onAmountTracked: (ingredientId: string, addedAmountGrams: number) => void;
   onOpenEditor: (recipeId: string, recipeName: string) => void;
-  onClose: () => void; // Prop to close the tab
-  // Add props for scale factor state and handler
+  onClose: () => void;
   scaleFactor: number;
   onScaleChange: (newScaleFactor: number) => void;
 }
 
 const RecipeContainer = styled.div`
-  /* --- Grid Layout (Tablet Landscape & Larger) --- */
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+  max-width: 1200px;
+  margin: 0 auto;
+  overflow-y: auto;
+
   @media (min-width: 1024px) {
     display: grid;
-    grid-template-columns: 1fr 1fr; /* Two equal columns */
-    grid-template-rows: auto auto minmax(0, 1fr) auto; /* Header, Info, Ingredients (expand), Scaling */
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto minmax(300px, 1fr) auto;
     grid-template-areas:
       "header header"
       "info   info"
       "ingredients steps"
-      "scaling steps"; /* Scaling below ingredients, steps span */
-    gap: var(--space-lg) var(--space-xl); /* Row gap, Column gap */
-    padding: var(--space-lg);
-    /* Let content determine height, container can scroll if needed */
-    overflow-y: auto; /* Allow vertical scrolling for the entire container if content overflows */
-    max-width: none; /* Remove max-width for grid */
-    margin: 0; /* Remove margin for grid */
-    /* Consider a max-height if you want to constrain it within viewport and scroll internally */
-    /* max-height: calc(100vh - var(--header-height, 100px)); */ /* Adjust header-height variable */
+      "scaling steps";
+    gap: var(--space-lg) var(--space-xl);
+    padding: var(--space-lg) 0;
   }
 
-  /* --- Flex Layout (Mobile & Smaller Tablets) --- */
   @media (max-width: 1023px) {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-lg); /* Keep consistent gap */
-    padding: var(--space-md); /* Slightly less padding on mobile */
-    max-width: 900px; /* Restore max-width */
-    margin: var(--space-lg) auto; /* Restore centering */
+    padding: var(--space-md) 0;
   }
 `;
 
 const LoadingMessage = styled.div`
-  grid-column: 1 / -1; /* Span full width in grid if loading */
+  grid-column: 1 / -1;
   font-style: italic;
-  color: var(--text-color-light); /* Use lighter text */
-  padding: var(--space-xl) 0; /* Add padding for visual spacing */
+  color: var(--text-color-light);
+  padding: var(--space-2xl) 0;
   text-align: center;
 `;
 
 const ErrorMessage = styled.div`
-  grid-column: 1 / -1; /* Span full width in grid if error */
-  color: var(--danger-color-dark); /* Changed to --danger-color-dark for better contrast */
-  font-weight: 500; /* Slightly less bold */
+  grid-column: 1 / -1;
+  color: var(--danger-color-dark);
+  font-weight: 500;
   padding: var(--space-lg);
-  background-color: rgba(239, 68, 68, 0.1); /* Light red background */
+  background-color: var(--danger-color-light);
   border: 1px solid var(--danger-color);
   border-radius: var(--border-radius);
   text-align: center;
 `;
 
-const RecipeHeader = styled.h2`
-  grid-area: header; /* Assign grid area */
-  margin-bottom: 0; /* Remove bottom margin, grid gap handles spacing */
+const RecipeHeader = styled.div`
+  grid-area: header;
   color: var(--text-color-strong);
   display: flex;
-  align-items: center; /* Align items vertically */
-  justify-content: space-between; /* Space out title and controls */
+  align-items: center;
+  justify-content: space-between;
   gap: var(--space-md);
-  flex-wrap: wrap; /* Allow wrapping on smaller screens within the header */
+  flex-wrap: wrap;
+  padding-bottom: var(--space-md);
+  border-bottom: var(--border-width) solid var(--border-color-light);
 `;
 
-const RecipeName = styled.span`
-  flex-grow: 1; /* Allow name to take available space */
+const RecipeName = styled.h2`
+  margin: 0;
+  font-size: var(--font-size-xl);
+  color: var(--text-color-strong);
 `;
 
+const HeaderActions = styled.div`
+  display: flex;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+  align-items: center;
+`;
 
-// Wrappers for list components to control grid placement and scrolling
-const IngredientsWrapper = styled.div`
-  grid-area: ingredients;
-  overflow-y: auto; /* Enable vertical scrolling */
-  min-height: 0; /* Allow shrinking in flex/grid context */
-  border: var(--border-width) solid var(--border-color-light); /* Optional: Add border */
-  border-radius: var(--border-radius);
-  padding: var(--space-md);
-  background-color: var(--surface-color-raised); /* Slightly different background */
+const ContentSection = styled.div<{ area: string }>`
+  grid-area: ${({ area }) => area};
+  border: var(--border-width) solid var(--border-color-light);
+  border-radius: var(--border-radius-lg);
+  padding: var(--space-lg);
+  background-color: var(--surface-color);
+  box-shadow: var(--shadow-xs);
+  overflow-y: auto;
+  min-height: 200px;
 
   @media (max-width: 1023px) {
-    overflow-y: visible; /* Disable scrolling on mobile */
     border: none;
     padding: 0;
     background-color: transparent;
+    box-shadow: none;
+    min-height: 0;
   }
 `;
 
-const StepsWrapper = styled.div`
-  grid-area: steps;
-  overflow-y: auto; /* Enable vertical scrolling */
-  min-height: 0; /* Allow shrinking in flex/grid context */
-  border: var(--border-width) solid var(--border-color-light); /* Optional: Add border */
-  border-radius: var(--border-radius);
-  padding: var(--space-md);
-  background-color: var(--surface-color-raised); /* Slightly different background */
+const ScalingSection = styled.div<{ area: string }>`
+  grid-area: ${({ area }) => area};
+  border: var(--border-width) solid var(--border-color-light);
+  border-radius: var(--border-radius-lg);
+  padding: var(--space-lg);
+  background-color: var(--surface-color);
+  box-shadow: var(--shadow-xs);
 
   @media (max-width: 1023px) {
-    overflow-y: visible; /* Disable scrolling on mobile */
     border: none;
     padding: 0;
     background-color: transparent;
+    box-shadow: none;
   }
 `;
 
-// Wrapper for scaling control placement
-const ScalingWrapper = styled.div`
-  grid-area: scaling;
-  /* Add margin-top if needed for spacing below ingredients */
-  /* margin-top: var(--space-md); */
+const SeparatorLine = styled.hr`
+  grid-column: 1 / -1;
+  border: none;
+  border-top: 1px solid var(--border-color-light);
+  margin: 0;
+  width: 100%;
+
+  @media (max-width: 1023px) {
+    display: none;
+  }
 `;
 
-
-// Custom styled component for ProductionModeToggle to handle isActive prop
 const ProductionModeButton = styled(SecondaryButton)<{ isActive?: boolean }>`
-  ${props => props.isActive ? `
+  ${(props) =>
+    props.isActive
+      ? `
     background-color: var(--secondary-color);
     color: var(--text-on-secondary);
     border-color: var(--secondary-color);
@@ -150,88 +155,63 @@ const ProductionModeButton = styled(SecondaryButton)<{ isActive?: boolean }>`
       background-color: var(--secondary-color-dark);
       border-color: var(--secondary-color-dark);
     }
-  ` : ''}
+  `
+      : ''}
 `;
 
-const SeparatorLine = styled.hr`
-  grid-column: 1 / -1; /* Span all columns in grid layout */
-  border: none;
-  border-top: 1px solid var(--border-color-light);
-  margin: 0; /* Rely on parent container's gap (grid or flex) for spacing */
-  width: 100%;
-`;
-
-// --- Component ---
 export const RecipeTab = ({
   recipeId,
-  // tabs, // No longer needed here
   handleOpenRecipeTab,
-  isProductionMode, // Destructure new props
+  isProductionMode,
   trackedAmounts,
   onToggleProductionMode,
   onAmountTracked,
-  onOpenEditor, // Destructure the new prop
-  onClose, // Destructure the close handler
-  scaleFactor, // Destructure scale factor props
+  onOpenEditor,
+  onClose,
+  scaleFactor,
   onScaleChange,
 }: RecipeTabProps) => {
-  // Removed local scaleFactor state
-  // Removed local isProductionMode state
-  // Removed local trackedAmounts state
-  // REMOVED Timer State (useState, useRef) - Now managed in App.tsx
-
-  const handleDeletionCycleComplete = useCallback((status: 'deleted' | 'cancelled' | 'error', itemId?: string) => {
-    if (status === 'deleted' && itemId === recipeId) {
-      onClose();
-    }
-    // Potentially handle other statuses or refresh data if needed,
-    // though query invalidation in the hook should cover most data refresh.
-    console.log(`Deletion cycle completed for item ${itemId} with status: ${status}`);
-  }, [recipeId, onClose]);
+  const handleDeletionCycleComplete = useCallback(
+    (status: 'deleted' | 'cancelled' | 'error', itemId?: string) => {
+      if (status === 'deleted' && itemId === recipeId) {
+        onClose();
+      }
+    },
+    [recipeId, onClose]
+  );
 
   const itemDeletionHook = useItemDeletion({ onDeletionCycleComplete: handleDeletionCycleComplete });
 
-  // --- Fetch Recipe Data ---
   const {
     data: recipe,
     isLoading,
     isError,
     error,
   } = useQuery<RecipeDetails, Error>({
-    queryKey: ['recipe', recipeId], // Unique key for this recipe query
-    queryFn: () => fetchRecipeById(recipeId), // Function to fetch data
+    queryKey: ['recipe', recipeId],
+    queryFn: () => fetchRecipeById(recipeId),
   });
 
   const queryClient = useQueryClient();
 
-  // Effect to handle errors from the itemDeletionHook.error state
   useEffect(() => {
     if (itemDeletionHook.error) {
-      // The error from useItemDeletion is already a string or null
-      const errorMessage = itemDeletionHook.error;
-      console.error("Error during deletion process (from itemDeletionHook.error):", errorMessage);
-      alert(`An error occurred: ${errorMessage}`);
-      // itemDeletionHook.clearError(); // Assuming a method to clear the error exists in the hook
-      // Consider if clearError should be called or if the error should persist until a new action.
+      console.error('Error during deletion process:', itemDeletionHook.error);
     }
   }, [itemDeletionHook.error]);
 
-  // --- Finalize Production Mutation ---
   const finalizeProductionMutation = useMutation({
     mutationFn: (id: string) => finalizeRecipeProductionApi(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['ingredients'] });
       onClose();
-      alert('Producció finalitzada i ingredients gastats correctament.');
-      console.log(`Recipe ${recipeId} production finalized.`);
     },
-    onError: (error: Error) => {
-      console.error("Error finalizing recipe production:", error);
-      alert(`Error en finalitzar la producció: ${error.message || 'Error desconegut'}.`);
+    onError: (err: Error) => {
+      console.error('Error finalizing recipe production:', err);
+      alert(`Error en finalitzar la producció: ${err.message || 'Error desconegut'}.`);
     },
   });
 
-  // --- Delete Handler ---
   const handleDeleteRecipe = () => {
     if (!recipe) return;
     const itemToDelete: ItemToDelete = {
@@ -242,24 +222,29 @@ export const RecipeTab = ({
     itemDeletionHook.startDeletionProcess(itemToDelete);
   };
 
-  // Handler for editing a dependent recipe from the modal
   const handleEditItemFromModal = (item: { id: string; name: string; type: 'recipe' | 'ingredient' }) => {
     if (item.type === 'recipe') {
       onOpenEditor(item.id, item.name);
-    } else {
-      // Handle ingredient editing if necessary, or log a warning if not expected here
-      console.warn(`Editing for item type '${item.type}' from modal not implemented in RecipeTab.`);
     }
   };
 
   if (isLoading) {
-    return <RecipeContainer><LoadingMessage aria-live="polite">Carregant detalls de la recepta...</LoadingMessage></RecipeContainer>;
+    return (
+      <RecipeContainer>
+        <LoadingMessage aria-live="polite">
+          Carregant detalls de la recepta...
+        </LoadingMessage>
+      </RecipeContainer>
+    );
   }
 
   if (isError) {
     return (
       <RecipeContainer>
-        <ErrorMessage aria-live="polite">Error en carregar la recepta: {error?.message || 'Error desconegut'}</ErrorMessage>
+        <ErrorMessage aria-live="polite">
+          Error en carregar la recepta:{' '}
+          {error?.message || 'Error desconegut'}
+        </ErrorMessage>
       </RecipeContainer>
     );
   }
@@ -269,39 +254,64 @@ export const RecipeTab = ({
       <RecipeContainer>
         <RecipeHeader>
           <RecipeName>{recipe.name}</RecipeName>
-          <ActionButton
-            onClick={() => onOpenEditor(recipeId, recipe.name)}
-            disabled={itemDeletionHook.isProcessingDelete || itemDeletionHook.isLoadingDependencies}
-          >
-            Editar
-          </ActionButton>
-          <DangerButton
-            onClick={handleDeleteRecipe}
-            disabled={!recipe || itemDeletionHook.isProcessingDelete || itemDeletionHook.isLoadingDependencies}
-          >
-            {itemDeletionHook.isProcessingDelete ? 'Eliminant...' : (itemDeletionHook.isLoadingDependencies ? 'Comprovant...' : 'Eliminar recepta')}
-          </DangerButton>
-          <ProductionModeButton
-            isActive={isProductionMode}
-            onClick={onToggleProductionMode}
-            aria-pressed={isProductionMode} // Added aria-pressed
-            title={isProductionMode ? "Desactivar mode producció" : "Activar mode producció"} // More specific title
-          >
-            {isProductionMode ? 'Mode producció: ACTIU' : 'Mode producció: INACTIU'}
-          </ProductionModeButton>
-          {isProductionMode && (
-            <PrimaryButton
-              onClick={() => finalizeProductionMutation.mutate(recipeId)}
-              disabled={finalizeProductionMutation.isPending || itemDeletionHook.isProcessingDelete || itemDeletionHook.isLoadingDependencies}
+          <HeaderActions>
+            <ActionButton
+              onClick={() => onOpenEditor(recipeId, recipe.name)}
+              disabled={
+                itemDeletionHook.isProcessingDelete ||
+                itemDeletionHook.isLoadingDependencies
+              }
             >
-              {finalizeProductionMutation.isPending ? 'Finalitzant...' : 'Finalitzar (gastar ingredients)'}
-            </PrimaryButton>
-          )}
+              Editar
+            </ActionButton>
+            <DangerButton
+              onClick={handleDeleteRecipe}
+              disabled={
+                !recipe ||
+                itemDeletionHook.isProcessingDelete ||
+                itemDeletionHook.isLoadingDependencies
+              }
+            >
+              {itemDeletionHook.isProcessingDelete
+                ? 'Eliminant...'
+                : itemDeletionHook.isLoadingDependencies
+                  ? 'Comprovant...'
+                  : 'Eliminar'}
+            </DangerButton>
+            <ProductionModeButton
+              isActive={isProductionMode}
+              onClick={onToggleProductionMode}
+              aria-pressed={isProductionMode}
+              title={
+                isProductionMode
+                  ? 'Desactivar mode producció'
+                  : 'Activar mode producció'
+              }
+            >
+              {isProductionMode
+                ? 'Mode producció: ACTIU'
+                : 'Mode producció: INACTIU'}
+            </ProductionModeButton>
+            {isProductionMode && (
+              <PrimaryButton
+                onClick={() => finalizeProductionMutation.mutate(recipeId)}
+                disabled={
+                  finalizeProductionMutation.isPending ||
+                  itemDeletionHook.isProcessingDelete ||
+                  itemDeletionHook.isLoadingDependencies
+                }
+              >
+                {finalizeProductionMutation.isPending
+                  ? 'Finalitzant...'
+                  : 'Finalitzar (gastar ingredients)'}
+              </PrimaryButton>
+            )}
+          </HeaderActions>
         </RecipeHeader>
 
         <SeparatorLine />
 
-        <IngredientsWrapper>
+        <ContentSection area="ingredients">
           <IngredientList
             ingredients={recipe.ingredients}
             linkedRecipes={recipe.linkedRecipes}
@@ -311,38 +321,42 @@ export const RecipeTab = ({
             trackedAmounts={trackedAmounts}
             onAmountTracked={onAmountTracked}
           />
-        </IngredientsWrapper>
+        </ContentSection>
 
-        <StepsWrapper>
+        <ContentSection area="steps">
           <StepList steps={recipe.steps} />
-        </StepsWrapper>
+        </ContentSection>
 
-        <ScalingWrapper>
-           <ScalingControl
-             scaleFactor={scaleFactor}
-             onScaleChange={onScaleChange}
-             baseYieldGrams={recipe.baseYieldGrams}
-             disabled={isProductionMode}
-           />
-        </ScalingWrapper>
-  
-        {/* Unified Dependency Modal */}
+        <ScalingSection area="scaling">
+          <ScalingControl
+            scaleFactor={scaleFactor}
+            onScaleChange={onScaleChange}
+            baseYieldGrams={recipe.baseYieldGrams}
+            disabled={isProductionMode}
+          />
+        </ScalingSection>
+
         <UnifiedDependencyModal
           isOuterModalOpen={itemDeletionHook.isDependencyModalOpen}
           onOuterModalClose={itemDeletionHook.cancelDeletionProcess}
           outerItemName={itemDeletionHook.currentItem?.name || ''}
           outerItemType={itemDeletionHook.currentItem?.type || 'recipe'}
-          outerItemDependentRecipes={itemDeletionHook.dependentItems.map(item => ({ id: item._id, name: item.name, type: 'recipe' }))}
+          outerItemDependentRecipes={itemDeletionHook.dependentItems.map(
+            (item) => ({ id: item._id, name: item.name, type: 'recipe' as const })
+          )}
           isLoadingOuterItemDependencies={itemDeletionHook.isLoadingDependencies}
           onRefreshOuterItemDependencies={itemDeletionHook.refreshDependencies}
-          outerItemError={itemDeletionHook.error} // Pass error from the hook
-          onEditRecipeInOuterModal={(recipeOrId: RecipeDetails | string) => {
+          outerItemError={itemDeletionHook.error}
+          onEditRecipeInOuterModal={(
+            recipeOrId: RecipeDetails | string
+          ) => {
             let id: string;
             let name: string;
             if (typeof recipeOrId === 'string') {
               id = recipeOrId;
-              // Attempt to find the name from the dependent items, or use a placeholder
-              const foundRecipe = itemDeletionHook.dependentItems.find(r => r._id === id);
+              const foundRecipe = itemDeletionHook.dependentItems.find(
+                (r) => r._id === id
+              );
               name = foundRecipe ? foundRecipe.name : 'Recipe';
             } else {
               id = recipeOrId._id;
@@ -350,25 +364,39 @@ export const RecipeTab = ({
             }
             handleEditItemFromModal({ id, name, type: 'recipe' });
           }}
-          // onEditIngredientInOuterModal prop would be needed if ingredients could be edited from here
         />
 
-        {/* Confirmation Modal */}
         <ConfirmationModal
           isOpen={itemDeletionHook.isConfirmationModalOpen}
-          onClose={itemDeletionHook.confirmationModalProps?.onCancel || itemDeletionHook.cancelDeletionProcess}
-          title={itemDeletionHook.confirmationModalProps?.title || "Confirm Deletion"}
-          message={itemDeletionHook.confirmationModalProps?.message || "Are you sure?"}
-          onConfirm={itemDeletionHook.confirmationModalProps?.onConfirm || (() => {})}
-          confirmButtonText={itemDeletionHook.confirmationModalProps?.confirmText || "Confirm"}
-          cancelButtonText={itemDeletionHook.confirmationModalProps?.cancelText || "Cancel"}
-          // Spread any other specific props if necessary, but ensure required ones are met.
-          // For example, if confirmButtonVariant is part of confirmationModalProps:
-          // confirmButtonVariant={itemDeletionHook.confirmationModalProps?.confirmButtonVariant || 'danger'}
+          onClose={
+            itemDeletionHook.confirmationModalProps?.onCancel ||
+            itemDeletionHook.cancelDeletionProcess
+          }
+          title={
+            itemDeletionHook.confirmationModalProps?.title || 'Confirm Deletion'
+          }
+          message={
+            itemDeletionHook.confirmationModalProps?.message || 'Are you sure?'
+          }
+          onConfirm={
+            itemDeletionHook.confirmationModalProps?.onConfirm || (() => {})
+          }
+          confirmButtonText={
+            itemDeletionHook.confirmationModalProps?.confirmText || 'Confirm'
+          }
+          cancelButtonText={
+            itemDeletionHook.confirmationModalProps?.cancelText || 'Cancel'
+          }
         />
       </RecipeContainer>
     );
   }
 
-  return <RecipeContainer>No hi ha dades de la recepta disponibles.</RecipeContainer>;
+  return (
+    <RecipeContainer>
+      <p style={{ textAlign: 'center', color: 'var(--text-color-light)' }}>
+        No hi ha dades de la recepta disponibles.
+      </p>
+    </RecipeContainer>
+  );
 };

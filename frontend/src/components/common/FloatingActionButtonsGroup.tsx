@@ -3,7 +3,6 @@ import { styled } from '@linaria/react';
 import { useTimers } from '../../contexts/TimerContext';
 import { TimerCreationPanel } from '../timers/TimerCreationPanel';
 
-// Copied from FloatingAddTimerButton.tsx, can be moved to a shared location if needed
 const PREDEFINED_COLORS = [
   'var(--timer-color-red)',
   'var(--timer-color-blue)',
@@ -16,7 +15,6 @@ interface FloatingActionButtonsGroupProps {
   onOpenDefaultStepsTab: () => void;
   onOpenIngredientsTab: () => void;
   onOpenNewRecipeEditor: () => void;
-  // The "New Timer" action will be handled internally by opening the TimerCreationPanel
 }
 
 const ActionButtonsContainer = styled.div`
@@ -24,35 +22,39 @@ const ActionButtonsContainer = styled.div`
   bottom: 2rem;
   right: 2rem;
   display: flex;
-  flex-direction: row; // Stack buttons horizontally
+  flex-direction: column;
   gap: var(--space-sm);
-  z-index: 1000;
+  z-index: 900;
 `;
 
 const ActionButton = styled.button`
-  width: 48px; // Slightly smaller for a group
-  height: 48px;
+  width: 56px;
+  height: 56px;
   border-radius: 50%;
   background-color: var(--primary-color);
   color: var(--text-on-primary);
   border: none;
-  box-shadow: var(--shadow-md);
-  font-size: 1.2rem; // Adjusted for icon-like text
-  font-weight: bold;
+  box-shadow: var(--shadow-lg);
+  font-size: 1.4rem;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all 0.2s ease;
+  touch-action: manipulation;
 
   &:hover {
-    transform: scale(1.1);
-    box-shadow: var(--shadow-lg);
-    background-color: var(--primary-color-dark); // Darken on hover
+    transform: scale(1.08);
+    box-shadow: var(--shadow-xl);
+    background-color: var(--primary-color-dark);
+  }
+
+  &:active {
+    transform: scale(0.95);
   }
 
   &:disabled {
-    background-color: var(--text-color-light);
+    background-color: var(--border-color);
     cursor: not-allowed;
     transform: none;
     opacity: 0.7;
@@ -74,13 +76,25 @@ export const FloatingActionButtonsGroup: React.FC<FloatingActionButtonsGroupProp
   return (
     <>
       <ActionButtonsContainer>
-        <ActionButton onClick={onOpenDefaultStepsTab} title="Passos per Defecte" aria-label="Passos per Defecte">
+        <ActionButton
+          onClick={onOpenDefaultStepsTab}
+          title="Passos per Defecte"
+          aria-label="Passos per Defecte"
+        >
           📜
         </ActionButton>
-        <ActionButton onClick={onOpenIngredientsTab} title="Ingredients" aria-label="Ingredients">
+        <ActionButton
+          onClick={onOpenIngredientsTab}
+          title="Ingredients"
+          aria-label="Ingredients"
+        >
           🥕
         </ActionButton>
-        <ActionButton onClick={onOpenNewRecipeEditor} title="+ Nova recepta" aria-label="+ Nova recepta">
+        <ActionButton
+          onClick={onOpenNewRecipeEditor}
+          title="+ Nova recepta"
+          aria-label="+ Nova recepta"
+        >
           🍦
         </ActionButton>
         <ActionButton

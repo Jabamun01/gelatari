@@ -16,38 +16,44 @@ interface TabBarProps {
 
 const NavContainer = styled.nav`
   display: flex;
-  flex-wrap: wrap;
   align-items: stretch;
   border-bottom: var(--border-width) solid var(--tab-border-color);
   background-color: var(--surface-color);
-  padding: 0 var(--space-sm);
-  gap: var(--space-xs);
   box-shadow: var(--shadow-sm);
   position: relative;
-  min-height: 50px; 
-  justify-content: space-between;
+  z-index: 10;
+  min-height: 52px;
 `;
 
 const TabsWrapper = styled.div`
   display: flex;
   align-items: stretch;
-  gap: var(--space-xs);
+  gap: 0;
   flex: 1;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
 `;
 
-// Define a dedicated styled component for the close icon (span)
 const CloseIcon = styled.span`
   margin-left: var(--space-sm);
   padding: var(--space-xs);
   border: none;
   background: transparent;
   cursor: pointer;
-  font-size: 1.1em;
-  color: var(--text-color-light);
-  opacity: 0.6;
+  font-size: 0.85em;
+  color: var(--text-color-lighter);
+  opacity: 0.5;
   border-radius: 50%;
-  width: 20px;
-  height: 20px;
+  min-width: 44px;
+  min-height: 44px;
+  width: auto;
+  height: auto;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -55,7 +61,7 @@ const CloseIcon = styled.span`
   transition: background-color 0.15s ease, opacity 0.15s ease, color 0.15s ease;
 
   button:hover & {
-      opacity: 0.8;
+    opacity: 0.8;
   }
 
   &:hover,
@@ -67,33 +73,39 @@ const CloseIcon = styled.span`
   }
 `;
 
-
 const TabButton = styled.button<{ isActive: boolean }>`
   padding: 0 var(--space-lg);
   border: none;
   border-bottom: 3px solid transparent;
-  background-color: transparent;
-  color: ${({ isActive }) => isActive ? 'var(--primary-color)' : 'var(--text-color-light)'};
+  background-color: ${({ isActive }) =>
+    isActive ? 'var(--tab-active-bg)' : 'var(--tab-inactive-bg)'};
+  color: ${({ isActive }) =>
+    isActive ? 'var(--primary-color)' : 'var(--text-color-light)'};
   cursor: pointer;
-  font-size: var(--font-size-base);
-  font-weight: ${({ isActive }) => isActive ? '600' : '500'};
-  border-top-left-radius: var(--border-radius);
-  border-top-right-radius: var(--border-radius);
-  margin-bottom: -1px;
+  font-size: var(--font-size-sm);
+  font-weight: ${({ isActive }) => (isActive ? '600' : '500')};
   position: relative;
   display: inline-flex;
   align-items: center;
+  white-space: nowrap;
   transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  min-height: 52px;
+  border-radius: 0;
+  box-shadow: none;
+  touch-action: manipulation;
 
-  ${({ isActive }) => isActive ? `
+  ${({ isActive }) =>
+    isActive
+      ? `
     border-bottom-color: var(--tab-active-border-color);
     color: var(--primary-color);
-  ` : ''}
+  `
+      : ''}
 
   &:hover:not(:disabled) {
     background-color: var(--tab-hover-bg);
-    color: ${({ isActive }) => isActive ? 'var(--primary-color)' : 'var(--text-color)'};
-    border-bottom-color: ${({ isActive }) => isActive ? 'var(--tab-active-border-color)' : 'var(--border-color-light)'};
+    color: ${({ isActive }) =>
+      isActive ? 'var(--primary-color)' : 'var(--text-color)'};
   }
 
   &:focus {
@@ -101,20 +113,25 @@ const TabButton = styled.button<{ isActive: boolean }>`
     box-shadow: inset 0 0 0 2px var(--primary-color);
     z-index: 1;
   }
+
+  &:active:not(:disabled) {
+    transform: none;
+  }
 `;
 
 const UserMenuContainer = styled.div`
   position: relative;
   display: flex;
   align-items: center;
-  padding: 0 var(--space-md);
+  flex-shrink: 0;
+  padding: 0 var(--space-sm);
 `;
 
 const UserButton = styled.button`
   display: flex;
   align-items: center;
-  gap: var(--space-sm);
-  padding: var(--space-sm) var(--space-md);
+  gap: var(--space-xs);
+  padding: var(--space-md) var(--space-md);
   border: var(--border-width) solid var(--border-color-light);
   border-radius: var(--border-radius);
   background-color: var(--surface-color);
@@ -123,6 +140,8 @@ const UserButton = styled.button`
   font-size: var(--font-size-sm);
   font-weight: 500;
   transition: border-color 0.15s ease, background-color 0.15s ease;
+  min-height: 44px;
+  box-shadow: none;
 
   &:hover {
     border-color: var(--primary-color);
@@ -131,7 +150,7 @@ const UserButton = styled.button`
 
   &:focus {
     outline: none;
-    box-shadow: 0 0 0 2px var(--primary-color);
+    box-shadow: 0 0 0 2px var(--focus-ring-color);
   }
 `;
 
@@ -160,6 +179,8 @@ const DropdownItem = styled.button`
   font-size: var(--font-size-sm);
   text-align: left;
   transition: background-color 0.15s ease;
+  box-shadow: none;
+  min-height: 44px;
 
   &:hover {
     background-color: var(--surface-color-light);
@@ -195,8 +216,8 @@ export const TabBar = ({
   onLogout,
 }: TabBarProps) => {
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const tabsRef = useRef<HTMLDivElement>(null);
 
-  // Close dropdown when clicking outside
   useEffect(() => {
     if (!showUserMenu) return;
     const handleClickOutside = (e: MouseEvent) => {
@@ -208,9 +229,20 @@ export const TabBar = ({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [showUserMenu, onUserMenuToggle]);
 
+  // Auto-scroll active tab into view
+  useEffect(() => {
+    if (!tabsRef.current) return;
+    const activeTabEl = tabsRef.current.querySelector(
+      `[id="tab-${CSS.escape(activeTabId)}"]`
+    ) as HTMLElement | null;
+    if (activeTabEl) {
+      activeTabEl.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+    }
+  }, [activeTabId]);
+
   return (
-    <NavContainer aria-label="Main navigation">
-      <TabsWrapper role="tablist">
+    <NavContainer aria-label="Navegació principal">
+      <TabsWrapper ref={tabsRef} role="tablist">
         {tabs.map((tab) => (
           <TabButton
             key={tab.id}
@@ -224,26 +256,26 @@ export const TabBar = ({
           >
             {tab.title}
             {tab.isCloseable && (
-            <CloseIcon
-              role="button"
-              tabIndex={0}
-              onClick={(e: React.MouseEvent) => {
-                e.stopPropagation();
-                onTabClose(tab.id);
-              }}
-              onKeyDown={(e: React.KeyboardEvent) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
+              <CloseIcon
+                role="button"
+                tabIndex={0}
+                onClick={(e: React.MouseEvent) => {
                   e.stopPropagation();
                   onTabClose(tab.id);
-                }
-              }}
-              title={`Tanca ${tab.title}`}
-              aria-label={`Tanca ${tab.title}`}
-            >
-              ✕
-            </CloseIcon>
-          )}
+                }}
+                onKeyDown={(e: React.KeyboardEvent) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    onTabClose(tab.id);
+                  }
+                }}
+                title={`Tanca ${tab.title}`}
+                aria-label={`Tanca ${tab.title}`}
+              >
+                ✕
+              </CloseIcon>
+            )}
           </TabButton>
         ))}
       </TabsWrapper>
@@ -264,7 +296,11 @@ export const TabBar = ({
             <DropdownItem role="menuitem" onClick={onChangePassword}>
               🔑 Canviar contrasenya
             </DropdownItem>
-            <DropdownItem role="menuitem" className="danger" onClick={onLogout}>
+            <DropdownItem
+              role="menuitem"
+              className="danger"
+              onClick={onLogout}
+            >
               🚪 Tancar sessió
             </DropdownItem>
           </Dropdown>

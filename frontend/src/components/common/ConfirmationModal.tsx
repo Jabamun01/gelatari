@@ -18,13 +18,15 @@ const MessageContainer = styled.div`
   margin-bottom: var(--space-lg);
   color: var(--text-color);
   line-height: var(--line-height-base);
-  white-space: pre-wrap; // To respect newlines in the message string
+  white-space: pre-wrap;
+  font-size: var(--font-size-base);
 `;
 
 const FooterActions = styled.div`
   display: flex;
   justify-content: flex-end;
   gap: var(--space-md);
+  flex-wrap: wrap;
 `;
 
 export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
@@ -33,9 +35,9 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
   onConfirm,
   title,
   message,
-  confirmButtonText = "Confirmar",
-  cancelButtonText = "Cancel·lar",
-  confirmButtonVariant = "primary",
+  confirmButtonText = 'Confirmar',
+  cancelButtonText = 'Cancel·lar',
+  confirmButtonVariant = 'primary',
 }) => {
   if (!isOpen) {
     return null;
@@ -43,10 +45,11 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
 
   const handleConfirm = () => {
     onConfirm();
-    onClose(); // Close modal after confirmation
+    onClose();
   };
 
-  const ConfirmButtonComponent = confirmButtonVariant === 'danger' ? DangerButton : PrimaryButton;
+  const ConfirmButtonComponent =
+    confirmButtonVariant === 'danger' ? DangerButton : PrimaryButton;
 
   return (
     <Modal
@@ -55,9 +58,7 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
       title={title}
       footer={
         <FooterActions>
-          <SecondaryButton onClick={onClose}>
-            {cancelButtonText}
-          </SecondaryButton>
+          <SecondaryButton onClick={onClose}>{cancelButtonText}</SecondaryButton>
           <ConfirmButtonComponent onClick={handleConfirm}>
             {confirmButtonText}
           </ConfirmButtonComponent>

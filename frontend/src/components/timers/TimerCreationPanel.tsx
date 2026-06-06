@@ -9,9 +9,8 @@ interface TimerCreationPanelProps {
   availableColors: string[];
 }
 
-// Keep existing parseDurationToSeconds, or refine if needed
 const parseDurationToSeconds = (durationStr: string): number | null => {
-  const parts = durationStr.split(':').map(part => parseInt(part, 10));
+  const parts = durationStr.split(':').map((part) => parseInt(part, 10));
   if (parts.length === 2) {
     const [minutes, seconds] = parts;
     if (!isNaN(minutes) && !isNaN(seconds) && seconds >= 0 && seconds < 60 && minutes >= 0 && minutes < 100) {
@@ -20,14 +19,11 @@ const parseDurationToSeconds = (durationStr: string): number | null => {
   } else if (parts.length === 1) {
     const [secondsOnly] = parts;
     if (!isNaN(secondsOnly) && secondsOnly >= 0) {
-        // Allow entering just seconds, up to 1 hour for simplicity here.
-        // Max value of slider is 3600.
-        return Math.min(secondsOnly, 3600);
+      return Math.min(secondsOnly, 3600);
     }
   }
   return null;
 };
-
 
 const Overlay = styled.div`
   position: fixed;
@@ -45,34 +41,33 @@ const PanelContainer = styled.div`
   left: 50%;
   transform: translate(-50%, -50%);
   background-color: var(--surface-color);
-  padding: var(--space-xl); /* Increased padding for a more spacious feel */
-  border-radius: var(--border-radius);
-  box-shadow: var(--shadow-lg);
+  padding: var(--space-xl);
+  border-radius: var(--border-radius-xl);
+  box-shadow: var(--shadow-xl);
   z-index: 1000;
-  width: 420px; /* Slightly increased width */
+  width: 440px;
+  max-width: 92vw;
   opacity: 0;
   transition: opacity 0.2s ease;
 
-  &[data-visible="true"] {
+  &[data-visible='true'] {
     opacity: 1;
   }
 `;
 
 const ModalTitle = styled.h2`
-  font-size: 1.375rem; /* Approx 22px */
+  font-size: var(--font-size-xl);
   color: var(--text-color-strong);
-  margin-top: 0;
-  margin-bottom: var(--space-md);
+  margin: 0 0 var(--space-md) 0;
   text-align: center;
   font-weight: 600;
 `;
 
 const StepDescription = styled.p`
-  font-size: var(--font-size-base);
+  font-size: var(--font-size-sm);
   color: var(--text-color-light);
   text-align: center;
-  margin-top: 0;
-  margin-bottom: var(--space-lg);
+  margin: 0 0 var(--space-lg) 0;
   line-height: var(--line-height-base);
 `;
 
@@ -80,7 +75,7 @@ const DurationInputContainer = styled.div`
   display: flex;
   align-items: center;
   gap: var(--space-md);
-  margin-bottom: var(--space-md); /* Reduced margin */
+  margin-bottom: var(--space-md);
 `;
 
 const DurationDisplayInput = styled.input`
@@ -88,53 +83,105 @@ const DurationDisplayInput = styled.input`
   padding: var(--space-sm) var(--space-md);
   border: var(--border-width) solid var(--border-color);
   border-radius: var(--border-radius);
-  font-size: var(--font-size-lg); /* Larger font for duration */
+  font-size: var(--font-size-lg);
   text-align: center;
   transition: border-color 0.2s ease;
 
   &:focus {
     border-color: var(--primary-color);
-    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+    box-shadow: 0 0 0 2px var(--focus-ring-color);
     outline: none;
   }
 `;
 
 const Slider = styled.input`
   width: 100%;
-  margin-bottom: var(--space-md); /* Reduced margin */
-  accent-color: var(--primary-color); /* Style the slider thumb and track */
-`;
+  margin-bottom: var(--space-md);
+  accent-color: var(--primary-color);
+  height: 6px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: var(--border-color-light);
+  border-radius: 3px;
+  outline: none;
+  cursor: pointer;
 
+  &::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--primary-color);
+    cursor: pointer;
+    border: 2px solid var(--surface-color);
+    box-shadow: var(--shadow-sm);
+    transition: transform 0.15s ease;
+  }
+
+  &::-moz-range-thumb {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--primary-color);
+    cursor: pointer;
+    border: 2px solid var(--surface-color);
+    box-shadow: var(--shadow-sm);
+  }
+
+  &::-webkit-slider-thumb:hover {
+    transform: scale(1.15);
+  }
+
+  &::-moz-range-thumb:hover {
+    transform: scale(1.15);
+  }
+
+  &:focus {
+    &::-webkit-slider-thumb {
+      box-shadow: 0 0 0 3px var(--focus-ring-color);
+    }
+    &::-moz-range-thumb {
+      box-shadow: 0 0 0 3px var(--focus-ring-color);
+    }
+  }
+`;
 
 const ColorSwatchContainer = styled.div`
   display: flex;
-  gap: var(--space-lg); /* Further increased gap */
+  gap: var(--space-lg);
   margin-bottom: var(--space-md);
   flex-wrap: wrap;
-  justify-content: space-around; /* Distribute space more evenly */
-  padding: var(--space-md) 0; /* Increased vertical padding */
+  justify-content: space-around;
+  padding: var(--space-md) 0;
 `;
 
-const ColorSwatch = styled.button<{ $color: string; }>`
-  width: 56px; /* Made swatches even larger */
-  height: 56px; /* Made swatches even larger */
-  border-radius: var(--border-radius); /* Square swatches */
-  background-color: ${props => props.$color};
-  border: 2px solid transparent;
+const ColorSwatch = styled.button<{ $color: string }>`
+  width: 56px;
+  height: 56px;
+  border-radius: var(--border-radius);
+  background-color: ${(props) => props.$color};
+  border: 3px solid transparent;
   cursor: pointer;
   transition: transform 0.2s ease, border-color 0.2s ease;
+  box-shadow: var(--shadow-sm);
 
   &:hover {
     transform: scale(1.1);
-    border-color: var(--primary-color-light);
+    border-color: var(--border-color-hover);
+  }
+
+  &:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px var(--focus-ring-color);
   }
 `;
 
 const ButtonGroup = styled.div`
   display: flex;
   gap: var(--space-sm);
-  /* justifyContent will be handled per instance or dynamically */
-  margin-top: var(--space-xl); /* Add consistent margin above button groups */
+  margin-top: var(--space-xl);
+  align-items: center;
 `;
 
 const Button = styled.button`
@@ -144,6 +191,8 @@ const Button = styled.button`
   cursor: pointer;
   transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
   border: 1px solid transparent;
+  min-height: 44px;
+  box-shadow: var(--shadow-xs);
 
   &.primary {
     background-color: var(--primary-color);
@@ -152,51 +201,38 @@ const Button = styled.button`
       background-color: var(--primary-color-dark);
     }
     &:disabled {
-      background-color: var(--disabled-color-strong); /* Darker disabled background */
-      color: var(--text-on-disabled); /* Ensure text is visible */
+      opacity: 0.5;
       cursor: not-allowed;
-      opacity: 0.7; /* Make it slightly less prominent but still visible */
     }
   }
 
   &.secondary {
     background-color: transparent;
     border-color: var(--border-color);
-    color: var(--text-color-normal);
+    color: var(--text-color);
     &:hover {
-      background-color: var(--background-color);
-      border-color: var(--primary-color-light);
+      background-color: var(--surface-color-hover);
+      border-color: var(--border-color-hover);
     }
   }
 `;
 
 const StatusMessage = styled.p`
-  margin-top: 0;
-  margin-bottom: var(--space-md); /* Reduced margin */
+  margin: 0 0 var(--space-md) 0;
   color: var(--danger-color);
   font-size: var(--font-size-sm);
   text-align: center;
-  min-height: var(--font-size-sm); /* Reduced min-height */
+  min-height: var(--font-size-sm);
 `;
 
-
-// Define snap points in seconds with more granularity
 const generateSnapPoints = (): number[] => {
   const points: number[] = [0];
-  // 0s to 30s: 2-second increments
   for (let i = 2; i <= 30; i += 2) points.push(i);
-  // 30s to 1min (60s): 5-second increments
   for (let i = 35; i <= 60; i += 5) points.push(i);
-  // 1min (60s) to 5min (300s): 15-second increments
   for (let i = 75; i <= 300; i += 15) points.push(i);
-  // 5min (300s) to 10min (600s): 30-second increments
   for (let i = 330; i <= 600; i += 30) points.push(i);
-  // 10min (600s) to 30min (1800s): 1-minute (60s) increments
   for (let i = 660; i <= 1800; i += 60) points.push(i);
-  // 30min (1800s) to 1hr (3600s): 2-minute (120s) increments
   for (let i = 1800 + 120; i <= 3600; i += 120) points.push(i);
-  
-  // Remove duplicates and sort, just in case generation logic overlaps
   return [...new Set(points)].sort((a, b) => a - b);
 };
 const SNAP_POINTS: number[] = generateSnapPoints();
@@ -205,9 +241,9 @@ const MAX_SLIDER_VALUE = SNAP_POINTS.length - 1;
 export const TimerCreationPanel: React.FC<TimerCreationPanelProps> = ({
   isOpen,
   onClose,
-  availableColors
+  availableColors,
 }) => {
-  const [currentStep, setCurrentStep] = useState(1); // 1 for duration, 2 for color
+  const [currentStep, setCurrentStep] = useState(1);
   const [durationInSeconds, setDurationInSeconds] = useState(SNAP_POINTS[0]);
   const [manualDurationInput, setManualDurationInput] = useState(formatDurationMMSS(SNAP_POINTS[0]));
   const [statusMessage, setStatusMessage] = useState('');
@@ -231,37 +267,29 @@ export const TimerCreationPanel: React.FC<TimerCreationPanelProps> = ({
     const newDuration = SNAP_POINTS[sliderValue];
     setDurationInSeconds(newDuration);
     setManualDurationInput(formatDurationMMSS(newDuration));
-    setStatusMessage(''); // Clear status on slider interaction
+    setStatusMessage('');
   };
 
   const handleSliderRelease = () => {
-    // Go to step 2 if duration is valid (always true with snap points, unless 0 and we want to prevent that)
     if (durationInSeconds > 0) {
       setCurrentStep(2);
       setStatusMessage('');
-    } else {
-      // Optionally, provide feedback if duration is 0
-      // setStatusMessage('Please select a duration greater than 0.');
     }
   };
 
   const handleManualDurationChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setManualDurationInput(event.target.value);
-    setStatusMessage(''); // Clear status on input change
+    setStatusMessage('');
     const parsedSeconds = parseDurationToSeconds(event.target.value);
     if (parsedSeconds !== null) {
       setDurationInSeconds(parsedSeconds);
-      // The slider's visual position will update automatically on re-render
-      // because its `value` prop is derived from `durationInSeconds`
-      // via `getSliderValueFromSeconds(durationInSeconds)`.
-      // No direct DOM manipulation is needed here.
     }
   };
-  
+
   const handleGoToStep2 = () => {
     const parsedSeconds = parseDurationToSeconds(manualDurationInput);
     if (parsedSeconds !== null && parsedSeconds > 0) {
-      setDurationInSeconds(parsedSeconds); // Ensure durationInSeconds is up-to-date
+      setDurationInSeconds(parsedSeconds);
       setCurrentStep(2);
       setStatusMessage('');
     } else {
@@ -269,26 +297,24 @@ export const TimerCreationPanel: React.FC<TimerCreationPanelProps> = ({
     }
   };
 
-
   const handleColorSelect = (color: string) => {
     if (durationInSeconds <= 0) {
-        setStatusMessage('La durada ha de ser superior a 0.');
-        setCurrentStep(1); // Go back to fix duration
-        return;
+      setStatusMessage('La durada ha de ser superior a 0.');
+      setCurrentStep(1);
+      return;
     }
     dispatch({
       type: 'ADD_TIMER',
-      payload: { duration: durationInSeconds, color: color }
+      payload: { duration: durationInSeconds, color: color },
     });
-    onClose(); // This will trigger resetForm via useEffect on isOpen
-  };
-  
-  const getSliderValueFromSeconds = (seconds: number): number => {
-    if (seconds >= SNAP_POINTS[MAX_SLIDER_VALUE]) return MAX_SLIDER_VALUE;
-    const closestIndex = SNAP_POINTS.findIndex(p => p >= seconds);
-    return closestIndex === -1 ? MAX_SLIDER_VALUE : closestIndex;
+    onClose();
   };
 
+  const getSliderValueFromSeconds = (seconds: number): number => {
+    if (seconds >= SNAP_POINTS[MAX_SLIDER_VALUE]) return MAX_SLIDER_VALUE;
+    const closestIndex = SNAP_POINTS.findIndex((p) => p >= seconds);
+    return closestIndex === -1 ? MAX_SLIDER_VALUE : closestIndex;
+  };
 
   if (!isOpen) return null;
 
@@ -300,7 +326,9 @@ export const TimerCreationPanel: React.FC<TimerCreationPanelProps> = ({
 
         {currentStep === 1 && (
           <>
-            <StepDescription>Estableix la durada desitjada per al teu temporitzador.</StepDescription>
+            <StepDescription>
+              Estableix la durada desitjada per al teu temporitzador.
+            </StepDescription>
             <StatusMessage>{statusMessage}</StatusMessage>
             <DurationInputContainer>
               <DurationDisplayInput
@@ -310,7 +338,6 @@ export const TimerCreationPanel: React.FC<TimerCreationPanelProps> = ({
                 placeholder="MM:SS"
                 aria-label="Durada del temporitzador"
               />
-              {/* "Següent" (Next) button moved to ButtonGroup below */}
             </DurationInputContainer>
             <Slider
               id="duration-slider"
@@ -320,11 +347,11 @@ export const TimerCreationPanel: React.FC<TimerCreationPanelProps> = ({
               value={getSliderValueFromSeconds(durationInSeconds)}
               onChange={handleSliderChange}
               onMouseUp={handleSliderRelease}
-              onTouchEnd={handleSliderRelease} /* For touch devices */
+              onTouchEnd={handleSliderRelease}
               aria-label="Control lliscant de la durada del temporitzador"
             />
             <ButtonGroup style={{ justifyContent: 'flex-end' }}>
-              <Button className="primary" onClick={handleGoToStep2} disabled={parseDurationToSeconds(manualDurationInput) === null || parseDurationToSeconds(manualDurationInput)! <=0}>
+              <Button className="primary" onClick={handleGoToStep2}>
                 Següent
               </Button>
             </ButtonGroup>
@@ -333,7 +360,9 @@ export const TimerCreationPanel: React.FC<TimerCreationPanelProps> = ({
 
         {currentStep === 2 && (
           <>
-            <StepDescription>Tria un color per identificar el teu temporitzador.</StepDescription>
+            <StepDescription>
+              Tria un color per identificar el teu temporitzador.
+            </StepDescription>
             <StatusMessage>{statusMessage}</StatusMessage>
             <ColorSwatchContainer>
               {availableColors.map((color) => (
@@ -346,13 +375,18 @@ export const TimerCreationPanel: React.FC<TimerCreationPanelProps> = ({
               ))}
             </ColorSwatchContainer>
             <ButtonGroup style={{ justifyContent: 'flex-start' }}>
-              <Button className="secondary" onClick={() => { setCurrentStep(1); setStatusMessage(''); }}>
+              <Button
+                className="secondary"
+                onClick={() => {
+                  setCurrentStep(1);
+                  setStatusMessage('');
+                }}
+              >
                 Enrere
               </Button>
             </ButtonGroup>
           </>
         )}
-        {/* Original ButtonGroup for cancel/create is removed as per existing comments and new flow */}
       </PanelContainer>
     </>
   );

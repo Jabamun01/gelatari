@@ -10,11 +10,16 @@ interface DefaultStepsEditorProps {
 const EditorContainer = styled.div`
   display: flex;
   flex-direction: column;
-  gap: var(--space-md);
-  padding: var(--space-md);
+  gap: var(--space-lg);
+  padding: var(--space-lg);
   background-color: var(--surface-color);
-  border-radius: var(--border-radius);
+  border-radius: var(--border-radius-lg);
   box-shadow: var(--shadow-sm);
+`;
+
+const SectionTitle = styled.h3`
+  margin: 0 0 var(--space-md) 0;
+  color: var(--text-color-strong);
 `;
 
 const StepListContainer = styled.ul`
@@ -28,48 +33,89 @@ const StepListContainer = styled.ul`
 
 const StepItem = styled.li`
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: var(--space-sm);
   padding: var(--space-sm);
   background-color: var(--surface-color-light);
   border-radius: var(--border-radius);
+  border: var(--border-width) solid var(--border-color-light);
+`;
+
+const StepNumber = styled.span`
+  font-weight: 600;
+  color: var(--primary-color);
+  font-size: var(--font-size-sm);
+  padding-top: var(--space-sm);
+  min-width: 24px;
+  text-align: center;
 `;
 
 const StepInput = styled.textarea`
   flex-grow: 1;
   padding: var(--space-sm);
-  border: 1px solid var(--border-color);
+  border: var(--border-width) solid var(--border-color);
   border-radius: var(--border-radius);
   font-size: var(--font-size-base);
-  min-height: 40px; /* Adjust as needed */
-  resize: vertical; /* Allow vertical resize */
+  min-height: 60px;
+  resize: vertical;
+  background-color: var(--surface-color);
+
   &:focus {
     border-color: var(--primary-color);
     outline: none;
-    box-shadow: 0 0 0 2px var(--primary-color-light);
+    box-shadow: 0 0 0 2px var(--focus-ring-color);
   }
 `;
 
+const ButtonRow = styled.div`
+  display: flex;
+  gap: var(--space-md);
+  flex-wrap: wrap;
+  align-items: center;
+`;
+
 const MessageArea = styled.p<{ type?: 'success' | 'error' }>`
-  padding: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
   border-radius: var(--border-radius);
-  background-color: ${({ type }) => type === 'success' ? 'var(--success-color-light)' : type === 'error' ? 'var(--danger-color-light)' : 'transparent'};
-  color: ${({ type }) => type === 'success' ? 'var(--success-color-dark)' : type === 'error' ? 'var(--danger-color-dark)' : 'var(--text-color)'};
-  border: 1px solid ${({ type }) => type === 'success' ? 'var(--success-color)' : type === 'error' ? 'var(--danger-color)' : 'transparent'};
-  margin-top: var(--space-sm);
+  background-color: ${({ type }) =>
+    type === 'success'
+      ? 'var(--success-color-light)'
+      : type === 'error'
+        ? 'var(--danger-color-light)'
+        : 'transparent'};
+  color: ${({ type }) =>
+    type === 'success'
+      ? 'var(--success-color-dark)'
+      : type === 'error'
+        ? 'var(--danger-color-dark)'
+        : 'var(--text-color)'};
+  border: 1px solid
+    ${({ type }) =>
+      type === 'success'
+        ? 'var(--success-color)'
+        : type === 'error'
+          ? 'var(--danger-color)'
+          : 'transparent'};
+  margin: 0;
   text-align: center;
+  font-size: var(--font-size-sm);
 `;
 
 const LoadingIndicator = styled.p`
-    font-style: italic;
-    color: var(--text-color-light);
+  font-style: italic;
+  color: var(--text-color-light);
+  text-align: center;
+  padding: var(--space-xl);
 `;
 
 const DefaultStepsEditor: React.FC<DefaultStepsEditorProps> = ({ category }) => {
   const [steps, setSteps] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isSaving, setIsSaving] = useState<boolean>(false);
-  const [message, setMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+  const [message, setMessage] = useState<{
+    text: string;
+    type: 'success' | 'error';
+  } | null>(null);
 
   const loadSteps = useCallback(async () => {
     setIsLoading(true);
@@ -79,8 +125,13 @@ const DefaultStepsEditor: React.FC<DefaultStepsEditorProps> = ({ category }) => 
       setSteps(fetchedSteps);
     } catch (error) {
       console.error(`Error fetching default steps for ${category}:`, error);
-      setMessage({ text: `Error en carregar els passos per defecte per a ${category === 'ice cream' ? 'Gelat' : 'Sorbet'}.`, type: 'error' });
-      setSteps([]); // Clear steps on error
+      setMessage({
+        text: `Error en carregar els passos per defecte per a ${
+          category === 'ice cream' ? 'Gelat' : 'Sorbet'
+        }.`,
+        type: 'error',
+      });
+      setSteps([]);
     } finally {
       setIsLoading(false);
     }
@@ -94,7 +145,7 @@ const DefaultStepsEditor: React.FC<DefaultStepsEditorProps> = ({ category }) => 
     const newSteps = [...steps];
     newSteps[index] = value;
     setSteps(newSteps);
-    setMessage(null); // Clear message on edit
+    setMessage(null);
   };
 
   const handleAddStep = () => {
@@ -123,17 +174,34 @@ const DefaultStepsEditor: React.FC<DefaultStepsEditorProps> = ({ category }) => 
   };
 
   if (isLoading) {
-    return <LoadingIndicator aria-live="polite">Carregant passos per defecte...</LoadingIndicator>;
+    return (
+      <LoadingIndicator aria-live="polite">
+        Carregant passos per defecte...
+      </LoadingIndicator>
+    );
   }
 
   const categoryDisplayName = category === 'ice cream' ? 'Gelat' : 'Sorbet';
 
   return (
     <EditorContainer>
-      <h3>{`Editant Passos per Defecte: ${categoryDisplayName}`}</h3>
+      <SectionTitle>{`Editant Passos per Defecte: ${categoryDisplayName}`}</SectionTitle>
       <StepListContainer>
+        {steps.length === 0 && (
+          <p
+            style={{
+              color: 'var(--text-color-light)',
+              fontStyle: 'italic',
+              textAlign: 'center',
+              padding: 'var(--space-lg)',
+            }}
+          >
+            No hi ha passos per defecte per a {categoryDisplayName}.
+          </p>
+        )}
         {steps.map((step, index) => (
           <StepItem key={index}>
+            <StepNumber>{index + 1}</StepNumber>
             <StepInput
               aria-label={`Pas ${index + 1} per a ${categoryDisplayName}`}
               value={step}
@@ -141,18 +209,29 @@ const DefaultStepsEditor: React.FC<DefaultStepsEditorProps> = ({ category }) => 
               placeholder="Descripció del pas"
               rows={2}
             />
-            <DangerButton onClick={() => handleDeleteStep(index)} disabled={isSaving} title={`Elimina el pas ${index + 1}`} style={{padding: 'var(--space-xs)'}}>
+            <DangerButton
+              onClick={() => handleDeleteStep(index)}
+              disabled={isSaving}
+              title={`Elimina el pas ${index + 1}`}
+              style={{ flexShrink: 0 }}
+            >
               ✕
             </DangerButton>
           </StepItem>
         ))}
       </StepListContainer>
-      <PrimaryButton onClick={handleAddStep} disabled={isSaving}>
-        Afegeix Pas
-      </PrimaryButton>
-      <PrimaryButton onClick={handleSaveChanges} disabled={isSaving || steps.length === 0}>
-        {isSaving ? 'Guardant...' : 'Guarda Canvis'}
-      </PrimaryButton>
+      <ButtonRow>
+        <PrimaryButton onClick={handleAddStep} disabled={isSaving}>
+          Afegeix Pas
+        </PrimaryButton>
+        <PrimaryButton
+          onClick={handleSaveChanges}
+          disabled={isSaving}
+          style={{ backgroundColor: 'var(--secondary-color)', borderColor: 'var(--secondary-color)' }}
+        >
+          {isSaving ? 'Guardant...' : 'Guarda Canvis'}
+        </PrimaryButton>
+      </ButtonRow>
       {message && (
         <MessageArea
           type={message.type}

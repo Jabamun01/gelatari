@@ -8,22 +8,28 @@ const LoginContainer = styled.div`
   align-items: center;
   justify-content: center;
   height: 100vh;
-  background-color: var(--background-color);
+  background: linear-gradient(135deg, var(--primary-color-xlight) 0%, var(--surface-color) 50%, var(--primary-color-xlight) 100%);
+  padding: var(--space-lg);
 `;
 
 const LoginCard = styled.div`
   background-color: var(--surface-color);
-  border-radius: var(--border-radius-lg);
-  box-shadow: var(--shadow-lg);
+  border-radius: var(--border-radius-xl);
+  box-shadow: var(--shadow-xl);
   padding: var(--space-2xl) var(--space-xl);
   width: 100%;
   max-width: 400px;
   text-align: center;
 `;
 
+const Logo = styled.div`
+  font-size: 3rem;
+  margin-bottom: var(--space-md);
+`;
+
 const Title = styled.h1`
   margin-bottom: var(--space-xs);
-  font-size: 2rem;
+  font-size: 1.75rem;
   color: var(--text-color-strong);
 `;
 
@@ -52,6 +58,9 @@ const LoginButton = styled.button`
   background-color: var(--primary-color);
   color: var(--text-on-primary);
   border: none;
+  border-radius: var(--border-radius);
+  font-weight: 600;
+  min-height: 48px;
 
   &:hover:not(:disabled) {
     background-color: var(--primary-color-dark);
@@ -63,9 +72,15 @@ const LoginButton = styled.button`
   }
 `;
 
+const ForgotHelp = styled.p`
+  margin-top: var(--space-lg);
+  font-size: var(--font-size-xs);
+  color: var(--text-color-lighter);
+`;
+
 const ErrorMessage = styled.div`
   padding: var(--space-md);
-  background-color: rgba(239, 68, 68, 0.1);
+  background-color: var(--danger-color-light);
   border: 1px solid var(--danger-color);
   border-radius: var(--border-radius);
   color: var(--danger-color-dark);
@@ -97,7 +112,8 @@ const LoginPage: React.FC = () => {
   return (
     <LoginContainer>
       <LoginCard>
-        <Title>🍦 El Gelatari</Title>
+        <Logo>🍦</Logo>
+        <Title>El Gelatari</Title>
         <Subtitle>Inicia sessió per continuar</Subtitle>
 
         <Form onSubmit={handleSubmit}>
@@ -126,6 +142,8 @@ const LoginPage: React.FC = () => {
             {isSubmitting ? 'Entrant...' : 'Entrar'}
           </LoginButton>
         </Form>
+
+        <ForgotHelp>Gelateria artesana — gestió de receptes i ingredients</ForgotHelp>
       </LoginCard>
     </LoginContainer>
   );
