@@ -1,4 +1,4 @@
-import { authFetch } from './auth-header';
+import { authFetch, apiFetch } from './auth-header';
 import { API_BASE_URL } from './config';
 import { RecipeDetails, CreateRecipeDto, UpdateRecipeDto } from '../types/recipe';
 
@@ -10,7 +10,7 @@ export interface RecipeSearchResult {
 }
 
 // Define the possible type filters
-export type RecipeTypeFilter = 'ice cream recipe' | 'not ice cream recipe';
+
 
 // Define the structure for the API response when fetching recipes with pagination
 export interface RecipeApiResponse {
@@ -85,27 +85,7 @@ export const fetchRecipes = async (
  * @returns A promise that resolves to the RecipeDetails.
  */
 export const fetchRecipeById = async (recipeId: string): Promise<RecipeDetails> => {
-  // Ensure the backend base URL is correct. Adjust if necessary.
-  const apiUrl = `${API_BASE_URL}/recipes/${recipeId}`;
-
-  try {
-    const response = await authFetch(apiUrl);
-
-    if (!response.ok) {
-      // Attempt to read error message from backend if available
-      const errorData = await response.json().catch(() => ({})); // Gracefully handle non-JSON error responses
-      throw new Error(
-        `Network response was not ok: ${response.status} ${response.statusText}. ${errorData.message || ''}`
-      );
-    }
-
-    const data: RecipeDetails = await response.json();
-    return data;
-  } catch (error) {
-    console.error(`Failed to fetch recipe with ID ${recipeId}:`, error);
-    // Re-throw the error so react-query can handle it
-    throw error;
-  }
+  return apiFetch<RecipeDetails>(`${API_BASE_URL}/recipes/${recipeId}`);
 };
 
 /**
@@ -114,30 +94,11 @@ export const fetchRecipeById = async (recipeId: string): Promise<RecipeDetails> 
  * @returns A promise that resolves to the created RecipeDetails.
  */
 export const createRecipe = async (recipeData: CreateRecipeDto): Promise<RecipeDetails> => {
-  const apiUrl = `${API_BASE_URL}/recipes`;
-
-  try {
-    const response = await authFetch(apiUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(recipeData),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(
-        `Network response was not ok: ${response.status} ${response.statusText}. ${errorData.message || ''}`
-      );
-    }
-
-    const createdRecipe: RecipeDetails = await response.json();
-    return createdRecipe;
-  } catch (error) {
-    console.error('Failed to create recipe:', error);
-    throw error;
-  }
+  return apiFetch<RecipeDetails>(`${API_BASE_URL}/recipes`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(recipeData),
+  });
 };
 
 /**
@@ -147,30 +108,11 @@ export const createRecipe = async (recipeData: CreateRecipeDto): Promise<RecipeD
  * @returns A promise that resolves to the updated RecipeDetails.
  */
 export const updateRecipe = async (id: string, recipeData: UpdateRecipeDto): Promise<RecipeDetails> => {
-  const apiUrl = `${API_BASE_URL}/recipes/${id}`;
-
-  try {
-    const response = await authFetch(apiUrl, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(recipeData),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(
-        `Network response was not ok: ${response.status} ${response.statusText}. ${errorData.message || ''}`
-      );
-    }
-
-    const updatedRecipe: RecipeDetails = await response.json();
-    return updatedRecipe;
-  } catch (error) {
-    console.error(`Failed to update recipe with ID ${id}:`, error);
-    throw error;
-  }
+  return apiFetch<RecipeDetails>(`${API_BASE_URL}/recipes/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(recipeData),
+  });
 };
 
 /**
@@ -204,10 +146,19 @@ export const deleteRecipe = async (id: string): Promise<DeleteRecipeResult> => {
     // Handle 409 Conflict specifically
     if (response.status === 409) {
       const conflictData = await response.json();
+      const dependencies = (conflictData.dependencies || []).map((dep: { _id: string; name: string }) => ({
+        _id: dep._id,
+        name: dep.name,
+        ingredients: [] as { ingredient: { _id: string; name: string }; amountGrams: number }[],
+        steps: [] as string[],
+        type: 'ice cream recipe' as const,
+        baseYieldGrams: 0,
+        linkedRecipes: [] as { recipe: { _id: string; name: string }; amountGrams: number }[],
+      }));
       return {
         success: false,
         isConflict: true,
-        dependentParentRecipes: conflictData.dependentRecipes || [], // Ensure this matches backend response
+        dependentParentRecipes: dependencies,
         error: conflictData.message || 'Recipe is in use by other recipes.',
         status: response.status,
       };
@@ -243,24 +194,7 @@ export const deleteRecipe = async (id: string): Promise<DeleteRecipeResult> => {
  * @returns A promise that resolves to an array of RecipeDetails representing the parent recipes that depend on this recipe.
  */
 export const getRecipeDependencies = async (recipeId: string): Promise<RecipeDetails[]> => {
-  const apiUrl = `${API_BASE_URL}/recipes/${recipeId}/dependencies`;
-
-  try {
-    const response = await authFetch(apiUrl);
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(
-        `Network response was not ok: ${response.status} ${response.statusText}. ${errorData.message || ''}`
-      );
-    }
-
-    const dependentRecipes: RecipeDetails[] = await response.json();
-    return dependentRecipes;
-  } catch (error) {
-    console.error(`Failed to fetch dependencies for recipe with ID ${recipeId}:`, error);
-    throw error;
-  }
+  return apiFetch<RecipeDetails[]>(`${API_BASE_URL}/recipes/${recipeId}/dependencies`);
 };
 
 /**
@@ -274,30 +208,12 @@ export const finalizeRecipeProductionApi = async (
   recipeId: string,
   flavorId?: string,
 ): Promise<void> => {
-  const apiUrl = `${API_BASE_URL}/recipes/${recipeId}/finalize-production`;
+  const body: Record<string, string> = {};
+  if (flavorId) body.flavorId = flavorId;
 
-  try {
-    const body: any = {};
-    if (flavorId) body.flavorId = flavorId;
-
-    const response = await authFetch(apiUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(body),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(
-        `Network response was not ok: ${response.status} ${response.statusText}. ${errorData.message || ''}`
-      );
-    }
-
-    return;
-  } catch (error) {
-    console.error(`Failed to finalize production for recipe with ID ${recipeId}:`, error);
-    throw error;
-  }
+  await apiFetch<void>(`${API_BASE_URL}/recipes/${recipeId}/finalize-production`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
 };

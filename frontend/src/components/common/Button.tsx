@@ -134,4 +134,4 @@ export const TextButton: React.FC<ButtonProps> = ({ type = 'button', ...props })
   <_TextButton type={type} {...props} />
 );
 
-export default BaseButton;
+

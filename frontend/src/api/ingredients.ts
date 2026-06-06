@@ -1,6 +1,6 @@
 import { Ingredient, CreateIngredientDto, UpdateIngredientDto } from '../types/ingredient';
 import { RecipeDetails } from '../types/recipe';
-import { authFetch } from './auth-header';
+import { authFetch, apiFetch } from './auth-header';
 
 // Define the structure for the paginated response
 export interface PaginatedIngredientsResponse {
@@ -105,28 +105,11 @@ export const getIngredientById = async (ingredientId: string): Promise<Ingredien
  * @returns A promise that resolves to the newly created Ingredient object.
  */
 export const createIngredient = async (ingredientData: CreateIngredientDto): Promise<Ingredient> => {
-  try {
-    const response = await authFetch(ingredientsApiUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(ingredientData),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(
-        `Network response was not ok: ${response.status} ${response.statusText}. ${errorData.message || ''}`
-      );
-    }
-
-    const data: Ingredient = await response.json();
-    return data;
-  } catch (error) {
-    console.error('Failed to create ingredient:', error);
-    throw error;
-  }
+  return apiFetch<Ingredient>(ingredientsApiUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(ingredientData),
+  });
 };
 
 /**
@@ -136,29 +119,11 @@ export const createIngredient = async (ingredientData: CreateIngredientDto): Pro
  * @returns A promise that resolves to the updated Ingredient object.
  */
 export const updateIngredient = async (id: string, updates: UpdateIngredientDto): Promise<Ingredient> => {
-  const apiUrl = `${ingredientsApiUrl}/${id}`;
-  try {
-    const response = await authFetch(apiUrl, {
-      method: 'PUT', // Or PATCH if the backend supports it for partial updates
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(updates),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(
-        `Network response was not ok: ${response.status} ${response.statusText}. ${errorData.message || ''}`
-      );
-    }
-
-    const data: Ingredient = await response.json();
-    return data;
-  } catch (error) {
-    console.error(`Failed to update ingredient with ID ${id}:`, error);
-    throw error;
-  }
+  return apiFetch<Ingredient>(`${ingredientsApiUrl}/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(updates),
+  });
 };
 
 /**
@@ -168,29 +133,11 @@ export const updateIngredient = async (id: string, updates: UpdateIngredientDto)
  * @returns A promise that resolves to the updated Ingredient object.
  */
 export const addAliasToIngredient = async (id: string, alias: string): Promise<Ingredient> => {
-    const apiUrl = `${ingredientsApiUrl}/${id}/aliases`;
-    try {
-        const response = await authFetch(apiUrl, {
-            method: 'PATCH',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ alias }),
-        });
-
-        if (!response.ok) {
-            const errorData = await response.json().catch(() => ({}));
-            throw new Error(
-                `Network response was not ok: ${response.status} ${response.statusText}. ${errorData.message || ''}`
-            );
-        }
-
-        const data: Ingredient = await response.json();
-        return data;
-    } catch (error) {
-        console.error(`Failed to add alias to ingredient with ID ${id}:`, error);
-        throw error;
-    }
+    return apiFetch<Ingredient>(`${ingredientsApiUrl}/${id}/aliases`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ alias }),
+    });
 };
 
 /**
@@ -207,12 +154,24 @@ export const deleteIngredient = async (id: string): Promise<void> => {
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({ message: 'Failed to parse error response' }));
-      if (response.status === 409 && errorData.dependentRecipes && Array.isArray(errorData.dependentRecipes)) {
-        // Assuming the backend sends { message: string, dependentRecipes: RecipeDetails[] }
+      if (response.status === 409) {
+        // Backend sends { message, details: { recipes: [...] } }
+        const backendRecipes = errorData?.details?.recipes;
+        const recipesList: RecipeDetails[] = Array.isArray(backendRecipes)
+          ? backendRecipes.map((r: { _id: string; name: string }) => ({
+              _id: r._id,
+              name: r.name,
+              ingredients: [],
+              steps: [],
+              type: 'ice cream recipe',
+              baseYieldGrams: 0,
+              linkedRecipes: [],
+            }))
+          : [];
         const customError: IngredientInUseErrorType = {
           name: 'IngredientInUseError',
           message: errorData.message || 'Ingredient is in use by other recipes.',
-          dependentRecipes: errorData.dependentRecipes,
+          dependentRecipes: recipesList,
         };
         throw customError;
       }
@@ -236,29 +195,11 @@ export const deleteIngredient = async (id: string): Promise<void> => {
  * @returns A promise that resolves to the updated Ingredient object.
  */
 export const addStockToIngredientApi = async (ingredientId: string, quantityToAdd: number): Promise<Ingredient> => {
-  const apiUrl = `${ingredientsApiUrl}/${ingredientId}/stock`;
-  try {
-    const response = await authFetch(apiUrl, {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ quantityToAdd }),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(
-        `Network response was not ok: ${response.status} ${response.statusText}. ${errorData.message || ''}`
-      );
-    }
-
-    const data: Ingredient = await response.json();
-    return data;
-  } catch (error) {
-    console.error(`Failed to add stock to ingredient with ID ${ingredientId}:`, error);
-    throw error;
-  }
+  return apiFetch<Ingredient>(`${ingredientsApiUrl}/${ingredientId}/stock`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ quantityToAdd }),
+  });
 };
 
 /**
@@ -267,19 +208,5 @@ export const addStockToIngredientApi = async (ingredientId: string, quantityToAd
  * @returns A promise that resolves to an array of RecipeDetails objects.
  */
 export const getIngredientDependencies = async (ingredientId: string): Promise<RecipeDetails[]> => {
-  const apiUrl = `${ingredientsApiUrl}/${ingredientId}/dependencies`; // Assuming this endpoint exists
-  try {
-    const response = await authFetch(apiUrl);
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(
-        `Network response was not ok: ${response.status} ${response.statusText}. ${errorData.message || 'Failed to fetch dependencies'}`
-      );
-    }
-    const dependentRecipes: RecipeDetails[] = await response.json();
-    return dependentRecipes || []; // Or simply: return dependentRecipes; // Ensure it returns an array
-  } catch (error) {
-    console.error(`Failed to fetch dependencies for ingredient ID ${ingredientId}:`, error);
-    throw error;
-  }
+  return apiFetch<RecipeDetails[]>(`${ingredientsApiUrl}/${ingredientId}/dependencies`);
 };

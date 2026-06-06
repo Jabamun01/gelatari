@@ -63,5 +63,4 @@ export type TabData =
   | IceCreamDashboardTabData
   | IceCreamFlavorEditTabData;
 
-// Update TabType to be derived from TabData
-export type TabType = TabData['type'];
+

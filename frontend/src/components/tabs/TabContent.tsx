@@ -1,6 +1,6 @@
 import React from 'react';
 import { styled } from '@linaria/react';
-import { TabData, RecipeTabData } from '../../types/tabs';
+import { TabData } from '../../types/tabs';
 import { SearchTab } from '../search/SearchTab';
 import { RecipeTab } from '../recipe/RecipeTab';
 import { IngredientsTab } from '../ingredients/IngredientsTab';
@@ -73,25 +73,24 @@ export const TabContent = ({
       case 'search':
         return <SearchTab onOpenRecipeTab={onOpenRecipeTab} onOpenRecipeEditor={onOpenRecipeEditor} />;
       case 'recipe': {
-        if (activeTab.type !== 'recipe' || !activeTab.recipeId) return null;
-        const recipeActiveTab = activeTab as RecipeTabData;
+        if (!activeTab.recipeId) return null;
 
         return (
           <RecipeTab
-            key={recipeActiveTab.id}
-            recipeId={recipeActiveTab.recipeId}
+            key={activeTab.id}
+            recipeId={activeTab.recipeId}
             tabs={tabs}
             handleOpenRecipeTab={onOpenRecipeTab}
             isProductionMode={isProductionMode}
             trackedAmounts={trackedAmounts}
-            onToggleProductionMode={() => onToggleProductionMode(recipeActiveTab.id)}
+            onToggleProductionMode={() => onToggleProductionMode(activeTab.id)}
             onAmountTracked={(ingredientId: string, amount: number) =>
-              onAmountTracked(recipeActiveTab.id, ingredientId, amount)
+              onAmountTracked(activeTab.id, ingredientId, amount)
             }
             onOpenEditor={onOpenRecipeEditor}
-            onClose={() => onCloseTab(recipeActiveTab.id)}
+            onClose={() => onCloseTab(activeTab.id)}
             scaleFactor={scaleFactor}
-            onScaleChange={(newScale: number) => onScaleChange(recipeActiveTab.id, newScale)}
+            onScaleChange={(newScale: number) => onScaleChange(activeTab.id, newScale)}
           />
         );
       }
@@ -103,7 +102,6 @@ export const TabContent = ({
           />
         );
       case 'recipeEditor':
-        if (activeTab.type !== 'recipeEditor') return null;
         return (
           <RecipeEditorTab
             key={activeTab.id}
@@ -114,7 +112,6 @@ export const TabContent = ({
           />
         );
       case 'ingredientEdit':
-        if (activeTab.type !== 'ingredientEdit') return null;
         return (
           <IngredientEditTab
             key={activeTab.id}
@@ -123,7 +120,6 @@ export const TabContent = ({
           />
         );
       case 'defaultSteps':
-        if (activeTab.type !== 'defaultSteps') return null;
         return <DefaultStepsTab />;
       case 'iceCreamDashboard':
         if (activeTab.type !== 'iceCreamDashboard') return null;
@@ -167,13 +163,7 @@ export const TabContent = ({
           {activeTab?.id === tab.id && currentContent}
         </TabPanelWrapper>
       ))}
-      {!activeTab && (
-        <ContentContainer>
-          <p style={{ textAlign: 'center', color: 'var(--text-color-light)' }}>
-            No s'ha seleccionat cap pestanya.
-          </p>
-        </ContentContainer>
-      )}
+
     </ContentContainer>
   );
 };

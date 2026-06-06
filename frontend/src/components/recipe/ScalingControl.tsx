@@ -158,7 +158,8 @@ export const ScalingControl = ({
     setInputValue(scaleFactor.toFixed(2));
   }, [scaleFactor]);
 
-  const getSnapPoint = (grams: number) => grams / baseYieldGrams;
+  const getSnapPoint = (grams: number) =>
+    baseYieldGrams > 0 ? grams / baseYieldGrams : grams / 1000; // Fallback to 1000g base if baseYieldGrams is 0
 
   const handleSliderChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const newScale = parseFloat(event.target.value);

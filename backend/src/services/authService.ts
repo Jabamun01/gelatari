@@ -95,8 +95,14 @@ export const changePassword = async (
   if (!newPassword || newPassword.length < MIN_PASSWORD_LENGTH) return false;
 
   const newHash = await bcrypt.hash(newPassword, SALT_ROUNDS);
-  user.passwordHash = newHash;
-  user.tokenVersion = (user.tokenVersion || 0) + 1;
-  await user.save();
+
+  // Use atomic update to avoid race conditions on tokenVersion increment
+  const updated = await User.findOneAndUpdate(
+    { _id: userId },
+    { $set: { passwordHash: newHash }, $inc: { tokenVersion: 1 } },
+    { new: true },
+  );
+  if (!updated) return false;
+
   return true;
 };

@@ -26,8 +26,7 @@ export const getDefaultStepsHandler = async (req: Request, res: Response): Promi
       res.status(404).json({ message: `Default steps not found for category: ${category}` });
     }
 
-  } catch (error: any) {
-    // Handle unexpected errors during service execution
+  } catch (error: unknown) {
     console.error(`Error in getDefaultStepsHandler for category ${req.params.category}:`, error);
     res.status(500).json({ message: 'Internal server error while fetching default steps.' });
   }
@@ -66,7 +65,7 @@ export const createOrUpdateDefaultStepsHandler = async (req: Request, res: Respo
       // Service function returned null, indicating an internal error during DB operation
       res.status(500).json({ message: `Failed to create or update default steps for category: ${category}` });
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error(`Error in createOrUpdateDefaultStepsHandler for category ${req.params.category}:`, error);
     res.status(500).json({ message: 'Internal server error while creating or updating default steps.' });
   }

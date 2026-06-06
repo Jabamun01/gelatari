@@ -85,7 +85,9 @@ export const createRecipe = async (
  */
 export const getAllRecipes = async (
   filter: RecipeFilter = {},
-): Promise<IRecipe[]> => {
+  page: number = 1,
+  limit: number = 0, // 0 means no pagination (return all)
+): Promise<{ recipes: IRecipe[]; totalCount: number; totalPages: number }> => {
   try {
     const query: any = {};
 
@@ -98,15 +100,27 @@ export const getAllRecipes = async (
       query.name = { $regex: filter.searchTerm, $options: 'i' };
     }
 
-    const recipes = await Recipe.find(query)
-      .populate('ingredients.ingredient', 'name isAllergen') // Populate ingredient details
-      .populate('linkedRecipes.recipe', 'name') // Populate linked recipe names
-      .sort({ name: 1 }) // Optional: sort by name
-      .exec();
-    return recipes;
+    // Get total count for pagination metadata
+    const totalCount = await Recipe.countDocuments(query);
+
+    let recipesQuery = Recipe.find(query)
+      .populate('ingredients.ingredient', 'name isAllergen')
+      .populate('linkedRecipes.recipe', 'name')
+      .sort({ name: 1 });
+
+    // Apply pagination only if limit > 0
+    if (limit > 0) {
+      const skip = (page - 1) * limit;
+      recipesQuery = recipesQuery.skip(skip).limit(limit);
+    }
+
+    const recipes = await recipesQuery.exec();
+    const totalPages = limit > 0 ? Math.ceil(totalCount / limit) : 1;
+
+    return { recipes, totalCount, totalPages };
   } catch (error) {
     console.error('Error fetching recipes:', error);
-    return []; // Return empty array on error
+    return { recipes: [], totalCount: 0, totalPages: 1 };
   }
 };
 
@@ -416,7 +430,8 @@ export const getDependentParentRecipes = async (recipeId: string): Promise<IReci
       .lean() // Use lean for performance if full Mongoose documents aren't needed by caller
       .exec();
 
-    return parentRecipes as IRecipe[]; // Cast if lean() is used and IRecipe is expected
+    // Lean returns plain objects so we cast to a minimal interface rather than IRecipe (Document)
+    return parentRecipes as unknown as IRecipe[]; // Cast if lean() is used and IRecipe is expected
   } catch (error) {
     console.error(`Error fetching dependent parent recipes for recipe ID ${recipeId}:`, error);
     throw new Error(`Failed to fetch dependent parent recipes for recipe ID ${recipeId}`);

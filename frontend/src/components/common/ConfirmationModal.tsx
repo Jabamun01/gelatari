@@ -1,6 +1,6 @@
 import React from 'react';
 import { styled } from '@linaria/react';
-import { Modal } from './Modal';
+import { Modal, ModalFooter } from './Modal';
 import { PrimaryButton, SecondaryButton, DangerButton } from './Button';
 
 interface ConfirmationModalProps {
@@ -20,13 +20,6 @@ const MessageContainer = styled.div`
   line-height: var(--line-height-base);
   white-space: pre-wrap;
   font-size: var(--font-size-base);
-`;
-
-const FooterActions = styled.div`
-  display: flex;
-  justify-content: flex-end;
-  gap: var(--space-md);
-  flex-wrap: wrap;
 `;
 
 export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
@@ -57,12 +50,12 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
       onClose={onClose}
       title={title}
       footer={
-        <FooterActions>
+        <ModalFooter>
           <SecondaryButton onClick={onClose}>{cancelButtonText}</SecondaryButton>
           <ConfirmButtonComponent onClick={handleConfirm}>
             {confirmButtonText}
           </ConfirmButtonComponent>
-        </FooterActions>
+        </ModalFooter>
       }
     >
       <MessageContainer>{message}</MessageContainer>

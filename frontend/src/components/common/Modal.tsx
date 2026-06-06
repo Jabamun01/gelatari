@@ -97,7 +97,7 @@ const ModalBody = styled.div`
   scrollbar-gutter: stable;
 `;
 
-const ModalFooter = styled.div`
+export const ModalFooter = styled.div`
   border-top: var(--border-width) solid var(--border-color-light);
   padding-top: var(--space-lg);
   display: flex;

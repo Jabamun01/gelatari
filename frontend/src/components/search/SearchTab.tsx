@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { styled } from '@linaria/react';
 import { useQuery, keepPreviousData } from '@tanstack/react-query';
-import { ActionButton, DangerButton, SecondaryButton } from '../common/Button';
+import { DangerButton, SecondaryButton } from '../common/Button';
+import { PaginationControls } from '../common/PaginationControls';
 import { fetchRecipes, RecipeApiResponse, RecipeSearchResult } from '../../api/recipes';
 import { RecipeDetails } from '../../types/recipe';
 import { useDebounce } from '../../utils/hooks';
@@ -166,21 +167,6 @@ const NoResultsItem = styled.li`
   color: var(--text-color-light);
   cursor: default;
   text-align: center;
-`;
-
-const PaginationControls = styled.div`
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: var(--space-md);
-  margin-top: var(--space-lg);
-  margin-bottom: var(--space-lg);
-  flex-wrap: wrap;
-
-  span {
-    font-size: var(--font-size-sm);
-    color: var(--text-color-light);
-  }
 `;
 
 interface SearchTabProps {
@@ -354,41 +340,13 @@ export const SearchTab = ({ onOpenRecipeTab, onOpenRecipeEditor }: SearchTabProp
             )}
           </ResultsList>
 
-          {pagination && pagination.totalPages > 1 && (
-            <PaginationControls>
-              <ActionButton
-                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-                disabled={
-                  currentPage === 1 ||
-                  isLoading ||
-                  isFetching ||
-                  itemDeletionHook.isProcessingDelete ||
-                  itemDeletionHook.isLoadingDependencies
-                }
-              >
-                Anterior
-              </ActionButton>
-              <span>
-                Pàgina {pagination.currentPage} de {pagination.totalPages}
-              </span>
-              <ActionButton
-                onClick={() =>
-                  setCurrentPage((prev) =>
-                    Math.min(prev + 1, pagination.totalPages)
-                  )
-                }
-                disabled={
-                  currentPage === pagination.totalPages ||
-                  isLoading ||
-                  isFetching ||
-                  itemDeletionHook.isProcessingDelete ||
-                  itemDeletionHook.isLoadingDependencies
-                }
-              >
-                Següent
-              </ActionButton>
-            </PaginationControls>
-          )}
+          <PaginationControls
+            currentPage={currentPage}
+            totalPages={pagination?.totalPages || 1}
+            onPageChange={setCurrentPage}
+            isLoading={isLoading || isFetching}
+            disabled={itemDeletionHook.isProcessingDelete || itemDeletionHook.isLoadingDependencies}
+          />
         </>
       )}
 
