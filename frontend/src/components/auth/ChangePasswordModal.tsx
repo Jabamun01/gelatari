@@ -21,7 +21,7 @@ const Input = styled.input`
 
 const ErrorMessage = styled.div`
   padding: var(--space-sm) var(--space-md);
-  background-color: rgba(239, 68, 68, 0.1);
+  background-color: var(--danger-color-light);
   border: 1px solid var(--danger-color);
   border-radius: var(--border-radius);
   color: var(--danger-color-dark);
@@ -31,10 +31,10 @@ const ErrorMessage = styled.div`
 
 const SuccessMessage = styled.div`
   padding: var(--space-sm) var(--space-md);
-  background-color: rgba(16, 185, 129, 0.1);
-  border: 1px solid var(--secondary-color);
+  background-color: var(--success-color-light);
+  border: 1px solid var(--success-color);
   border-radius: var(--border-radius);
-  color: var(--secondary-color-dark);
+  color: var(--success-color-dark);
   font-size: var(--font-size-sm);
   text-align: center;
 `;
