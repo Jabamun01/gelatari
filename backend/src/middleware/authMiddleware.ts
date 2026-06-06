@@ -1,17 +1,16 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-
-const JWT_SECRET = process.env.JWT_SECRET || 'gelatari-dev-secret-change-in-production';
+import { JWT_SECRET } from '../config/auth';
+import User from '../models/User';
 
 export interface AuthRequest extends Request {
   userId?: string;
   username?: string;
 }
 
-export const authMiddleware = (req: AuthRequest, res: Response, next: NextFunction): void => {
-  // Skip auth for login, health check, and OPTIONS requests
-  const publicPaths = ['/api/auth/login'];
-  if (publicPaths.includes(req.path) || req.method === 'OPTIONS') {
+export const authMiddleware = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+  // OPTIONS requests don't need auth
+  if (req.method === 'OPTIONS') {
     next();
     return;
   }
@@ -26,7 +25,21 @@ export const authMiddleware = (req: AuthRequest, res: Response, next: NextFuncti
   const token = authHeader.split(' ')[1];
 
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as { userId: string; username: string };
+    const decoded = jwt.verify(token, JWT_SECRET) as { userId: string; username: string; tokenVersion?: number };
+
+    // Verify user still exists in the database
+    const user = await User.findById(decoded.userId).select('_id tokenVersion');
+    if (!user) {
+      res.status(401).json({ message: 'User no longer exists.' });
+      return;
+    }
+
+    // Verify token version (invalidates tokens on password change)
+    if (decoded.tokenVersion !== undefined && user.tokenVersion !== decoded.tokenVersion) {
+      res.status(401).json({ message: 'Session expired. Please log in again.' });
+      return;
+    }
+
     req.userId = decoded.userId;
     req.username = decoded.username;
     next();

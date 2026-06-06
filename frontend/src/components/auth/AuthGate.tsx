@@ -1,10 +1,20 @@
 import React, { ReactNode } from 'react';
+import { styled } from '@linaria/react';
 import { useAuth } from '../../contexts/AuthContext';
 import LoginPage from './LoginPage';
 
 interface AuthGateProps {
   children: ReactNode;
 }
+
+const LoadingContainer = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  font-size: 1.2rem;
+  color: var(--text-color-light);
+`;
 
 /**
  * Wraps the main app and shows a loading spinner or login page
@@ -15,20 +25,7 @@ const AuthGate: React.FC<AuthGateProps> = ({ children }) => {
   const { isAuthenticated, isLoading } = useAuth();
 
   if (isLoading) {
-    return (
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          height: '100vh',
-          fontSize: '1.2rem',
-          color: '#6B7280',
-        }}
-      >
-        Carregant...
-      </div>
-    );
+    return <LoadingContainer>Carregant...</LoadingContainer>;
   }
 
   if (!isAuthenticated) {

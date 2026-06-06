@@ -1,0 +1,39 @@
+services:
+  mongo:
+    image: mongo:7
+    container_name: gelatari-test-mongo
+    restart: unless-stopped
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: gelatari-test-backend
+    restart: unless-stopped
+    depends_on:
+      mongo:
+        condition: service_healthy
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - DATABASE_URI=mongodb://mongo:27017/iceCreamWorkshop
+      - JWT_SECRET=test-jwt-secret-for-integration-tests-do-not-use-in-production
+      - DEFAULT_PASSWORD=testpassword123
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        - VITE_API_BASE_URL=/api
+    container_name: gelatari-test-frontend
+    restart: unless-stopped
+    ports:
+      - "8081:80"
+    depends_on:
+      - backend

@@ -1,4 +1,4 @@
-import { getAuthHeaders } from './auth-header';
+import { authFetch } from './auth-header';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 const AUTH_URL = `${API_BASE_URL}/auth`;
@@ -42,9 +42,7 @@ export const login = async (username: string, password: string): Promise<LoginRe
 };
 
 export const verifyToken = async (): Promise<VerifyResponse> => {
-  const response = await fetch(`${AUTH_URL}/verify`, {
-    headers: { ...getAuthHeaders() },
-  });
+  const response = await authFetch(`${AUTH_URL}/verify`);
   return handleResponse<VerifyResponse>(response);
 };
 
@@ -52,9 +50,9 @@ export const changePassword = async (
   currentPassword: string,
   newPassword: string,
 ): Promise<ChangePasswordResponse> => {
-  const response = await fetch(`${AUTH_URL}/change-password`, {
+  const response = await authFetch(`${AUTH_URL}/change-password`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ currentPassword, newPassword }),
   });
   return handleResponse<ChangePasswordResponse>(response);

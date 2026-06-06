@@ -35,8 +35,8 @@ const TabsWrapper = styled.div`
   flex: 1;
 `;
 
-// Define a dedicated styled component for the close icon (span)
-const CloseIcon = styled.span`
+// Define a dedicated styled component for the close icon (button)
+const CloseIcon = styled.button`
   margin-left: var(--space-sm);
   padding: var(--space-xs);
   border: none;
@@ -216,7 +216,7 @@ export const TabBar = ({
             key={tab.id}
             id={`tab-${tab.id}`}
             role="tab"
-            aria-selected={tab.id === activeTabId}
+            aria-selected={tab.id === activeTabId ? 'true' : 'false'}
             aria-controls={`tabpanel-${tab.id}`}
             isActive={tab.id === activeTabId}
             onClick={() => onTabClick(tab.id)}
@@ -225,18 +225,10 @@ export const TabBar = ({
             {tab.title}
             {tab.isCloseable && (
             <CloseIcon
-              role="button"
-              tabIndex={0}
+              type="button"
               onClick={(e: React.MouseEvent) => {
                 e.stopPropagation();
                 onTabClose(tab.id);
-              }}
-              onKeyDown={(e: React.KeyboardEvent) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  onTabClose(tab.id);
-                }
               }}
               title={`Tanca ${tab.title}`}
               aria-label={`Tanca ${tab.title}`}

@@ -31,8 +31,7 @@ export const isIngredientInUseError = (error: unknown): error is IngredientInUse
   return false;
 };
 
-// Define the base URL for the backend API using Vite's environment variables.
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+import { API_BASE_URL } from './config';
 const ingredientsApiUrl = `${API_BASE_URL}/ingredients`;
 
 /**

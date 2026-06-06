@@ -68,6 +68,11 @@ export const globalStyles = css`
       --tab-hover-bg: var(--background-color);
       --tab-border-color: var(--border-color);
       --tab-active-border-color: var(--primary-color);
+
+      /* Interactive states */
+      --surface-color-hover: #F3F4F6;
+      --border-color-hover: #9CA3AF;
+      --focus-ring-color: rgba(59, 130, 246, 0.25);
     }
 
     /* Apply Inter font if available */

@@ -64,8 +64,8 @@ export const changePasswordHandler = async (req: AuthRequest, res: Response): Pr
       return;
     }
 
-    if (newPassword.length < 4) {
-      res.status(400).json({ message: 'New password must be at least 4 characters.' });
+    if (newPassword.length < 8) {
+      res.status(400).json({ message: 'New password must be at least 8 characters.' });
       return;
     }
 

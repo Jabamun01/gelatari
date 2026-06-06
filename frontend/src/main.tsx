@@ -14,11 +14,11 @@ createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <AuthGate>
-          <TimerProvider>
+        <TimerProvider>
+          <AuthGate>
             <App />
-          </TimerProvider>
-        </AuthGate>
+          </AuthGate>
+        </TimerProvider>
       </AuthProvider>
     </QueryClientProvider>
   </StrictMode>,
