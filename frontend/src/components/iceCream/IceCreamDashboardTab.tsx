@@ -1,0 +1,992 @@
+import React, { useState } from 'react';
+import { styled } from '@linaria/react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { fetchEvents, IceCreamEventItem } from '../../api/iceCreamFlavors';
+import {
+  fetchDashboard,
+  convertMixToFrozen,
+  sellContainer,
+  moveContainers,
+  deleteFlavor,
+} from '../../api/iceCreamFlavors';
+import {
+  DashboardFlavor,
+  ConvertMixDto,
+} from '../../types/iceCreamFlavor';
+
+// ---------------------------------------------------------------------------
+// Styled components
+// ---------------------------------------------------------------------------
+
+const Container = styled.div`
+  max-width: 1200px;
+  margin: var(--space-lg) auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+`;
+
+const HeaderRow = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-md);
+`;
+
+const PageTitle = styled.h2`
+  margin: 0;
+`;
+
+const HeaderActions = styled.div`
+  display: flex;
+  gap: var(--space-sm);
+`;
+
+const ActionButton = styled.button`
+  padding: var(--space-sm) var(--space-md);
+  border: none;
+  border-radius: var(--border-radius);
+  background-color: var(--primary-color);
+  color: var(--text-on-primary);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  white-space: nowrap;
+
+  &:hover { background-color: var(--primary-color-dark); }
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+`;
+
+const DangerButton = styled.button`
+  padding: 2px 8px;
+  border: var(--border-width) solid var(--danger-color);
+  border-radius: var(--border-radius);
+  background: var(--danger-color);
+  color: white;
+  font-size: var(--font-size-xs);
+  cursor: pointer;
+  white-space: nowrap;
+  &:hover { background-color: var(--danger-color-dark); }
+  &:disabled { opacity: 0.4; cursor: not-allowed; }
+`;
+
+const SecondaryButton = styled(ActionButton)`
+  background-color: var(--surface-color);
+  color: var(--text-color);
+  border: var(--border-width) solid var(--border-color);
+  &:hover { background-color: var(--surface-color-light); }
+`;
+
+const SmallButton = styled.button`
+  padding: 2px 8px;
+  border: var(--border-width) solid var(--border-color);
+  border-radius: var(--border-radius);
+  background: var(--surface-color);
+  color: var(--text-color);
+  font-size: var(--font-size-xs);
+  cursor: pointer;
+  white-space: nowrap;
+  &:hover { background-color: var(--surface-color-light); }
+  &:disabled { opacity: 0.4; cursor: not-allowed; }
+`;
+
+const LoadingMessage = styled.div`
+  text-align: center;
+  padding: var(--space-2xl);
+  color: var(--text-color-light);
+  font-style: italic;
+`;
+
+const ErrorMessage = styled.div`
+  padding: var(--space-md);
+  color: var(--danger-color-dark);
+  background: var(--danger-color-light);
+  border-radius: var(--border-radius);
+  text-align: center;
+`;
+
+const EmptyMessage = styled.div`
+  text-align: center;
+  padding: var(--space-2xl);
+  color: var(--text-color-light);
+  font-style: italic;
+`;
+
+// ---------------------------------------------------------------------------
+// Flavor card
+// ---------------------------------------------------------------------------
+
+const Card = styled.div<{ alertLevel?: 'low' | 'critical' }>`
+  border: var(--border-width) solid
+    ${({ alertLevel }) =>
+      alertLevel === 'critical'
+        ? 'var(--danger-color)'
+        : alertLevel === 'low'
+          ? 'var(--warning-color, #f0ad4e)'
+          : 'var(--border-color)'};
+  border-radius: var(--border-radius-lg);
+  background: var(--surface-color);
+  padding: var(--space-lg);
+  box-shadow: ${({ alertLevel }) =>
+    alertLevel === 'critical'
+      ? '0 0 0 2px var(--danger-color-light)'
+      : 'var(--shadow-sm)'};
+`;
+
+const CardHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-md);
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+`;
+
+const FlavorName = styled.h3`
+  margin: 0;
+  font-size: var(--font-size-lg);
+`;
+
+const BadgeGroup = styled.span`
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+`;
+
+const Badge = styled.span<{ variant?: 'essential' | 'warning' | 'danger' | 'info' }>`
+  display: inline-block;
+  padding: 1px 8px;
+  border-radius: 12px;
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  background: ${({ variant }) =>
+    variant === 'essential'
+      ? 'var(--primary-color-light, #d4edda)'
+      : variant === 'warning'
+        ? '#fff3cd'
+        : variant === 'danger'
+          ? 'var(--danger-color-light)'
+          : '#e2e3f5'};
+  color: ${({ variant }) =>
+    variant === 'essential'
+      ? 'var(--primary-color-dark, #155724)'
+      : variant === 'warning'
+        ? '#856404'
+        : variant === 'danger'
+          ? 'var(--danger-color-dark)'
+          : '#383d41'};
+`;
+
+const StatsGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: var(--space-md);
+  margin-bottom: var(--space-md);
+`;
+
+const StatBox = styled.div`
+  text-align: center;
+  padding: var(--space-sm);
+  background: var(--surface-color-light);
+  border-radius: var(--border-radius);
+`;
+
+const StatValue = styled.div`
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+  color: var(--text-color-strong);
+`;
+
+const StatLabel = styled.div`
+  font-size: var(--font-size-xs);
+  color: var(--text-color-light);
+  margin-top: 2px;
+`;
+
+const LocationRow = styled.div`
+  display: flex;
+  gap: var(--space-md);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-md);
+  font-size: var(--font-size-sm);
+`;
+
+const LocationBlock = styled.div`
+  flex: 1;
+  min-width: 120px;
+  padding: var(--space-sm);
+  background: var(--surface-color-light);
+  border-radius: var(--border-radius);
+`;
+
+const LocationLabel = styled.div`
+  font-weight: 600;
+  font-size: var(--font-size-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-color-light);
+  margin-bottom: 4px;
+`;
+
+const LocationDetail = styled.div`
+  font-size: var(--font-size-sm);
+  color: var(--text-color);
+`;
+
+const ActionRow = styled.div`
+  display: flex;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+  margin-top: var(--space-sm);
+  padding-top: var(--space-sm);
+  border-top: var(--border-width) solid var(--border-color-light);
+`;
+
+// ---------------------------------------------------------------------------
+// Modals (inline to keep imports clean)
+// ---------------------------------------------------------------------------
+
+const ModalOverlay = styled.div`
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+`;
+
+const ModalBox = styled.div`
+  background: var(--surface-color);
+  border-radius: var(--border-radius-lg);
+  padding: var(--space-xl);
+  min-width: 340px;
+  max-width: 500px;
+  width: 90%;
+  box-shadow: var(--shadow-xl);
+`;
+
+const ModalTitle = styled.h3`
+  margin: 0 0 var(--space-lg);
+`;
+
+const FieldGroup = styled.div`
+  margin-bottom: var(--space-md);
+`;
+
+const FieldLabel = styled.label`
+  display: block;
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  margin-bottom: 4px;
+  color: var(--text-color);
+`;
+
+const FieldInput = styled.input`
+  width: 100%;
+  padding: var(--space-sm);
+  border: var(--border-width) solid var(--border-color);
+  border-radius: var(--border-radius);
+  font-size: var(--font-size-base);
+
+  &[type='number'] {
+    max-width: 200px;
+  }
+`;
+
+const FieldSelect = styled.select`
+  width: 100%;
+  max-width: 200px;
+  padding: var(--space-sm);
+  border: var(--border-width) solid var(--border-color);
+  border-radius: var(--border-radius);
+  font-size: var(--font-size-base);
+  background: var(--surface-color);
+`;
+
+const ModalActions = styled.div`
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-sm);
+  margin-top: var(--space-lg);
+`;
+
+// ---------------------------------------------------------------------------
+// Event history (collapsible inline)
+// ---------------------------------------------------------------------------
+
+const HistoryToggle = styled.button`
+  background: none;
+  border: none;
+  color: var(--primary-color);
+  cursor: pointer;
+  font-size: var(--font-size-xs);
+  padding: 0;
+  text-decoration: underline;
+  &:hover { opacity: 0.8; }
+`;
+
+const HistoryTable = styled.table`
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-size-xs);
+  margin-top: var(--space-sm);
+
+  th, td {
+    padding: 4px 8px;
+    text-align: left;
+    border-bottom: var(--border-width) solid var(--border-color-light);
+  }
+  th {
+    font-weight: 600;
+    color: var(--text-color-light);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+`;
+
+const EventTypeBadge = styled.span<{ etype: string }>`
+  display: inline-block;
+  padding: 0 6px;
+  border-radius: 8px;
+  font-size: 10px;
+  font-weight: 600;
+  background: ${({ etype }) =>
+    etype === 'production'
+      ? '#cce5ff'
+      : etype === 'conversion'
+        ? '#d4edda'
+        : etype === 'sale'
+          ? '#f8d7da'
+          : '#fff3cd'};
+  color: ${({ etype }) =>
+    etype === 'production'
+      ? '#004085'
+      : etype === 'conversion'
+        ? '#155724'
+        : etype === 'sale'
+          ? '#721c24'
+          : '#856404'};
+`;
+
+const HistorySection: React.FC<{ flavorId: string }> = ({ flavorId }) => {
+  const [open, setOpen] = useState(false);
+
+  const { data, isLoading } = useQuery({
+    queryKey: ['iceCreamEvents', flavorId],
+    queryFn: () => fetchEvents({ flavorId, limit: 10 }),
+    enabled: open,
+  });
+
+  const events = data?.events || [];
+
+  const formatDate = (ts: string) => {
+    const d = new Date(ts);
+    return d.toLocaleDateString('ca-ES', {
+      day: '2-digit',
+      month: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
+
+  const describeEvent = (e: IceCreamEventItem) => {
+    switch (e.type) {
+      case 'production':
+        return `Producció: +${e.mixKgAdded?.toFixed(2)} kg mix` +
+          (e.recipeName ? ` (${e.recipeName})` : '');
+      case 'conversion':
+        return `Conversió: ${e.mixKgConverted?.toFixed(1)} kg → ${e.frozenLitersProduced?.toFixed(1)} L` +
+          ` (${e.largeContainersAdded} grans + ${e.smallContainersAdded} petits)` +
+          (e.batchOverrunPercent ? ` · overrun: ${e.batchOverrunPercent.toFixed(1)}%` : '');
+      case 'sale':
+        return `Venda: 1 envàs ${e.soldContainerType === 'large' ? 'gran' : 'petit'} (${e.soldLocation === 'paradeta' ? 'paradeta' : 'magatzem'})`;
+      case 'movement':
+        return `Moviment: ${e.movedCount} ${e.movedContainerType === 'large' ? 'grans' : 'petits'}` +
+          ` de ${e.movedFrom === 'warehouse' ? 'magatzem' : 'paradeta'}` +
+          ` a ${e.movedTo === 'warehouse' ? 'magatzem' : 'paradeta'}`;
+      default:
+        return '';
+    }
+  };
+
+  return (
+    <div style={{ marginTop: 'var(--space-sm)' }}>
+      <HistoryToggle onClick={() => setOpen(!open)}>
+        {open ? '▼ Amaga historial' : '▶ Mostra historial'}
+      </HistoryToggle>
+      {open && (
+        <div style={{ marginTop: 'var(--space-sm)' }}>
+          {isLoading ? (
+            <span style={{ color: 'var(--text-color-light)', fontSize: 'var(--font-size-xs)' }}>Carregant...</span>
+          ) : events.length === 0 ? (
+            <span style={{ color: 'var(--text-color-light)', fontSize: 'var(--font-size-xs)' }}>No hi ha esdeveniments.</span>
+          ) : (
+            <HistoryTable>
+              <thead>
+                <tr>
+                  <th>Data</th>
+                  <th>Tipus</th>
+                  <th>Detall</th>
+                </tr>
+              </thead>
+              <tbody>
+                {events.map((ev) => (
+                  <tr key={ev._id}>
+                    <td style={{ whiteSpace: 'nowrap' }}>{formatDate(ev.timestamp)}</td>
+                    <td><EventTypeBadge etype={ev.type}>{ev.type}</EventTypeBadge></td>
+                    <td>{describeEvent(ev)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </HistoryTable>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ---------------------------------------------------------------------------
+// Modal components
+// ---------------------------------------------------------------------------
+
+interface ConvertModalProps {
+  flavor: DashboardFlavor;
+  onClose: () => void;
+  onConfirm: (flavorId: string, dto: ConvertMixDto) => void;
+  isPending: boolean;
+}
+
+const ConvertMixModal: React.FC<ConvertModalProps> = ({
+  flavor,
+  onClose,
+  onConfirm,
+  isPending,
+}) => {
+  const [mixKg, setMixKg] = useState(flavor.iceCreamMixKg > 0 ? Math.min(flavor.iceCreamMixKg, 10) : 0);
+  const [frozenLiters, setFrozenLiters] = useState(0);
+  const [largeContainers, setLargeContainers] = useState(0);
+  const [smallContainers, setSmallContainers] = useState(0);
+
+  const handleSubmit = () => {
+    if (mixKg <= 0 || frozenLiters <= 0) return;
+    if (largeContainers === 0 && smallContainers === 0) return;
+    onConfirm(flavor._id, { mixKg, frozenLiters, largeContainers, smallContainers });
+  };
+
+  return (
+    <ModalOverlay onClick={onClose}>
+      <ModalBox onClick={(e) => e.stopPropagation()}>
+        <ModalTitle>
+          Convertir mix a congelat — {flavor.name}
+        </ModalTitle>
+        <div style={{fontSize:'var(--font-size-sm)',color:'var(--text-color-light)',marginBottom:'var(--space-md)'}}>
+          Mix disponible: <strong>{flavor.iceCreamMixKg.toFixed(2)} kg</strong>
+          {flavor.iceCreamMixKg > 0 && (
+            <span> · Overrun mitjà: <strong>{flavor.overrunPercent.toFixed(1)}%</strong></span>
+          )}
+        </div>
+
+        <FieldGroup>
+          <FieldLabel>Kg de mix a convertir</FieldLabel>
+          <FieldInput
+            type="number"
+            min={0}
+            step={0.1}
+            value={mixKg}
+            onChange={(e) => setMixKg(parseFloat(e.target.value) || 0)}
+          />
+        </FieldGroup>
+
+        <FieldGroup>
+          <FieldLabel>Liters de gelat produïts</FieldLabel>
+          <FieldInput
+            type="number"
+            min={0}
+            step={0.1}
+            value={frozenLiters}
+            onChange={(e) => setFrozenLiters(parseFloat(e.target.value) || 0)}
+          />
+          {mixKg > 0 && frozenLiters > 0 && (
+            <div style={{fontSize:'var(--font-size-xs)',color:'var(--text-color-light)',marginTop:4}}>
+              Overrun estimat: <strong>{((frozenLiters / mixKg - 1) * 100).toFixed(1)}%</strong>
+            </div>
+          )}
+        </FieldGroup>
+
+        <FieldGroup>
+          <FieldLabel>Envasos grans (omplir)</FieldLabel>
+          <FieldInput
+            type="number"
+            min={0}
+            step={1}
+            value={largeContainers}
+            onChange={(e) => setLargeContainers(parseInt(e.target.value) || 0)}
+          />
+          {largeContainers > 0 && frozenLiters > 0 && (
+            <div style={{fontSize:'var(--font-size-xs)',color:'var(--text-color-light)',marginTop:4}}>
+              ~ {(frozenLiters - smallContainers) / largeContainers} L per envàs gran
+            </div>
+          )}
+        </FieldGroup>
+
+        <FieldGroup>
+          <FieldLabel>Envasos petits (1L cadascun)</FieldLabel>
+          <FieldInput
+            type="number"
+            min={0}
+            step={1}
+            value={smallContainers}
+            onChange={(e) => setSmallContainers(parseInt(e.target.value) || 0)}
+          />
+        </FieldGroup>
+
+        <ModalActions>
+          <SecondaryButton onClick={onClose} disabled={isPending}>
+            Cancel·lar
+          </SecondaryButton>
+          <ActionButton onClick={handleSubmit} disabled={isPending || mixKg <= 0 || frozenLiters <= 0 || (largeContainers === 0 && smallContainers === 0)}>
+            {isPending ? 'Convertint...' : 'Convertir'}
+          </ActionButton>
+        </ModalActions>
+      </ModalBox>
+    </ModalOverlay>
+  );
+};
+
+// ---------------------------------------------------------------------------
+
+interface SellModalProps {
+  flavor: DashboardFlavor;
+  onClose: () => void;
+  onConfirm: (flavorId: string, containerType: 'large' | 'small', location: 'warehouse' | 'paradeta') => void;
+  isPending: boolean;
+}
+
+const SellContainerModal: React.FC<SellModalProps> = ({
+  flavor,
+  onClose,
+  onConfirm,
+  isPending,
+}) => {
+  const [containerType, setContainerType] = useState<'large' | 'small'>('small');
+  const [location, setLocation] = useState<'warehouse' | 'paradeta'>('paradeta');
+
+  const maxAvailable =
+    containerType === 'large'
+      ? location === 'warehouse'
+        ? flavor.largeWarehouseContainers
+        : flavor.largeParadetaContainers
+      : location === 'warehouse'
+        ? flavor.smallWarehouseCount
+        : flavor.smallParadetaCount;
+
+  const handleSubmit = () => {
+    if (maxAvailable < 1) return;
+    onConfirm(flavor._id, containerType, location);
+  };
+
+  return (
+    <ModalOverlay onClick={onClose}>
+      <ModalBox onClick={(e) => e.stopPropagation()}>
+        <ModalTitle>Vendre envàs — {flavor.name}</ModalTitle>
+
+        <FieldGroup>
+          <FieldLabel>Tipus d'envàs</FieldLabel>
+          <FieldSelect
+            value={containerType}
+            onChange={(e) => setContainerType(e.target.value as 'large' | 'small')}
+          >
+            <option value="small">Petit (1L)</option>
+            <option value="large">Gran (~{(
+              (location === 'warehouse'
+                ? flavor.largeWarehouseLiters
+                : flavor.largeParadetaLiters) /
+              Math.max(1, location === 'warehouse'
+                ? flavor.largeWarehouseContainers
+                : flavor.largeParadetaContainers)
+            ).toFixed(1)}L)</option>
+          </FieldSelect>
+        </FieldGroup>
+
+        <FieldGroup>
+          <FieldLabel>Ubicació</FieldLabel>
+          <FieldSelect
+            value={location}
+            onChange={(e) => setLocation(e.target.value as 'warehouse' | 'paradeta')}
+          >
+            <option value="paradeta">Paradeta</option>
+            <option value="warehouse">Magatzem</option>
+          </FieldSelect>
+        </FieldGroup>
+
+        {maxAvailable < 1 && (
+          <div style={{ color: 'var(--danger-color)', fontSize: 'var(--font-size-sm)', marginBottom: 'var(--space-md)' }}>
+            No hi ha envasos disponibles en aquesta ubicació.
+          </div>
+        )}
+
+        <ModalActions>
+          <SecondaryButton onClick={onClose} disabled={isPending}>
+            Cancel·lar
+          </SecondaryButton>
+          <ActionButton onClick={handleSubmit} disabled={isPending || maxAvailable < 1}>
+            {isPending ? 'Venent...' : 'Vendre'}
+          </ActionButton>
+        </ModalActions>
+      </ModalBox>
+    </ModalOverlay>
+  );
+};
+
+// ---------------------------------------------------------------------------
+
+interface MoveModalProps {
+  flavor: DashboardFlavor;
+  onClose: () => void;
+  onConfirm: (flavorId: string, containerType: 'large' | 'small', count: number, from: 'warehouse' | 'paradeta', to: 'warehouse' | 'paradeta') => void;
+  isPending: boolean;
+}
+
+const MoveContainersModal: React.FC<MoveModalProps> = ({
+  flavor,
+  onClose,
+  onConfirm,
+  isPending,
+}) => {
+  const [containerType, setContainerType] = useState<'large' | 'small'>('large');
+  const [from, setFrom] = useState<'warehouse' | 'paradeta'>('warehouse');
+  const [count, setCount] = useState(1);
+
+  const to = from === 'warehouse' ? 'paradeta' : 'warehouse';
+  const maxAvailable =
+    containerType === 'large'
+      ? from === 'warehouse'
+        ? flavor.largeWarehouseContainers
+        : flavor.largeParadetaContainers
+      : from === 'warehouse'
+        ? flavor.smallWarehouseCount
+        : flavor.smallParadetaCount;
+
+  const handleSubmit = () => {
+    if (count <= 0 || count > maxAvailable) return;
+    onConfirm(flavor._id, containerType, count, from, to);
+  };
+
+  const fromLabel = from === 'warehouse' ? 'Magatzem' : 'Paradeta';
+  const toLabel = to === 'warehouse' ? 'Magatzem' : 'Paradeta';
+
+  return (
+    <ModalOverlay onClick={onClose}>
+      <ModalBox onClick={(e) => e.stopPropagation()}>
+        <ModalTitle>Moure envasos — {flavor.name}</ModalTitle>
+
+        <FieldGroup>
+          <FieldLabel>Tipus d'envàs</FieldLabel>
+          <FieldSelect
+            value={containerType}
+            onChange={(e) => setContainerType(e.target.value as 'large' | 'small')}
+          >
+            <option value="small">Petit (1L)</option>
+            <option value="large">Gran</option>
+          </FieldSelect>
+        </FieldGroup>
+
+        <FieldGroup>
+          <FieldLabel>De</FieldLabel>
+          <FieldSelect
+            value={from}
+            onChange={(e) => setFrom(e.target.value as 'warehouse' | 'paradeta')}
+          >
+            <option value="warehouse">Magatzem ({maxAvailable} disponibles)</option>
+            <option value="paradeta">Paradeta ({maxAvailable} disponibles)</option>
+          </FieldSelect>
+        </FieldGroup>
+
+        <FieldGroup>
+          <FieldLabel>Quantitat</FieldLabel>
+          <FieldInput
+            type="number"
+            min={1}
+            max={maxAvailable}
+            step={1}
+            value={count}
+            onChange={(e) => setCount(Math.min(parseInt(e.target.value) || 1, maxAvailable))}
+          />
+        </FieldGroup>
+
+        <div style={{fontSize:'var(--font-size-sm)',color:'var(--text-color-light)',marginBottom:'var(--space-md)'}}>
+          Moure <strong>{count}</strong> envàs(sos) {containerType === 'large' ? 'gran(s)' : 'petit(s)'} de <strong>{fromLabel}</strong> a <strong>{toLabel}</strong>
+        </div>
+
+        <ModalActions>
+          <SecondaryButton onClick={onClose} disabled={isPending}>
+            Cancel·lar
+          </SecondaryButton>
+          <ActionButton onClick={handleSubmit} disabled={isPending || count <= 0 || count > maxAvailable}>
+            {isPending ? 'Movent...' : 'Moure'}
+          </ActionButton>
+        </ModalActions>
+      </ModalBox>
+    </ModalOverlay>
+  );
+};
+
+// ---------------------------------------------------------------------------
+// Main dashboard component
+// ---------------------------------------------------------------------------
+
+interface IceCreamDashboardTabProps {
+  onOpenFlavorEdit: (flavorName: string, flavorId?: string) => void;
+}
+
+export const IceCreamDashboardTab: React.FC<IceCreamDashboardTabProps> = ({
+  onOpenFlavorEdit,
+}) => {
+  const queryClient = useQueryClient();
+
+  // Fetch dashboard data
+  const {
+    data: flavors,
+    isLoading,
+    isError,
+    error,
+  } = useQuery<DashboardFlavor[], Error>({
+    queryKey: ['iceCreamDashboard'],
+    queryFn: fetchDashboard,
+  });
+
+  // Mutations
+  const convertMutation = useMutation({
+    mutationFn: ({
+      flavorId,
+      dto,
+    }: {
+      flavorId: string;
+      dto: ConvertMixDto;
+    }) => convertMixToFrozen(flavorId, dto),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['iceCreamDashboard'] });
+      setConvertFlavor(null);
+    },
+  });
+
+  const sellMutation = useMutation({
+    mutationFn: ({
+      flavorId,
+      containerType,
+      location,
+    }: {
+      flavorId: string;
+      containerType: 'large' | 'small';
+      location: 'warehouse' | 'paradeta';
+    }) => sellContainer(flavorId, { containerType, location }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['iceCreamDashboard'] });
+      setSellFlavor(null);
+    },
+  });
+
+  const moveMutation = useMutation({
+    mutationFn: ({
+      flavorId,
+      containerType,
+      count,
+      from,
+      to,
+    }: {
+      flavorId: string;
+      containerType: 'large' | 'small';
+      count: number;
+      from: 'warehouse' | 'paradeta';
+      to: 'warehouse' | 'paradeta';
+    }) => moveContainers(flavorId, { containerType, count, from, to }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['iceCreamDashboard'] });
+      setMoveFlavor(null);
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (flavorId: string) => deleteFlavor(flavorId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['iceCreamDashboard'] });
+    },
+  });
+
+  // Modal state
+  const [convertFlavor, setConvertFlavor] = useState<DashboardFlavor | null>(null);
+  const [sellFlavor, setSellFlavor] = useState<DashboardFlavor | null>(null);
+  const [moveFlavor, setMoveFlavor] = useState<DashboardFlavor | null>(null);
+
+  // Determine overall alert level for a card
+  const getAlertLevel = (f: DashboardFlavor): 'critical' | 'low' | undefined => {
+    if (!f.essentialLarge && !f.essentialSmall) return undefined;
+    if (f.alerts.overallLow) return 'critical';
+    if (f.alerts.paradetaLow) return 'low';
+    return undefined;
+  };
+
+  if (isLoading) return <Container><LoadingMessage>Carregant dashboard...</LoadingMessage></Container>;
+  if (isError) return <Container><ErrorMessage>Error: {error?.message}</ErrorMessage></Container>;
+
+  const typedFlavors = flavors as DashboardFlavor[] | undefined;
+
+  return (
+    <Container>
+      <HeaderRow>
+        <PageTitle>🍦 Estoc de Gelats</PageTitle>
+        <HeaderActions>
+          <ActionButton onClick={() => onOpenFlavorEdit('Nou Gust')}>
+            + Nou Gust
+          </ActionButton>
+        </HeaderActions>
+      </HeaderRow>
+
+      {(!typedFlavors || typedFlavors.length === 0) ? (
+        <EmptyMessage>
+          No hi ha gustos de gelat definits. Creeu el primer gust!
+        </EmptyMessage>
+      ) : (
+        typedFlavors.map((f) => {
+          const alertLevel = getAlertLevel(f);
+          return (
+            <Card key={f._id} alertLevel={alertLevel}>
+              <CardHeader>
+                <FlavorName>{f.name}</FlavorName>
+                <BadgeGroup>
+                  {f.essentialLarge && <Badge variant="essential">Essencial GRAN</Badge>}
+                  {f.essentialSmall && <Badge variant="essential">Essencial PETIT</Badge>}
+                  {alertLevel === 'critical' && <Badge variant="danger">URGENT: Estoc baix</Badge>}
+                  {alertLevel === 'low' && <Badge variant="warning">Paradeta baixa</Badge>}
+                  {f.overrunPercent > 0 && (
+                    <Badge variant="info">Overrun: {f.overrunPercent.toFixed(1)}%</Badge>
+                  )}
+                </BadgeGroup>
+              </CardHeader>
+
+              {/* Main stats */}
+              <StatsGrid>
+                <StatBox>
+                  <StatValue>{f.iceCreamMixKg.toFixed(2)} kg</StatValue>
+                  <StatLabel>Mix disponible</StatLabel>
+                </StatBox>
+                <StatBox>
+                  <StatValue>{f.totalFrozenLiters.toFixed(1)} L</StatValue>
+                  <StatLabel>Total congelat</StatLabel>
+                </StatBox>
+                <StatBox>
+                  <StatValue>{f.totalLargeContainers}</StatValue>
+                  <StatLabel>Envasos grans</StatLabel>
+                </StatBox>
+                <StatBox>
+                  <StatValue>{f.totalSmallCount}</StatValue>
+                  <StatLabel>Envasos petits</StatLabel>
+                </StatBox>
+              </StatsGrid>
+
+              {/* Location breakdown */}
+              <LocationRow>
+                <LocationBlock>
+                  <LocationLabel>📍 Magatzem</LocationLabel>
+                  <LocationDetail>
+                    Grans: {f.largeWarehouseContainers} ({f.largeWarehouseLiters.toFixed(1)} L)
+                  </LocationDetail>
+                  <LocationDetail>
+                    Petits: {f.smallWarehouseCount}
+                  </LocationDetail>
+                </LocationBlock>
+                <LocationBlock>
+                  <LocationLabel>🏪 Paradeta</LocationLabel>
+                  <LocationDetail>
+                    Grans: {f.largeParadetaContainers} ({f.largeParadetaLiters.toFixed(1)} L)
+                  </LocationDetail>
+                  <LocationDetail>
+                    Petits: {f.smallParadetaCount}
+                  </LocationDetail>
+                </LocationBlock>
+              </LocationRow>
+
+              {/* Actions */}
+              <ActionRow>
+                <SmallButton
+                  onClick={() => setConvertFlavor(f)}
+                  disabled={f.iceCreamMixKg <= 0}
+                  title={
+                    f.iceCreamMixKg <= 0
+                      ? 'No hi ha mix disponible per convertir'
+                      : 'Convertir mix en gelat congelat'
+                  }
+                >
+                  🧊 Convertir mix
+                </SmallButton>
+                <SmallButton
+                  onClick={() => setSellFlavor(f)}
+                  disabled={f.totalFrozenLiters <= 0}
+                  title="Vendre un envàs"
+                >
+                  💰 Vendre envàs
+                </SmallButton>
+                <SmallButton
+                  onClick={() => setMoveFlavor(f)}
+                  disabled={f.totalFrozenLiters <= 0}
+                  title="Moure envasos entre ubicacions"
+                >
+                  📦 Moure envasos
+                </SmallButton>
+                <SmallButton onClick={() => onOpenFlavorEdit(f.name, f._id)}>
+                  ✏️ Editar
+                </SmallButton>
+                <DangerButton
+                  onClick={() => {
+                    if (window.confirm(`Eliminar el gust "${f.name}"?`)) {
+                      deleteMutation.mutate(f._id);
+                    }
+                  }}
+                >
+                  🗑️ Eliminar
+                </DangerButton>
+              </ActionRow>
+              <HistorySection flavorId={f._id} />
+            </Card>
+          );
+        })
+      )}
+
+      {/* Modals */}
+      {convertFlavor && (
+        <ConvertMixModal
+          flavor={convertFlavor}
+          onClose={() => setConvertFlavor(null)}
+          onConfirm={(flavorId, dto) =>
+            convertMutation.mutate({ flavorId, dto })
+          }
+          isPending={convertMutation.isPending}
+        />
+      )}
+
+      {sellFlavor && (
+        <SellContainerModal
+          flavor={sellFlavor}
+          onClose={() => setSellFlavor(null)}
+          onConfirm={(flavorId, containerType, location) =>
+            sellMutation.mutate({ flavorId, containerType, location })
+          }
+          isPending={sellMutation.isPending}
+        />
+      )}
+
+      {moveFlavor && (
+        <MoveContainersModal
+          flavor={moveFlavor}
+          onClose={() => setMoveFlavor(null)}
+          onConfirm={(flavorId, containerType, count, from, to) =>
+            moveMutation.mutate({ flavorId, containerType, count, from, to })
+          }
+          isPending={moveMutation.isPending}
+        />
+      )}
+    </Container>
+  );
+};

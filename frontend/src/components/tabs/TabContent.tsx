@@ -7,6 +7,8 @@ import { IngredientsTab } from '../ingredients/IngredientsTab';
 import { RecipeEditorTab } from '../recipe/RecipeEditorTab';
 import IngredientEditTab from '../ingredients/IngredientEditTab';
 import DefaultStepsTab from '../defaultSteps/DefaultStepsTab';
+import { IceCreamDashboardTab } from '../iceCream/IceCreamDashboardTab';
+import { IceCreamFlavorEditTab } from '../iceCream/IceCreamFlavorEditTab';
 
 interface TabContentProps {
   activeTab: TabData | undefined;
@@ -19,6 +21,9 @@ interface TabContentProps {
   onAmountTracked: (tabId: string, ingredientId: string, addedAmountGrams: number) => void;
   onOpenRecipeEditor: (recipeId: string, recipeName: string) => void;
   onOpenIngredientEditTab: (ingredientName: string, ingredientId?: string) => void;
+  // Ice-cream tab handlers
+  onOpenIceCreamDashboardTab?: () => void;
+  onOpenIceCreamFlavorEditTab?: (flavorName: string, flavorId?: string) => void;
   scaleFactor: number;
   onScaleChange: (tabId: string, newScaleFactor: number) => void;
 }
@@ -116,6 +121,23 @@ export const TabContent = ({
       case 'defaultSteps':
         if (activeTab.type !== 'defaultSteps') return null;
         return <DefaultStepsTab />;
+      case 'iceCreamDashboard':
+        if (activeTab.type !== 'iceCreamDashboard') return null;
+        return (
+          <IceCreamDashboardTab
+            onOpenFlavorEdit={(flavorName, flavorId) =>
+              onOpenIceCreamFlavorEditTab?.(flavorName, flavorId)
+            }
+          />
+        );
+      case 'iceCreamFlavorEdit':
+        if (activeTab.type !== 'iceCreamFlavorEdit') return null;
+        return (
+          <IceCreamFlavorEditTab
+            tab={activeTab}
+            onCloseTab={onCloseTab}
+          />
+        );
       default:
         console.warn('Unhandled tab type in TabContent renderContent:', activeTab);
         return (

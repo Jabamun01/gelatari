@@ -264,21 +264,28 @@ export const getRecipeDependencies = async (recipeId: string): Promise<RecipeDet
 };
 
 /**
- * Finalizes the production of a recipe, typically spending ingredients.
+ * Finalizes the production of a recipe, spending ingredients.
+ * Optionally adds ice-cream mix to the specified flavor.
  * @param recipeId The ID of the recipe to finalize.
+ * @param flavorId Optional ID of the ice-cream flavor to add mix to.
  * @returns A promise that resolves when the finalization is successful.
  */
-export const finalizeRecipeProductionApi = async (recipeId: string): Promise<void> => {
+export const finalizeRecipeProductionApi = async (
+  recipeId: string,
+  flavorId?: string,
+): Promise<void> => {
   const apiUrl = `${API_BASE_URL}/recipes/${recipeId}/finalize-production`;
 
   try {
+    const body: any = {};
+    if (flavorId) body.flavorId = flavorId;
+
     const response = await authFetch(apiUrl, {
-      method: 'POST', // Or 'PATCH' if that's what the backend expects
+      method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        // Add any other headers like Authorization if needed
       },
-      // body: JSON.stringify({}), // Send an empty body or specific payload if required by backend
+      body: JSON.stringify(body),
     });
 
     if (!response.ok) {
@@ -288,18 +295,9 @@ export const finalizeRecipeProductionApi = async (recipeId: string): Promise<voi
       );
     }
 
-    // POST requests for actions might return 200 OK, 204 No Content, or the updated resource.
-    // Assuming 204 No Content or just a success status for now.
-    if (response.status === 204) {
-      return; // Indicate success for No Content
-    }
-    // If response has content (e.g. updated recipe), parse it, though not strictly needed for void return
-    // const data = await response.json();
-    // return data; // or just return;
-    return; // Indicate success
-
+    return;
   } catch (error) {
     console.error(`Failed to finalize production for recipe with ID ${recipeId}:`, error);
-    throw error; // Re-throw for react-query
+    throw error;
   }
 };
