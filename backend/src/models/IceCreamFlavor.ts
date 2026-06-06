@@ -27,6 +27,14 @@ export interface IIceCreamFlavor extends Document {
   // --- Essential flags (separate for large / small) ---
   essentialLarge: boolean;
   essentialSmall: boolean;
+
+  // --- Computed virtuals ---
+  totalLargeContainers: number;
+  totalLargeLiters: number;
+  totalSmallCount: number;
+  totalFrozenLiters: number;
+  averageLargeContainerLiters: number;
+  overrunPercent: number;
 }
 
 const iceCreamFlavorSchema = new Schema<IIceCreamFlavor>(

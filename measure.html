@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Measure Helper</title>
+  <style>
+    body { margin: 0; font-family: monospace; }
+    iframe { width: 100%; height: 80vh; border: 2px solid blue; }
+    #results { padding: 10px; background: #f0f0f0; white-space: pre-wrap; }
+  </style>
+</head>
+<body>
+  <div id="results">Loading...</div>
+  <iframe id="app" src="http://localhost:8080/"></iframe>
+  <script>
+    const iframe = document.getElementById('app');
+    iframe.onload = function() {
+      setTimeout(function() {
+        try {
+          const doc = iframe.contentDocument || iframe.contentWindow.document;
+          const results = [];
+          doc.querySelectorAll('button, input[type="range"]').forEach(el => {
+            const rect = el.getBoundingClientRect();
+            if (rect.height > 0) {
+              results.push({
+                t: el.textContent.trim().slice(0, 40) || el.type || el.getAttribute('aria-label') || 'unknown',
+                h: Math.round(rect.height * 10) / 10,
+                w: Math.round(rect.width * 10) / 10
+              });
+            }
+          });
+          document.getElementById('results').textContent = JSON.stringify(results, null, 2);
+        } catch (e) {
+          document.getElementById('results').textContent = 'Error: ' + e.message;
+        }
+      }, 2000);
+    };
+  </script>
+</body>
+</html>

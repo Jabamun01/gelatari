@@ -55,6 +55,7 @@ export const TabContent = ({
   onAmountTracked,
   onOpenRecipeEditor,
   onOpenIngredientEditTab,
+  onOpenIceCreamFlavorEditTab,
   scaleFactor,
   onScaleChange,
 }: TabContentProps) => {

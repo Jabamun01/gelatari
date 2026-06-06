@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "project": "/home/patata/Repos/gelatari",
+  "base_branch": "main",
+  "coordinator": {
+    "session_id": "019e9e5b-03a8-7791-8184-c7b427bc300a",
+    "pid": 121496,
+    "started_at": 1780777904776,
+    "last_seen": 1780777904776
+  },
+  "workers": []
+}
