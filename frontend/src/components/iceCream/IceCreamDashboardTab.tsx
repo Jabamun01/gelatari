@@ -1041,22 +1041,11 @@ export const IceCreamDashboardTab: React.FC<IceCreamDashboardTabProps> = ({
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
   const [sortBy, setSortBy] = useState<'alphabetical-essential' | 'alphabetical' | 'mix-low' | 'mix-high' | 'frozen-low' | 'frozen-high'>('alphabetical-essential');
 
-  // Determine overall alert level for a card
-  const getAlertLevel = (f: DashboardFlavor): 'critical' | 'low' | undefined => {
-    if (!f.essentialLarge && !f.essentialSmall) return undefined;
-    if (f.alerts.overallLow) return 'critical';
-    if (f.alerts.paradetaLow) return 'low';
-    return undefined;
-  };
+  // ── Client-side pagination state ────────────────────────────────────
+  const PAGE_SIZE = 5;
+  const [currentPage, setCurrentPage] = useState(1);
 
-  const isAnyResetPending =
-    resetMixMutation.isPending ||
-    resetContainersMutation.isPending ||
-    resetAllMutation.isPending;
-
-  if (isLoading) return <Container><LoadingMessage>Carregant dashboard...</LoadingMessage></Container>;
-  if (isError) return <Container><ErrorMessage>Error: {error?.message}</ErrorMessage></Container>;
-
+  // Derive typed flavors (always before guards so hooks are consistent)
   const typedFlavors = flavors as DashboardFlavor[] | undefined;
 
   // ── Filter & sort flavors ────────────────────────────────────────────
@@ -1099,10 +1088,7 @@ export const IceCreamDashboardTab: React.FC<IceCreamDashboardTabProps> = ({
     });
   }, [typedFlavors, debouncedSearchTerm, sortBy]);
 
-  // ── Client-side pagination on filtered+sorted data ──────────────────
-  const PAGE_SIZE = 5;
-  const [currentPage, setCurrentPage] = useState(1);
-
+  // ── Pagination derived values ─────────────────────────────────────
   const totalPages = Math.max(1, Math.ceil((filteredAndSortedFlavors?.length || 0) / PAGE_SIZE));
 
   // Reset to last page if current page exceeds total after a deletion
@@ -1114,6 +1100,22 @@ export const IceCreamDashboardTab: React.FC<IceCreamDashboardTabProps> = ({
     const start = (currentPage - 1) * PAGE_SIZE;
     return filteredAndSortedFlavors.slice(start, start + PAGE_SIZE);
   }, [filteredAndSortedFlavors, currentPage]);
+
+  // Determine overall alert level for a card
+  const getAlertLevel = (f: DashboardFlavor): 'critical' | 'low' | undefined => {
+    if (!f.essentialLarge && !f.essentialSmall) return undefined;
+    if (f.alerts.overallLow) return 'critical';
+    if (f.alerts.paradetaLow) return 'low';
+    return undefined;
+  };
+
+  const isAnyResetPending =
+    resetMixMutation.isPending ||
+    resetContainersMutation.isPending ||
+    resetAllMutation.isPending;
+
+  if (isLoading) return <Container><LoadingMessage>Carregant dashboard...</LoadingMessage></Container>;
+  if (isError) return <Container><ErrorMessage>Error: {error?.message}</ErrorMessage></Container>;
 
   return (
     <Container>
