@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { styled } from '@linaria/react';
 import { useQuery } from '@tanstack/react-query';
 import { useDebounce } from '../../utils/hooks';
+import { normalizeText } from '../../utils/formatting';
 
 const SearchInput = styled.input`
   font-size: var(--font-size-base);
@@ -164,7 +165,7 @@ export const SearchableSelector = <T extends SelectableItem>({
 
   const { data: results = [], isLoading, isError, error } = useQuery<T[], Error>({
     queryKey: queryKey,
-    queryFn: () => queryFn(debouncedSearchTerm),
+    queryFn: () => queryFn(normalizeText(debouncedSearchTerm)),
     enabled: debouncedSearchTerm.length >= minSearchLength && !disabled,
     staleTime: 5 * 60 * 1000,
   });

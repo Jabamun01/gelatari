@@ -233,13 +233,13 @@ export const IceCreamFlavorEditModal: React.FC<IceCreamFlavorEditModalProps> = (
     }
   }, []);
 
-  const handleAddMixIn = (item: SelectableItem) => {
+  const handleAddMixIn = (item: SelectableItem, amount: number = 0) => {
     // Check if already added
     if (mixIns.some(m => m.ingredient === item.id)) {
       setError(`"${item.name}" ja és a la llista de mix-ins.`);
       return;
     }
-    setMixIns(prev => [...prev, { ingredient: item.id, ingredientName: item.name, amountPerKg: 0 }]);
+    setMixIns(prev => [...prev, { ingredient: item.id, ingredientName: item.name, amountPerKg: amount }]);
     setError(null);
   };
 

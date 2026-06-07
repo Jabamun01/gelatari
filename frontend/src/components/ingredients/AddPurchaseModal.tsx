@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { styled } from '@linaria/react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { getAllIngredients, batchAddPurchaseApi, BatchPurchaseInputItem } from '../../api/ingredients';
+import { normalizeText } from '../../utils/formatting';
 import { Ingredient } from '../../types/ingredient';
 
 // ---------------------------------------------------------------------------
@@ -353,7 +354,7 @@ const AddPurchaseModal: React.FC<AddPurchaseModalProps> = ({ onClose }) => {
     setIsSearching(true);
     searchTimeoutRef.current = setTimeout(async () => {
       try {
-        const res = await getAllIngredients(1, 15, searchTerm.trim());
+        const res = await getAllIngredients(1, 15, normalizeText(searchTerm.trim()));
         setSearchResults(res.data.filter(
           (ing) => !items.some((item) => item.ingredientId === ing._id),
         ));
