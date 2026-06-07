@@ -8,7 +8,7 @@ import {
   updateFlavor,
 } from '../../api/iceCreamFlavors';
 import { getAllIngredients } from '../../api/ingredients';
-import { IceCreamFlavor, UpdateFlavorDto } from '../../types/iceCreamFlavor';
+import { IceCreamFlavor } from '../../types/iceCreamFlavor';
 import { Ingredient } from '../../types/ingredient';
 import { SearchableSelector, SelectableItem } from '../common/SearchableSelector';
 

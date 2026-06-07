@@ -10,43 +10,17 @@
   },
   "workers": [
     {
-      "id": "worker_1",
-      "worktree": "/home/patata/Repos/gelatari--worker_1",
-      "branch": "piparallel/worker_1",
-      "status": "working",
-      "session_id": "019ea215-07a8-7205-a1d5-1f645c2a983f",
-      "pid": 67159,
-      "started_at": 1780835748149,
-      "last_seen": 1780836013756,
-      "changed_files": {},
-      "summary": "",
-      "merge_status": "merged"
-    },
-    {
       "id": "worker_2",
       "worktree": "/home/patata/Repos/gelatari--worker_2",
       "branch": "piparallel/worker_2",
       "status": "working",
-      "session_id": "019ea215-d45f-7c00-a4bd-4e0f20f3ea06",
-      "pid": 68003,
-      "started_at": 1780835800554,
-      "last_seen": 1780836013961,
+      "session_id": "019ea2c0-184e-7431-95ef-bc4a7241d681",
+      "pid": 134611,
+      "started_at": 1780846959076,
+      "last_seen": 1780846959076,
       "changed_files": {},
       "summary": "",
-      "merge_status": "merged"
-    },
-    {
-      "id": "worker_3",
-      "worktree": "/home/patata/Repos/gelatari--worker_3",
-      "branch": "piparallel/worker_3",
-      "status": "working",
-      "session_id": "019ea216-c31b-75fe-8fb7-a39a06f271f3",
-      "pid": 68785,
-      "started_at": 1780835861678,
-      "last_seen": 1780836264430,
-      "changed_files": {},
-      "summary": "",
-      "merge_status": "merged"
+      "merge_status": null
     }
   ]
 }
