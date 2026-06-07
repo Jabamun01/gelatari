@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { styled } from '@linaria/react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { PaginationControls } from '../common/PaginationControls';
@@ -1091,10 +1091,12 @@ export const IceCreamDashboardTab: React.FC<IceCreamDashboardTabProps> = ({
   // ── Pagination derived values ─────────────────────────────────────
   const totalPages = Math.max(1, Math.ceil((filteredAndSortedFlavors?.length || 0) / PAGE_SIZE));
 
-  // Reset to last page if current page exceeds total after a deletion
-  if (filteredAndSortedFlavors && currentPage > Math.ceil(filteredAndSortedFlavors.length / PAGE_SIZE)) {
-    setCurrentPage(Math.max(1, Math.ceil(filteredAndSortedFlavors.length / PAGE_SIZE)));
-  }
+  // Reset to last page if current page exceeds total after a deletion (via effect to avoid re-render loop)
+  useEffect(() => {
+    if (filteredAndSortedFlavors && currentPage > Math.ceil(filteredAndSortedFlavors.length / PAGE_SIZE)) {
+      setCurrentPage(Math.max(1, Math.ceil(filteredAndSortedFlavors.length / PAGE_SIZE)));
+    }
+  }, [filteredAndSortedFlavors, currentPage, PAGE_SIZE]);
 
   const paginatedFlavors = useMemo(() => {
     const start = (currentPage - 1) * PAGE_SIZE;
