@@ -1,4 +1,5 @@
 import IceCreamFlavor, { IIceCreamFlavor } from '../models/IceCreamFlavor';
+import Recipe from '../models/Recipe';
 import mongoose from 'mongoose';
 import * as eventService from './iceCreamEventService';
 
@@ -28,6 +29,8 @@ export interface MoveContainersInput {
 export interface DashboardFlavor {
   _id: string;
   name: string;
+  sourceRecipeId?: string;
+  sourceRecipeName?: string;
   iceCreamMixKg: number;
   overrunPercent: number;
   totalFrozenLiters: number;
@@ -69,7 +72,11 @@ const isValidObjectId = (id: string): boolean =>
 /**
  * Build a typed dashboard item from a flavor document.
  */
-const toDashboardItem = (f: IIceCreamFlavor): DashboardFlavor => {
+/**
+ * Build a typed dashboard item from a flavor document.
+ * Expects sourceRecipeId to be populated (or just an ObjectId).
+ */
+const toDashboardItem = (f: IIceCreamFlavor & { sourceRecipeId?: any }): DashboardFlavor => {
   const totalLargeL = f.largeWarehouseLiters + f.largeParadetaLiters;
   const totalSmall = f.smallWarehouseCount + f.smallParadetaCount;
   const paradetaL =
@@ -98,9 +105,22 @@ const toDashboardItem = (f: IIceCreamFlavor): DashboardFlavor => {
     }
   }
 
+  // Extract source recipe info (may be populated or just an ObjectId)
+  const sourceRecipeId = f.sourceRecipeId
+    ? (typeof f.sourceRecipeId === 'object' && f.sourceRecipeId._id
+        ? f.sourceRecipeId._id.toString()
+        : f.sourceRecipeId.toString())
+    : undefined;
+  const sourceRecipeName =
+    f.sourceRecipeId && typeof f.sourceRecipeId === 'object' && (f.sourceRecipeId as any).name
+      ? (f.sourceRecipeId as any).name
+      : undefined;
+
   return {
     _id: (f._id as string).toString(),
     name: f.name,
+    sourceRecipeId,
+    sourceRecipeName,
     iceCreamMixKg: f.iceCreamMixKg,
     overrunPercent:
       f.totalMixConvertedKg > 0
@@ -196,6 +216,15 @@ export const updateFlavor = async (
     new: true,
     runValidators: true,
   });
+
+  // Bidirectional sync: if flavor name changed, update the linked recipe name
+  if (updated && updates.name) {
+    await Recipe.findByIdAndUpdate(
+      updated.sourceRecipeId,
+      { $set: { name: updates.name } },
+    );
+  }
+
   return updated;
 };
 
@@ -624,6 +653,8 @@ export const resetAllFlavors = async (): Promise<number> => {
 // ---------------------------------------------------------------------------
 
 export const getDashboard = async (): Promise<DashboardFlavor[]> => {
-  const flavors = await IceCreamFlavor.find().sort({ name: 1 });
+  const flavors = await IceCreamFlavor.find()
+    .populate('sourceRecipeId', 'name')
+    .sort({ name: 1 });
   return flavors.map(toDashboardItem);
 };

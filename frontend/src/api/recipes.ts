@@ -200,21 +200,15 @@ export const getRecipeDependencies = async (recipeId: string): Promise<RecipeDet
 
 /**
  * Finalizes the production of a recipe, spending ingredients.
- * Optionally adds ice-cream mix to the specified flavor.
+ * For ice cream recipes, mix stock is auto-incremented on the linked flavor.
  * @param recipeId The ID of the recipe to finalize.
- * @param flavorId Optional ID of the ice-cream flavor to add mix to.
  * @returns A promise that resolves when the finalization is successful.
  */
 export const finalizeRecipeProductionApi = async (
   recipeId: string,
-  flavorId?: string,
 ): Promise<void> => {
-  const body: Record<string, string> = {};
-  if (flavorId) body.flavorId = flavorId;
-
   await apiFetch<void>(`${API_BASE_URL}/recipes/${recipeId}/finalize-production`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
   });
 };

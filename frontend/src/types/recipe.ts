@@ -29,6 +29,7 @@ export interface RecipeDetails {
   linkedRecipes: LinkedRecipeInfo[];
   productionLossPercent: number;
   productIngredientId?: string; // Reference to Ingredient for sub-recipe stock tracking
+  flavorId?: string; // Reference to IceCreamFlavor for 1:1 link
 }
 
 // Structure matching backend API expectations for POST /api/recipes

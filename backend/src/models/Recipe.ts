@@ -24,6 +24,7 @@ export interface IRecipe extends Document {
   linkedRecipes: ILinkedRecipe[];
   productionLossPercent: number;
   productIngredientId?: Types.ObjectId; // Reference to Ingredient for sub-recipe stock tracking
+  flavorId?: Types.ObjectId; // Reference to IceCreamFlavor for 1:1 link
 }
 
 // Mongoose schema definition for Recipe
@@ -100,6 +101,11 @@ const recipeSchema = new Schema<IRecipe>(
     productIngredientId: {
       type: Schema.Types.ObjectId,
       ref: 'Ingredient',
+      default: undefined,
+    },
+    flavorId: {
+      type: Schema.Types.ObjectId,
+      ref: 'IceCreamFlavor',
       default: undefined,
     },
   },

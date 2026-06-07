@@ -26,7 +26,26 @@ export interface RecipeDeletionDependencies {
 }
 
 /**
+ * Auto-create an IceCreamFlavor for an ice cream recipe.
+ * Sets recipe.flavorId and saves the recipe.
+ */
+async function autoCreateFlavorForRecipe(recipe: IRecipe): Promise<void> {
+  if (recipe.type !== 'ice cream recipe') return;
+
+  const newFlavor = new IceCreamFlavor({
+    name: recipe.name,
+    sourceRecipeId: recipe._id,
+    iceCreamMixKg: 0,
+  });
+  const savedFlavor = await newFlavor.save();
+
+  recipe.flavorId = savedFlavor._id as Types.ObjectId;
+  await recipe.save();
+}
+
+/**
  * Creates a new recipe in the database.
+ * If the recipe is of type 'ice cream recipe', auto-creates a matching IceCreamFlavor.
  * @param recipeData - The data for the new recipe.
  * @returns The created recipe document.
  * @throws Throws an error if recipe creation fails.
@@ -61,12 +80,17 @@ export const createRecipe = async (
       dataToSave.baseYieldGrams = 1000;
     } else if (!dataToSave.baseYieldGrams) {
       // If baseYieldGrams is missing, assume 1000 (or handle as error if required)
-      // For now, let's default it to 1000 if missing. Consider validation upstream.
       dataToSave.baseYieldGrams = 1000;
     }
 
     const newRecipeInstance = new Recipe(dataToSave); // Use potentially scaled data
     const savedRecipe = await newRecipeInstance.save(); // Save the instance
+
+    // Auto-create flavor for ice cream recipes
+    if (savedRecipe.type === 'ice cream recipe') {
+      await autoCreateFlavorForRecipe(savedRecipe);
+    }
+
     // Populate the saved document before returning
     await savedRecipe.populate('ingredients.ingredient', 'name isAllergen mermaPercent');
     await savedRecipe.populate('linkedRecipes.recipe', 'name mermaPercent');
@@ -157,6 +181,7 @@ export const getRecipeById = async (id: string): Promise<IRecipe | null> => {
 
 /**
  * Updates an existing recipe by its ID.
+ * Handles flavor sync: name changes, type changes, auto-creation, deletion.
  * @param id - The ID of the recipe to update.
  * @param updates - An object containing the fields to update.
  * @returns A promise resolving to the updated recipe document or null if not found.
@@ -171,6 +196,38 @@ export const updateRecipe = async (
         return null;
     }
 
+    // Fetch the current recipe before applying updates
+    const currentRecipe = await Recipe.findById(id).exec();
+    if (!currentRecipe) {
+      console.warn(`Recipe not found for update with ID: ${id}`);
+      return null;
+    }
+
+    // --- Flavor sync logic ---
+    const isBecomingIceCream = updates.type === 'ice cream recipe' && currentRecipe.type !== 'ice cream recipe';
+    const isLeavingIceCream = updates.type && updates.type !== 'ice cream recipe' && currentRecipe.type === 'ice cream recipe';
+    const nameChanged = updates.name && updates.name !== currentRecipe.name;
+
+    // If type changed to ice cream recipe and no flavorId yet, auto-create
+    if (isBecomingIceCream && !currentRecipe.flavorId) {
+      // Apply the type update first so autoCreateFlavorForRecipe sees the right type
+      currentRecipe.set(updates);
+      await autoCreateFlavorForRecipe(currentRecipe);
+      // Re-fetch to get the saved document with flavorId
+      const refreshed = await Recipe.findById(id)
+        .populate('ingredients.ingredient', 'name isAllergen mermaPercent')
+        .populate('linkedRecipes.recipe', 'name')
+        .exec();
+      return refreshed;
+    }
+
+    // If type changed away from ice cream recipe, delete the linked flavor
+    if (isLeavingIceCream && currentRecipe.flavorId) {
+      await IceCreamFlavor.findByIdAndDelete(currentRecipe.flavorId);
+      // Remove the flavorId reference from updates so it's not preserved
+      delete (updates as any).flavorId;
+    }
+
     // Find and update the recipe, return the *new* document after update
     const updatedRecipe = await Recipe.findByIdAndUpdate(id, updates, {
       new: true, // Return the modified document rather than the original
@@ -183,6 +240,14 @@ export const updateRecipe = async (
     if (!updatedRecipe) {
       console.warn(`Recipe not found for update with ID: ${id}`);
       return null;
+    }
+
+    // If the recipe name changed and it has a flavorId, sync the flavor name
+    if (nameChanged && updatedRecipe.flavorId) {
+      await IceCreamFlavor.findByIdAndUpdate(
+        updatedRecipe.flavorId,
+        { $set: { name: updatedRecipe.name } },
+      );
     }
 
     // START: Autoscaling logic for edited recipes
@@ -248,7 +313,7 @@ export const updateRecipe = async (
 /**
  * Deletes a recipe by its ID.
  * If the recipe is a dependency for other recipes, it returns information about these dependencies.
- * Otherwise, it deletes the recipe.
+ * Otherwise, it deletes the recipe and cascades to delete the linked flavor.
  * @param id - The ID of the recipe to delete.
  * @returns A promise resolving to the deleted recipe document, null if not found or invalid ID,
  * or a RecipeDeletionDependencies object if dependencies exist.
@@ -283,12 +348,21 @@ export const deleteRecipe = async (
       };
     }
 
+    // Fetch the recipe to check for a linked flavor before deleting
+    const recipeToDelete = await Recipe.findById(id).select('flavorId').lean().exec();
+
     // If no dependencies, proceed with deletion
     const deletedRecipe = await Recipe.findByIdAndDelete(id).exec();
 
     if (!deletedRecipe) {
       console.warn(`Recipe not found for deletion with ID: ${id}`);
       return null;
+    }
+
+    // Cascade delete the linked flavor if it exists
+    if (recipeToDelete?.flavorId) {
+      await IceCreamFlavor.findByIdAndDelete(recipeToDelete.flavorId);
+      console.log(`Deleted linked flavor ${recipeToDelete.flavorId} for recipe ${id}`);
     }
 
     // Note: The deleted document is returned.
@@ -302,15 +376,13 @@ export const deleteRecipe = async (
 
 /**
  * Finalizes the production of a recipe, deducting ingredient stock.
- * Optionally increments the ice-cream mix for the specified flavor.
+ * For ice cream recipes, automatically increments the linked flavor's mix stock.
  * @param recipeId - The ID of the recipe to finalize.
- * @param flavorId - Optional ID of the ice-cream flavor to add mix to.
  * @returns The recipe document.
  * @throws Throws an error if the recipe is not found or if a critical error occurs.
  */
 export const finalizeRecipeProduction = async (
   recipeId: string,
-  flavorId?: string,
 ): Promise<IRecipe | null> => {
   try {
     const recipe = await getRecipeById(recipeId);
@@ -527,24 +599,24 @@ export const finalizeRecipeProduction = async (
       }
     }
 
-    // --- Step 4: Increment ice-cream mix (if flavorId provided, for ice-cream/sorbet recipes) ---
-    if (flavorId) {
+    // --- Step 4: For ice cream recipes, auto-increment the linked flavor's mix stock ---
+    if (recipe.type === 'ice cream recipe' && recipe.flavorId) {
       const mixKg = recipe.baseYieldGrams / 1000;
 
       if (mixKg > 0) {
         const updatedFlavor = await IceCreamFlavor.findByIdAndUpdate(
-          flavorId,
+          recipe.flavorId,
           { $inc: { iceCreamMixKg: mixKg } },
           { new: true },
         );
 
         if (!updatedFlavor) {
           console.warn(
-            `Ice-cream flavor with ID ${flavorId} not found. Mix not added.`,
+            `Ice-cream flavor with ID ${recipe.flavorId} not found for recipe ${recipeId}. Mix not added.`,
           );
         } else {
           console.log(
-            `Added ${mixKg.toFixed(3)} kg of mix to flavor "${updatedFlavor.name}". New mix: ${updatedFlavor.iceCreamMixKg.toFixed(3)} kg.`,
+            `Added ${mixKg.toFixed(3)} kg of mix to flavor "${updatedFlavor.name}" (auto-linked from recipe "${recipe.name}"). New mix: ${updatedFlavor.iceCreamMixKg.toFixed(3)} kg.`,
           );
 
           // Log the production event

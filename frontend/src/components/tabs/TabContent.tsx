@@ -116,6 +116,7 @@ export const TabContent = ({
             onOpenFlavorEdit={(flavorName, flavorId) =>
               onOpenIceCreamFlavorEditTab?.(flavorName, flavorId)
             }
+            onOpenRecipeTab={onOpenRecipeTab}
           />
         );
       default:

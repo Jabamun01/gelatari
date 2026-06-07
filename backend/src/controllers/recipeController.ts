@@ -346,18 +346,18 @@ export const deleteRecipeHandler = async (req: Request<{ id: string }>, res: Res
 
 /**
  * Handles finalizing the production of a recipe, triggering ingredient stock deduction.
+ * For ice cream recipes, mix stock is auto-incremented on the linked flavor.
  */
 export const finalizeRecipeProductionHandler = async (req: Request<{ recipeId: string }>, res: Response): Promise<void> => {
   try {
     const { recipeId } = req.params;
-    const { flavorId } = req.body;
 
     if (!recipeId) {
       res.status(400).json({ message: 'Recipe ID parameter is required.' });
       return;
     }
 
-    const finalizedRecipe = await recipeService.finalizeRecipeProduction(recipeId, flavorId);
+    const finalizedRecipe = await recipeService.finalizeRecipeProduction(recipeId);
 
     if (!finalizedRecipe) {
       res.status(404).json({ message: `Recipe with ID ${recipeId} not found or could not be finalized.` });

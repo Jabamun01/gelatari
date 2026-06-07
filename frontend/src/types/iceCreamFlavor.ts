@@ -33,6 +33,8 @@ export interface IceCreamFlavor {
 export interface DashboardFlavor {
   _id: string;
   name: string;
+  sourceRecipeId?: string;
+  sourceRecipeName?: string;
   iceCreamMixKg: number;
   overrunPercent: number;
   totalFrozenLiters: number;
