@@ -52,8 +52,8 @@ const CloseIcon = styled.button`
   background: transparent;
   cursor: pointer;
   font-size: 0.85em;
-  color: var(--text-color-lighter);
-  opacity: 0.5;
+  color: var(--text-color);
+  opacity: 0.7;
   border-radius: 50%;
   min-width: 44px;
   min-height: 44px;
@@ -66,7 +66,8 @@ const CloseIcon = styled.button`
   transition: background-color 0.15s ease, opacity 0.15s ease, color 0.15s ease;
 
   button:hover & {
-    opacity: 0.8;
+    opacity: 1;
+    color: var(--text-color-strong);
   }
 
   &:hover,
@@ -85,7 +86,7 @@ const CloseIcon = styled.button`
 `;
 
 const TabButton = styled.button<{ isActive: boolean }>`
-  padding: 0 var(--space-md);
+  padding: 0 var(--space-sm);
   border: none;
   border-bottom: 3px solid transparent;
   background-color: ${({ isActive }) =>
@@ -98,12 +99,17 @@ const TabButton = styled.button<{ isActive: boolean }>`
   position: relative;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   white-space: nowrap;
   transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
   min-height: 52px;
   border-radius: 0;
   box-shadow: none;
   touch-action: manipulation;
+  flex: 1 1 0;
+  min-width: 100px;
+  max-width: 200px;
+  overflow: hidden;
 
   ${({ isActive }) =>
     isActive
@@ -130,11 +136,13 @@ const TabButton = styled.button<{ isActive: boolean }>`
   }
 
   @media (max-width: 640px) {
-    padding: 0 var(--space-sm);
+    padding: 0 var(--space-xs);
     font-size: var(--font-size-xs);
     min-height: 48px;
+    min-width: 80px;
+    max-width: 140px;
   }
-`;
+`;}]}
 
 const UserMenuContainer = styled.div`
   position: relative;

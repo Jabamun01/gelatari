@@ -5,10 +5,7 @@ import { SearchTab } from '../search/SearchTab';
 import { RecipeTab } from '../recipe/RecipeTab';
 import { IngredientsTab } from '../ingredients/IngredientsTab';
 import { RecipeEditorTab } from '../recipe/RecipeEditorTab';
-import IngredientEditTab from '../ingredients/IngredientEditTab';
-import DefaultStepsTab from '../defaultSteps/DefaultStepsTab';
 import { IceCreamDashboardTab } from '../iceCream/IceCreamDashboardTab';
-import { IceCreamFlavorEditTab } from '../iceCream/IceCreamFlavorEditTab';
 
 interface TabContentProps {
   activeTab: TabData | undefined;
@@ -112,16 +109,6 @@ export const TabContent = ({
             onOpenRecipeTab={onOpenRecipeTab}
           />
         );
-      case 'ingredientEdit':
-        return (
-          <IngredientEditTab
-            key={activeTab.id}
-            tab={activeTab}
-            onCloseTab={onCloseTab}
-          />
-        );
-      case 'defaultSteps':
-        return <DefaultStepsTab />;
       case 'iceCreamDashboard':
         if (activeTab.type !== 'iceCreamDashboard') return null;
         return (
@@ -129,14 +116,6 @@ export const TabContent = ({
             onOpenFlavorEdit={(flavorName, flavorId) =>
               onOpenIceCreamFlavorEditTab?.(flavorName, flavorId)
             }
-          />
-        );
-      case 'iceCreamFlavorEdit':
-        if (activeTab.type !== 'iceCreamFlavorEdit') return null;
-        return (
-          <IceCreamFlavorEditTab
-            tab={activeTab}
-            onCloseTab={onCloseTab}
           />
         );
       default:

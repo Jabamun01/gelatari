@@ -1,42 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { styled } from '@linaria/react';
-import { IngredientEditTabData } from '../../types/tabs';
+import { Modal } from '../common/Modal';
 import { PrimaryButton, SecondaryButton, DangerButton } from '../common/Button';
 import { updateIngredient, getIngredientById, createIngredient } from '../../api/ingredients';
 import { UpdateIngredientDto, CreateIngredientDto, Ingredient } from '../../types/ingredient';
 import { useQueryClient } from '@tanstack/react-query';
-
-const EditContainer = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-lg);
-  max-width: 700px;
-  margin: var(--space-lg) auto;
-  padding: var(--space-xl);
-  background-color: var(--surface-color);
-  border-radius: var(--border-radius-lg);
-  box-shadow: var(--shadow-md);
-
-  @media (max-width: 640px) {
-    margin: var(--space-md) auto;
-    padding: var(--space-lg);
-    box-shadow: none;
-    border-radius: 0;
-  }
-`;
-
-const PageTitle = styled.h2`
-  text-align: center;
-  margin-bottom: var(--space-md);
-  color: var(--text-color-strong);
-`;
-
-const Subtitle = styled.p`
-  text-align: center;
-  margin-bottom: var(--space-lg);
-  color: var(--text-color-light);
-  font-size: var(--font-size-sm);
-`;
 
 const ErrorMessage = styled.div`
   color: var(--danger-color-dark);
@@ -50,16 +18,16 @@ const ErrorMessage = styled.div`
 `;
 
 const LoadingMessage = styled.div`
-  padding: var(--space-2xl);
+  padding: var(--space-xl);
   text-align: center;
-  font-size: var(--font-size-lg);
+  font-size: var(--font-size-base);
   color: var(--text-color-light);
 `;
 
 const Form = styled.form`
   display: flex;
   flex-direction: column;
-  gap: var(--space-xl);
+  gap: var(--space-lg);
 `;
 
 const FormGroup = styled.div`
@@ -97,13 +65,17 @@ const AliasInputContainer = styled.div`
   }
 `;
 
-const ActionButtonContainer = styled.div`
+const AddAliasButton = styled(SecondaryButton)`
+  align-self: flex-start;
+`;
+
+const ModalFooter = styled.div`
   display: flex;
   justify-content: flex-end;
   gap: var(--space-md);
-  margin-top: var(--space-xl);
-  padding-top: var(--space-xl);
+  padding-top: var(--space-lg);
   border-top: var(--border-width) solid var(--border-color-light);
+  margin-top: var(--space-lg);
   flex-wrap: wrap;
 
   @media (max-width: 640px) {
@@ -113,17 +85,23 @@ const ActionButtonContainer = styled.div`
   }
 `;
 
-interface IngredientEditTabProps {
-  tab: IngredientEditTabData;
-  onCloseTab: (tabId: string) => void;
+interface IngredientEditModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  ingredientId?: string;
+  ingredientName?: string;
 }
 
-const IngredientEditTab: React.FC<IngredientEditTabProps> = ({ tab, onCloseTab }) => {
-  const { id: tabId, ingredientId } = tab;
+export const IngredientEditModal: React.FC<IngredientEditModalProps> = ({
+  isOpen,
+  onClose,
+  ingredientId,
+  ingredientName,
+}) => {
   const isEditMode = !!ingredientId;
   const queryClient = useQueryClient();
 
-  const [ingredientName, setIngredientName] = useState<string>('');
+  const [name, setName] = useState<string>('');
   const [aliases, setAliases] = useState<string[]>(['']);
   const [stockQuantity, setStockQuantity] = useState<number>(0);
   const [mermaPercent, setMermaPercent] = useState<number>(0);
@@ -132,13 +110,24 @@ const IngredientEditTab: React.FC<IngredientEditTabProps> = ({ tab, onCloseTab }
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!isOpen) {
+      // Reset form when modal closes
+      setName('');
+      setAliases(['']);
+      setStockQuantity(0);
+      setError(null);
+      setIsLoading(false);
+      setIsSaving(false);
+      return;
+    }
+
     if (isEditMode && ingredientId) {
       setIsLoading(true);
       setError(null);
 
       getIngredientById(ingredientId)
         .then((data: Ingredient) => {
-          setIngredientName(data.name);
+          setName(data.name);
           setAliases(data.aliases && data.aliases.length > 0 ? data.aliases : ['']);
           setStockQuantity(data.quantityInStock || 0);
           setMermaPercent(data.mermaPercent || 0);
@@ -147,20 +136,20 @@ const IngredientEditTab: React.FC<IngredientEditTabProps> = ({ tab, onCloseTab }
         .catch((err) => {
           console.error('Failed to fetch ingredient details:', err);
           setError(err instanceof Error ? err.message : "Error en carregar les dades de l'ingredient.");
-          setIngredientName('');
+          setName('');
           setAliases(['']);
           setStockQuantity(0);
           setIsLoading(false);
         });
     } else {
-      setIngredientName('');
+      setName(ingredientName || '');
       setAliases(['']);
       setStockQuantity(0);
       setMermaPercent(0);
       setIsLoading(false);
       setError(null);
     }
-  }, [ingredientId, isEditMode]);
+  }, [ingredientId, isEditMode, isOpen]);
 
   const handleAddAlias = () => {
     setAliases([...aliases, '']);
@@ -181,7 +170,7 @@ const IngredientEditTab: React.FC<IngredientEditTabProps> = ({ tab, onCloseTab }
     setError(null);
 
     const commonData = {
-      name: ingredientName.trim(),
+      name: name.trim(),
       aliases: aliases.filter((alias) => alias.trim() !== '').map((alias) => alias.trim()),
       quantityInStock: stockQuantity,
       mermaPercent: mermaPercent,
@@ -201,14 +190,14 @@ const IngredientEditTab: React.FC<IngredientEditTabProps> = ({ tab, onCloseTab }
         queryClient.invalidateQueries({ queryKey: ['ingredient', ingredientId] });
         queryClient.invalidateQueries({ queryKey: ['recipeDependencies'] });
         queryClient.invalidateQueries({ queryKey: ['ingredientDependencies'] });
-        onCloseTab(tabId);
+        onClose();
       } else {
         const payload: CreateIngredientDto = commonData;
         await createIngredient(payload);
         queryClient.invalidateQueries({ queryKey: ['ingredients'] });
         queryClient.invalidateQueries({ queryKey: ['recipeDependencies'] });
         queryClient.invalidateQueries({ queryKey: ['ingredientDependencies'] });
-        onCloseTab(tabId);
+        onClose();
       }
     } catch (err) {
       console.error(`Failed to ${isEditMode ? 'update' : 'create'} ingredient:`, err);
@@ -223,25 +212,25 @@ const IngredientEditTab: React.FC<IngredientEditTabProps> = ({ tab, onCloseTab }
   };
 
   const handleCancel = () => {
-    onCloseTab(tabId);
+    onClose();
   };
 
   if (isLoading) {
     return (
-      <LoadingMessage aria-live="polite">
-        Carregant detalls de l'ingredient...
-      </LoadingMessage>
+      <Modal isOpen={isOpen} onClose={onClose} title={isEditMode ? 'Edita Ingredient' : 'Crea Ingredient Nou'}>
+        <LoadingMessage aria-live="polite">
+          Carregant detalls de l'ingredient...
+        </LoadingMessage>
+      </Modal>
     );
   }
 
   return (
-    <EditContainer>
-      <PageTitle>
-        {isEditMode ? 'Edita Ingredient' : 'Crea Ingredient Nou'}
-      </PageTitle>
-      {isEditMode && ingredientName && !error && (
-        <Subtitle>Editant: {ingredientName}</Subtitle>
-      )}
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={isEditMode ? `Edita: ${ingredientName || 'Ingredient'}` : 'Crea Ingredient Nou'}
+    >
       {error && (
         <ErrorMessage aria-live="polite" role="alert">
           Error: {error}
@@ -254,8 +243,8 @@ const IngredientEditTab: React.FC<IngredientEditTabProps> = ({ tab, onCloseTab }
           <FormInput
             type="text"
             id="ingredientName"
-            value={ingredientName}
-            onChange={(e) => setIngredientName(e.target.value)}
+            value={name}
+            onChange={(e) => setName(e.target.value)}
             placeholder="Introdueix el nom de l'ingredient"
             disabled={isSaving}
             required
@@ -286,14 +275,13 @@ const IngredientEditTab: React.FC<IngredientEditTabProps> = ({ tab, onCloseTab }
               )}
             </AliasInputContainer>
           ))}
-          <SecondaryButton
+          <AddAliasButton
             type="button"
             onClick={handleAddAlias}
             disabled={isSaving}
-            style={{ alignSelf: 'flex-start' }}
           >
             Afegeix Àlies
-          </SecondaryButton>
+          </AddAliasButton>
         </FormGroup>
 
         <FormGroup>
@@ -322,14 +310,14 @@ const IngredientEditTab: React.FC<IngredientEditTabProps> = ({ tab, onCloseTab }
           />
         </FormGroup>
 
-        <ActionButtonContainer>
+        <ModalFooter>
           <SecondaryButton type="button" onClick={handleCancel} disabled={isSaving}>
             Cancel·la
           </SecondaryButton>
           <PrimaryButton
             type="button"
             onClick={handleSaveChanges}
-            disabled={isSaving || (!isEditMode && !ingredientName.trim())}
+            disabled={isSaving || (!isEditMode && !name.trim())}
           >
             {isSaving
               ? 'Desant...'
@@ -337,10 +325,8 @@ const IngredientEditTab: React.FC<IngredientEditTabProps> = ({ tab, onCloseTab }
                 ? 'Desa Canvis'
                 : 'Crea Ingredient'}
           </PrimaryButton>
-        </ActionButtonContainer>
+        </ModalFooter>
       </Form>
-    </EditContainer>
+    </Modal>
   );
 };
-
-export default IngredientEditTab;

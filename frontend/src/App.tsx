@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
-import { v4 as uuidv4 } from 'uuid';
 import { styled } from '@linaria/react';
-import { TabData, RecipeTabData, RecipeEditorTabData, IngredientsTabData, SearchTabData, IngredientEditTabData, DefaultStepsTabData, IceCreamDashboardTabData, IceCreamFlavorEditTabData } from './types/tabs';
+import { TabData, RecipeTabData, RecipeEditorTabData, IngredientsTabData, SearchTabData, IceCreamDashboardTabData } from './types/tabs';
 import { TabBar } from './components/tabs/TabBar';
 import { TabContent } from './components/tabs/TabContent';
 import { FloatingActionButtonsGroup } from './components/common/FloatingActionButtonsGroup';
@@ -9,26 +8,22 @@ import { FloatingTimersDisplay } from './components/timers/FloatingTimersDisplay
 import AlarmSoundHandler from './components/timers/AlarmSoundHandler';
 import { useAuth } from './contexts/AuthContext';
 import ChangePasswordModal from './components/auth/ChangePasswordModal';
-// Global styles are imported and applied automatically by Linaria
-// import { globalStyles } from './styles/global'; // No longer needed here
+import { DefaultStepsModal } from './components/defaultSteps/DefaultStepsModal';
+import { IngredientEditModal } from './components/ingredients/IngredientEditModal';
+import { IceCreamFlavorEditModal } from './components/iceCream/IceCreamFlavorEditModal';
 
-// Apply global styles. This is often done in main.tsx, but can be here too.
-// If it's already in main.tsx, this might be redundant but harmless.
-// Let's assume it's needed here for clarity or if not done in main.tsx yet.
 const AppContainer = styled.div`
-  /* globalStyles are applied automatically by Linaria via the import */
   display: flex;
   flex-direction: column;
-  height: 100vh; /* Full viewport height */
-  background-color: var(--background-color); /* Uses new variable */
-  color: var(--text-color); /* Uses new variable */
+  height: 100vh;
+  background-color: var(--background-color);
+  color: var(--text-color);
 `;
 
 const TabContentContainer = styled.div`
   flex-grow: 1;
   display: flex;
   overflow: hidden;
-  /* Use the lighter surface color for the main content area */
   background-color: var(--surface-color-light);
 `;
 
@@ -43,50 +38,43 @@ const loadAppState = (): { tabs: TabData[]; activeTabId: string } | null => {
       const parsedState = JSON.parse(savedState);
       if (parsedState && Array.isArray(parsedState.tabs) && typeof parsedState.activeTabId === 'string') {
         const searchTabTemplate: SearchTabData = { id: 'search', title: 'Gelatari', type: 'search', isCloseable: false };
-        const loadedTabsFromStorage = parsedState.tabs as TabData[]; // Assume new structure for simplicity, migration could be added
+        const loadedTabsFromStorage = parsedState.tabs as TabData[];
         const finalTabs: TabData[] = [];
         let searchTabFound = false;
 
         loadedTabsFromStorage.forEach(loadedTab => {
-          let processedTab: TabData = { ...loadedTab }; // Start with loaded tab
-
-          // Ensure common properties and type-specific defaults/migrations if necessary
-          // This example assumes loaded tabs are already in the new discriminated union format
-          // or that a more complex migration logic would be here.
-          // For now, we'll just ensure the 'type' exists and is valid.
+          let processedTab: TabData = { ...loadedTab };
 
           switch (loadedTab.type) {
             case 'search': {
-              // For search, ensure it's always the template, potentially with stored ID/title if they were ever customized (though unlikely for 'search')
               processedTab = {
-                ...searchTabTemplate, // Start with base template
-                ...loadedTab,         // Overlay any stored values (like a custom title if that was ever possible)
-                isCloseable: false    // Explicitly ensure it's not closeable
+                ...searchTabTemplate,
+                ...loadedTab,
+                isCloseable: false
               } as SearchTabData;
               searchTabFound = true;
               break;
             }
             case 'ingredients': {
               processedTab = {
-                ...loadedTab, // Spread stored properties first
-                type: 'ingredients', // Enforce type
-                id: (loadedTab as IngredientsTabData).id || 'ingredients', // Ensure ID, default if missing
-                title: (loadedTab as IngredientsTabData).title || 'Ingredients', // Ensure title, default if missing
-                isCloseable: (loadedTab as IngredientsTabData).isCloseable ?? true, // Default isCloseable
+                ...loadedTab,
+                type: 'ingredients',
+                id: (loadedTab as IngredientsTabData).id || 'ingredients',
+                title: (loadedTab as IngredientsTabData).title || 'Ingredients',
+                isCloseable: (loadedTab as IngredientsTabData).isCloseable ?? true,
               } as IngredientsTabData;
               break;
             }
             case 'recipe': {
-              const tempRecipeTab = loadedTab as RecipeTabData; // Cast for easier access
+              const tempRecipeTab = loadedTab as RecipeTabData;
               processedTab = {
-                ...tempRecipeTab, // Spread stored properties first
-                type: 'recipe', // Enforce type
-                // id, title, recipeId are expected to be present from storage for a recipe tab
+                ...tempRecipeTab,
+                type: 'recipe',
                 isCloseable: tempRecipeTab.isCloseable ?? true,
-                initialScaleFactor: tempRecipeTab.initialScaleFactor, // Keep if present
-                scaleFactor: tempRecipeTab.scaleFactor ?? tempRecipeTab.initialScaleFactor ?? 1, // Default scaleFactor
-                isProductionMode: tempRecipeTab.isProductionMode ?? false, // Default isProductionMode
-                trackedAmounts: tempRecipeTab.trackedAmounts ?? {}, // Default trackedAmounts
+                initialScaleFactor: tempRecipeTab.initialScaleFactor,
+                scaleFactor: tempRecipeTab.scaleFactor ?? tempRecipeTab.initialScaleFactor ?? 1,
+                isProductionMode: tempRecipeTab.isProductionMode ?? false,
+                trackedAmounts: tempRecipeTab.trackedAmounts ?? {},
               } as RecipeTabData;
               break;
             }
@@ -95,30 +83,8 @@ const loadAppState = (): { tabs: TabData[]; activeTabId: string } | null => {
               processedTab = {
                 ...tempRecipeEditorTab,
                 type: 'recipeEditor',
-                // id, title are expected
-                // recipeId is optional
                 isCloseable: tempRecipeEditorTab.isCloseable ?? true,
               } as RecipeEditorTabData;
-              break;
-            }
-            case 'ingredientEdit': {
-                const tempIngredientEditTab = loadedTab as IngredientEditTabData;
-                processedTab = {
-                    ...tempIngredientEditTab,
-                    type: 'ingredientEdit',
-                    // id, title, ingredientId, ingredientName are expected
-                    isCloseable: tempIngredientEditTab.isCloseable ?? true,
-                } as IngredientEditTabData;
-                break;
-            }
-            case 'defaultSteps': {
-              processedTab = {
-                ...loadedTab,
-                type: 'defaultSteps',
-                id: (loadedTab as DefaultStepsTabData).id || 'defaultSteps',
-                title: (loadedTab as DefaultStepsTabData).title || 'Passos per Defecte',
-                isCloseable: (loadedTab as DefaultStepsTabData).isCloseable ?? true,
-              } as DefaultStepsTabData;
               break;
             }
             case 'iceCreamDashboard': {
@@ -131,19 +97,9 @@ const loadAppState = (): { tabs: TabData[]; activeTabId: string } | null => {
               } as IceCreamDashboardTabData;
               break;
             }
-            case 'iceCreamFlavorEdit': {
-              const temp = loadedTab as IceCreamFlavorEditTabData;
-              processedTab = {
-                ...temp,
-                type: 'iceCreamFlavorEdit',
-                isCloseable: temp.isCloseable ?? true,
-              } as IceCreamFlavorEditTabData;
-              break;
-            }
             default:
-              // Skip unknown tab types or handle them as errors
-              console.warn("Unknown tab type loaded from storage:", loadedTab);
-              return; // Skip this tab
+              console.warn("Unknown or removed tab type loaded from storage:", loadedTab);
+              return;
           }
           finalTabs.push(processedTab);
         });
@@ -180,6 +136,15 @@ const App = () => {
     initialState?.activeTabId || 'search',
   );
 
+  // Modal states for single-use editors
+  const [showDefaultStepsModal, setShowDefaultStepsModal] = useState(false);
+  const [showIngredientEditModal, setShowIngredientEditModal] = useState(false);
+  const [ingredientEditId, setIngredientEditId] = useState<string | undefined>(undefined);
+  const [ingredientEditName, setIngredientEditName] = useState<string | undefined>(undefined);
+  const [showFlavorEditModal, setShowFlavorEditModal] = useState(false);
+  const [flavorEditId, setFlavorEditId] = useState<string | undefined>(undefined);
+  const [flavorEditName, setFlavorEditName] = useState<string | undefined>(undefined);
+
   // Effect to save state to localStorage whenever tabs or activeTabId change
   useEffect(() => {
     try {
@@ -195,19 +160,16 @@ const App = () => {
     setActiveTabId(tabId);
   };
 
-  // Updated handleCloseTab function
   const handleCloseTab = (tabIdToClose: string) => {
-      // Prevent closing essential tabs if needed (e.g., search, ingredients) - handled by isCloseable flag usually
       const tabToClose = tabs.find(tab => tab.id === tabIdToClose);
       if (!tabToClose || !tabToClose.isCloseable) return;
 
       const tabIndex = tabs.findIndex(tab => tab.id === tabIdToClose);
       const remainingTabs = tabs.filter(tab => tab.id !== tabIdToClose);
 
-      // Determine new active tab (e.g., the one before, or the first one)
       let newActiveTabId = activeTabId;
       if (activeTabId === tabIdToClose) {
-          newActiveTabId = tabs[tabIndex - 1]?.id || remainingTabs[0]?.id || ''; // Fallback logic
+          newActiveTabId = tabs[tabIndex - 1]?.id || remainingTabs[0]?.id || '';
       }
 
       setTabs(remainingTabs);
@@ -215,15 +177,13 @@ const App = () => {
   };
 
   const handleOpenRecipeTab = (recipeId: string, recipeName: string, initialScaleFactor?: number) => {
-    // Check if tab already exists
     const existingTab = tabs.find(tab => tab.id === recipeId);
     if (existingTab) {
-      setActiveTabId(recipeId); // Activate existing tab
+      setActiveTabId(recipeId);
       return;
     }
 
-    // Create new tab if it doesn't exist
-    const newTab: RecipeTabData = { // Use RecipeTabData
+    const newTab: RecipeTabData = {
       id: recipeId,
       title: recipeName,
       type: 'recipe',
@@ -236,13 +196,12 @@ const App = () => {
     };
 
     setTabs(prevTabs => [...prevTabs, newTab]);
-    setActiveTabId(recipeId); // Activate the new tab
+    setActiveTabId(recipeId);
   };
 
-  // Handler to open a new, blank recipe editor tab
   const handleOpenNewRecipeEditor = () => {
-    const newEditorId = `editor-${uuidv4()}`;
-    const newTab: RecipeEditorTabData = { // Use RecipeEditorTabData
+    const newEditorId = `editor-${Date.now()}`;
+    const newTab: RecipeEditorTabData = {
       id: newEditorId,
       title: 'Nova Recepta',
       type: 'recipeEditor',
@@ -258,11 +217,11 @@ const App = () => {
     const existingTab = tabs.find(tab => tab.id === ingredientsTabId);
 
     if (existingTab) {
-      setActiveTabId(ingredientsTabId); // Activate existing tab
+      setActiveTabId(ingredientsTabId);
       return;
     }
 
-    const newTab: IngredientsTabData = { // Use IngredientsTabData
+    const newTab: IngredientsTabData = {
       id: ingredientsTabId,
       title: 'Ingredients',
       type: 'ingredients',
@@ -272,7 +231,7 @@ const App = () => {
     setActiveTabId(ingredientsTabId);
   };
 
-  // Helper to update a recipe tab's properties (DRY: avoids repeated map/spread pattern)
+  // Helper to update a recipe tab's properties
   const updateRecipeTab = (
     tabId: string,
     updater: (tab: RecipeTabData) => Partial<RecipeTabData>,
@@ -286,7 +245,6 @@ const App = () => {
     );
   };
 
-  // Handler to toggle production mode for a specific tab with confirmation
   const handleToggleProductionMode = (tabId: string) => {
     const tabToToggle = tabs.find(tab => tab.id === tabId);
 
@@ -316,7 +274,6 @@ const App = () => {
     }
   };
 
-  // Handler to track ingredient amount for a specific tab
   const handleAmountTracked = (tabId: string, ingredientId: string, addedAmountGrams: number) => {
     updateRecipeTab(tabId, (tab) => ({
       trackedAmounts: {
@@ -326,7 +283,6 @@ const App = () => {
     }));
   };
 
-  // Handler to update scale factor for a specific tab
   const handleScaleChange = (tabId: string, newScaleFactor: number) => {
     updateRecipeTab(tabId, () => ({ scaleFactor: newScaleFactor }));
   };
@@ -337,12 +293,11 @@ const App = () => {
     const existingTab = tabs.find(tab => tab.id === editorTabId);
 
     if (existingTab) {
-      setActiveTabId(editorTabId); // Activate existing editor tab
+      setActiveTabId(editorTabId);
       return;
     }
 
-    // Create new editor tab if it doesn't exist
-    const newTab: RecipeEditorTabData = { // Use RecipeEditorTabData
+    const newTab: RecipeEditorTabData = {
       id: editorTabId,
       title: `Edita: ${recipeName}`,
       type: 'recipeEditor',
@@ -354,63 +309,37 @@ const App = () => {
     setActiveTabId(editorTabId);
   };
 
-  // Handler to open an ingredient editor tab (for new or existing)
-  const handleOpenIngredientEditTab = (ingredientName?: string, ingredientId?: string) => {
-    let editTabId: string;
-    let title: string;
-    let currentIngredientId: string | undefined = ingredientId;
-    let currentIngredientName: string | undefined = ingredientName;
-
-    if (ingredientId && ingredientName) {
-      // Editing existing ingredient
-      editTabId = `edit-ingredient-${ingredientId}`;
-      title = `Edita: ${ingredientName}`;
-    } else {
-      // Creating new ingredient
-      const newId = uuidv4(); // Generate a unique part for the tab ID
-      editTabId = `new-ingredient-${newId}`;
-      title = 'Nou Ingredient';
-      currentIngredientId = undefined; // Explicitly undefined for new
-      currentIngredientName = undefined; // Explicitly undefined for new
-    }
-
-    const existingTab = tabs.find(tab => tab.id === editTabId);
-
-    if (existingTab) {
-      setActiveTabId(editTabId);
-      return;
-    }
-
-    const newTab: IngredientEditTabData = {
-      id: editTabId,
-      title: title,
-      type: 'ingredientEdit',
-      ingredientId: currentIngredientId,
-      ingredientName: currentIngredientName,
-      isCloseable: true,
-    };
-
-    setTabs(prevTabs => [...prevTabs, newTab]);
-    setActiveTabId(editTabId);
+  // Modal handlers for single-use editors
+  const handleOpenIngredientEditModal = (ingredientName?: string, ingredientId?: string) => {
+    setIngredientEditName(ingredientName);
+    setIngredientEditId(ingredientId);
+    setShowIngredientEditModal(true);
   };
 
-  const handleOpenDefaultStepsTab = () => {
-    const defaultStepsTabId = 'defaultSteps';
-    const existingTab = tabs.find(tab => tab.id === defaultStepsTabId);
+  const handleCloseIngredientEditModal = () => {
+    setShowIngredientEditModal(false);
+    setIngredientEditId(undefined);
+    setIngredientEditName(undefined);
+  };
 
-    if (existingTab) {
-      setActiveTabId(defaultStepsTabId);
-      return;
-    }
+  const handleOpenDefaultStepsModal = () => {
+    setShowDefaultStepsModal(true);
+  };
 
-    const newTab: DefaultStepsTabData = {
-      id: defaultStepsTabId,
-      title: 'Passos per Defecte',
-      type: 'defaultSteps',
-      isCloseable: true,
-    };
-    setTabs(prevTabs => [...prevTabs, newTab]);
-    setActiveTabId(defaultStepsTabId);
+  const handleCloseDefaultStepsModal = () => {
+    setShowDefaultStepsModal(false);
+  };
+
+  const handleOpenFlavorEditModal = (flavorName: string, flavorId?: string) => {
+    setFlavorEditName(flavorName);
+    setFlavorEditId(flavorId);
+    setShowFlavorEditModal(true);
+  };
+
+  const handleCloseFlavorEditModal = () => {
+    setShowFlavorEditModal(false);
+    setFlavorEditId(undefined);
+    setFlavorEditName(undefined);
   };
 
   // Ice-cream dashboard tab
@@ -431,37 +360,6 @@ const App = () => {
     setActiveTabId(tabId);
   };
 
-  // Ice-cream flavor edit tab
-  const handleOpenIceCreamFlavorEditTab = (flavorName: string, flavorId?: string) => {
-    let editTabId: string;
-    let title: string;
-
-    if (flavorId) {
-      editTabId = `edit-flavor-${flavorId}`;
-      title = `Edita: ${flavorName}`;
-    } else {
-      editTabId = `new-flavor-${Date.now()}`;
-      title = 'Nou Gust';
-    }
-
-    const existing = tabs.find(t => t.id === editTabId);
-    if (existing) {
-      setActiveTabId(editTabId);
-      return;
-    }
-
-    const newTab: IceCreamFlavorEditTabData = {
-      id: editTabId,
-      title,
-      type: 'iceCreamFlavorEdit',
-      flavorId,
-      flavorName,
-      isCloseable: true,
-    };
-    setTabs(prev => [...prev, newTab]);
-    setActiveTabId(editTabId);
-  };
-
 
 // Calculate activeTab based on the current state *after* potential updates
 const activeTab: TabData | undefined = tabs.find(tab => tab.id === activeTabId);
@@ -472,14 +370,12 @@ const activeTab: TabData | undefined = tabs.find(tab => tab.id === activeTabId);
         activeTabId={activeTabId}
         onTabClick={handleTabClick}
         onTabClose={handleCloseTab}
-        // Removed action button props from TabBar
         username={username}
         onUserMenuToggle={() => setShowUserMenu(!showUserMenu)}
         showUserMenu={showUserMenu}
         onChangePassword={() => { setShowUserMenu(false); setShowChangePassword(true); }}
         onLogout={() => { setShowUserMenu(false); logout(); }}
       />
-      {/* GlobalActionBar removed */}
       <TabContentContainer>
         <TabContent
           activeTab={activeTab}
@@ -487,10 +383,9 @@ const activeTab: TabData | undefined = tabs.find(tab => tab.id === activeTabId);
           onOpenRecipeTab={handleOpenRecipeTab}
           onCloseTab={handleCloseTab}
           onOpenRecipeEditor={handleOpenRecipeEditor}
-          onOpenIngredientEditTab={handleOpenIngredientEditTab}
+          onOpenIngredientEditTab={handleOpenIngredientEditModal}
           onOpenIceCreamDashboardTab={handleOpenIceCreamDashboardTab}
-          onOpenIceCreamFlavorEditTab={handleOpenIceCreamFlavorEditTab}
-          // Production mode and scale factor are specific to RecipeTabData
+          onOpenIceCreamFlavorEditTab={handleOpenFlavorEditModal}
           isProductionMode={activeTab?.type === 'recipe' ? (activeTab.isProductionMode ?? false) : false}
           trackedAmounts={activeTab?.type === 'recipe' ? (activeTab.trackedAmounts ?? {}) : {}}
           onToggleProductionMode={handleToggleProductionMode}
@@ -500,7 +395,7 @@ const activeTab: TabData | undefined = tabs.find(tab => tab.id === activeTabId);
         />
       </TabContentContainer>
       <FloatingActionButtonsGroup
-        onOpenDefaultStepsTab={handleOpenDefaultStepsTab}
+        onOpenDefaultStepsTab={handleOpenDefaultStepsModal}
         onOpenIngredientsTab={handleOpenIngredientsTab}
         onOpenNewRecipeEditor={handleOpenNewRecipeEditor}
         onOpenIceCreamDashboardTab={handleOpenIceCreamDashboardTab}
@@ -510,6 +405,24 @@ const activeTab: TabData | undefined = tabs.find(tab => tab.id === activeTabId);
       <ChangePasswordModal
         isOpen={showChangePassword}
         onClose={() => setShowChangePassword(false)}
+      />
+
+      {/* Modals for single-use editors (replacing old single-use tabs) */}
+      <DefaultStepsModal
+        isOpen={showDefaultStepsModal}
+        onClose={handleCloseDefaultStepsModal}
+      />
+      <IngredientEditModal
+        isOpen={showIngredientEditModal}
+        onClose={handleCloseIngredientEditModal}
+        ingredientId={ingredientEditId}
+        ingredientName={ingredientEditName}
+      />
+      <IceCreamFlavorEditModal
+        isOpen={showFlavorEditModal}
+        onClose={handleCloseFlavorEditModal}
+        flavorId={flavorEditId}
+        flavorName={flavorEditName}
       />
     </AppContainer>
   );
