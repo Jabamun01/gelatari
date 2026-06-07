@@ -8,10 +8,15 @@ import {
   sellContainer,
   moveContainers,
   deleteFlavor,
+  setFlavorStock,
+  resetAllMix,
+  resetAllContainers,
+  resetAllFlavors,
 } from '../../api/iceCreamFlavors';
 import {
   DashboardFlavor,
   ConvertMixDto,
+  SetFlavorStockDto,
 } from '../../types/iceCreamFlavor';
 
 // ---------------------------------------------------------------------------
@@ -734,6 +739,138 @@ const MoveContainersModal: React.FC<MoveModalProps> = ({
 };
 
 // ---------------------------------------------------------------------------
+// Edit Stock Modal (direct quantity editing)
+// ---------------------------------------------------------------------------
+
+interface EditStockModalProps {
+  flavor: DashboardFlavor;
+  onClose: () => void;
+  onConfirm: (flavorId: string, dto: SetFlavorStockDto) => void;
+  isPending: boolean;
+}
+
+const EditStockModal: React.FC<EditStockModalProps> = ({
+  flavor,
+  onClose,
+  onConfirm,
+  isPending,
+}) => {
+  const [mixKg, setMixKg] = useState(flavor.iceCreamMixKg);
+  const [largeWH, setLargeWH] = useState(flavor.largeWarehouseContainers);
+  const [largeWHL, setLargeWHL] = useState(flavor.largeWarehouseLiters);
+  const [largePar, setLargePar] = useState(flavor.largeParadetaContainers);
+  const [largeParL, setLargeParL] = useState(flavor.largeParadetaLiters);
+  const [smallWH, setSmallWH] = useState(flavor.smallWarehouseCount);
+  const [smallPar, setSmallPar] = useState(flavor.smallParadetaCount);
+
+  const handleSubmit = () => {
+    onConfirm(flavor._id, {
+      iceCreamMixKg: mixKg,
+      largeWarehouseContainers: largeWH,
+      largeWarehouseLiters: largeWHL,
+      largeParadetaContainers: largePar,
+      largeParadetaLiters: largeParL,
+      smallWarehouseCount: smallWH,
+      smallParadetaCount: smallPar,
+    });
+  };
+
+  return (
+    <ModalOverlay onClick={onClose}>
+      <ModalBox onClick={(e) => e.stopPropagation()}>
+        <ModalTitle>Editar estoc directe — {flavor.name}</ModalTitle>
+        <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--text-color-light)', marginBottom: 'var(--space-md)' }}>
+          Estableix els valors exactes que vulguis. Això sobreescriu les dades actuals.
+        </p>
+
+        <FieldGroup>
+          <FieldLabel>Mix disponible (kg)</FieldLabel>
+          <FieldInput type="number" min={0} step={0.1} value={mixKg} onChange={(e) => setMixKg(parseFloat(e.target.value) || 0)} />
+        </FieldGroup>
+
+        <FieldGroup>
+          <FieldLabel>📍 Magatzem — Envasos grans (comptador)</FieldLabel>
+          <FieldInput type="number" min={0} step={1} value={largeWH} onChange={(e) => setLargeWH(parseInt(e.target.value) || 0)} />
+        </FieldGroup>
+        <FieldGroup>
+          <FieldLabel>📍 Magatzem — Envasos grans (litres)</FieldLabel>
+          <FieldInput type="number" min={0} step={0.1} value={largeWHL} onChange={(e) => setLargeWHL(parseFloat(e.target.value) || 0)} />
+        </FieldGroup>
+        <FieldGroup>
+          <FieldLabel>🏪 Paradeta — Envasos grans (comptador)</FieldLabel>
+          <FieldInput type="number" min={0} step={1} value={largePar} onChange={(e) => setLargePar(parseInt(e.target.value) || 0)} />
+        </FieldGroup>
+        <FieldGroup>
+          <FieldLabel>🏪 Paradeta — Envasos grans (litres)</FieldLabel>
+          <FieldInput type="number" min={0} step={0.1} value={largeParL} onChange={(e) => setLargeParL(parseFloat(e.target.value) || 0)} />
+        </FieldGroup>
+        <FieldGroup>
+          <FieldLabel>📍 Magatzem — Envasos petits (comptador)</FieldLabel>
+          <FieldInput type="number" min={0} step={1} value={smallWH} onChange={(e) => setSmallWH(parseInt(e.target.value) || 0)} />
+        </FieldGroup>
+        <FieldGroup>
+          <FieldLabel>🏪 Paradeta — Envasos petits (comptador)</FieldLabel>
+          <FieldInput type="number" min={0} step={1} value={smallPar} onChange={(e) => setSmallPar(parseInt(e.target.value) || 0)} />
+        </FieldGroup>
+
+        <ModalActions>
+          <SecondaryButton onClick={onClose} disabled={isPending}>
+            Cancel·lar
+          </SecondaryButton>
+          <ActionButton onClick={handleSubmit} disabled={isPending}>
+            {isPending ? 'Desant...' : 'Desar valors'}
+          </ActionButton>
+        </ModalActions>
+      </ModalBox>
+    </ModalOverlay>
+  );
+};
+
+// ---------------------------------------------------------------------------
+// Reset confirmation modal (reusable inline)
+// ---------------------------------------------------------------------------
+
+interface ResetConfirmModalProps {
+  isOpen: boolean;
+  title: string;
+  message: string;
+  onConfirm: () => void;
+  onCancel: () => void;
+  isPending: boolean;
+}
+
+const ResetConfirmModal: React.FC<ResetConfirmModalProps> = ({
+  isOpen,
+  title,
+  message,
+  onConfirm,
+  onCancel,
+  isPending,
+}) => {
+  if (!isOpen) return null;
+  return (
+    <ModalOverlay onClick={onCancel}>
+      <ModalBox onClick={(e) => e.stopPropagation()}>
+        <ModalTitle>{title}</ModalTitle>
+        <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--text-color)' }}>{message}</p>
+        <ModalActions>
+          <SecondaryButton onClick={onCancel} disabled={isPending}>
+            Cancel·lar
+          </SecondaryButton>
+          <DangerButton
+            style={{ padding: 'var(--space-sm) var(--space-md)', fontSize: 'var(--font-size-sm)' }}
+            onClick={onConfirm}
+            disabled={isPending}
+          >
+            {isPending ? 'Restablint...' : 'Sí, restablir'}
+          </DangerButton>
+        </ModalActions>
+      </ModalBox>
+    </ModalOverlay>
+  );
+};
+
+// ---------------------------------------------------------------------------
 // Main dashboard component
 // ---------------------------------------------------------------------------
 
@@ -815,10 +952,59 @@ export const IceCreamDashboardTab: React.FC<IceCreamDashboardTabProps> = ({
     },
   });
 
+  // ── New: Edit stock mutation ─────────────────────────────────────────
+  const editStockMutation = useMutation({
+    mutationFn: ({
+      flavorId,
+      dto,
+    }: {
+      flavorId: string;
+      dto: SetFlavorStockDto;
+    }) => setFlavorStock(flavorId, dto),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['iceCreamDashboard'] });
+      setEditStockFlavor(null);
+    },
+  });
+
+  // ── New: Reset mutations ─────────────────────────────────────────────
+  const resetMixMutation = useMutation({
+    mutationFn: () => resetAllMix(),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['iceCreamDashboard'] });
+      setResetModal(null);
+    },
+  });
+
+  const resetContainersMutation = useMutation({
+    mutationFn: () => resetAllContainers(),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['iceCreamDashboard'] });
+      setResetModal(null);
+    },
+  });
+
+  const resetAllMutation = useMutation({
+    mutationFn: () => resetAllFlavors(),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['iceCreamDashboard'] });
+      setResetModal(null);
+    },
+  });
+
   // Modal state
   const [convertFlavor, setConvertFlavor] = useState<DashboardFlavor | null>(null);
   const [sellFlavor, setSellFlavor] = useState<DashboardFlavor | null>(null);
   const [moveFlavor, setMoveFlavor] = useState<DashboardFlavor | null>(null);
+  const [editStockFlavor, setEditStockFlavor] = useState<DashboardFlavor | null>(null);
+
+  // Reset confirmation modal state: { title, message, onConfirm } | null
+  const [resetModal, setResetModal] = useState<{
+    title: string;
+    message: string;
+    onConfirm: () => void;
+    isPending: boolean;
+  } | null>(null);
 
   // Determine overall alert level for a card
   const getAlertLevel = (f: DashboardFlavor): 'critical' | 'low' | undefined => {
@@ -827,6 +1013,11 @@ export const IceCreamDashboardTab: React.FC<IceCreamDashboardTabProps> = ({
     if (f.alerts.paradetaLow) return 'low';
     return undefined;
   };
+
+  const isAnyResetPending =
+    resetMixMutation.isPending ||
+    resetContainersMutation.isPending ||
+    resetAllMutation.isPending;
 
   if (isLoading) return <Container><LoadingMessage>Carregant dashboard...</LoadingMessage></Container>;
   if (isError) return <Container><ErrorMessage>Error: {error?.message}</ErrorMessage></Container>;
@@ -838,6 +1029,53 @@ export const IceCreamDashboardTab: React.FC<IceCreamDashboardTabProps> = ({
       <HeaderRow>
         <PageTitle>🍦 Estoc de Gelats</PageTitle>
         <HeaderActions>
+          {/* ── Reset buttons ── */}
+          <SecondaryButton
+            onClick={() =>
+              setResetModal({
+                title: 'Restablir mix a 0',
+                message:
+                  'Això posarà iceCreamMixKg a 0 per a TOTS els gustos. Esteu segurs?',
+                onConfirm: () => resetMixMutation.mutate(),
+                isPending: resetMixMutation.isPending,
+              })
+            }
+            disabled={isAnyResetPending}
+            title="Restablir tot el mix a 0"
+          >
+            🔄 Restablir Mix
+          </SecondaryButton>
+          <SecondaryButton
+            onClick={() =>
+              setResetModal({
+                title: 'Restablir envasos a 0',
+                message:
+                  'Això posarà TOTS els envasos (grans, petits, magatzem, paradeta) a 0 per a TOTS els gustos. Esteu segurs?',
+                onConfirm: () => resetContainersMutation.mutate(),
+                isPending: resetContainersMutation.isPending,
+              })
+            }
+            disabled={isAnyResetPending}
+            title="Restablir tots els envasos a 0"
+          >
+            🔄 Restablir Envasos
+          </SecondaryButton>
+          <DangerButton
+            style={{ padding: 'var(--space-sm) var(--space-md)', fontSize: 'var(--font-size-sm)' }}
+            onClick={() =>
+              setResetModal({
+                title: '⚠️ Restablir TOT a 0',
+                message:
+                  'Això posarà mix + envasos + històric de overrun a 0 per a TOTS els gustos. Aquesta acció no es pot desfer. Esteu absolutament segurs?',
+                onConfirm: () => resetAllMutation.mutate(),
+                isPending: resetAllMutation.isPending,
+              })
+            }
+            disabled={isAnyResetPending}
+            title="Restablir tot (mix + envasos + overrun) a 0"
+          >
+            ⚠️ Restablir TOT
+          </DangerButton>
           <ActionButton onClick={() => onOpenFlavorEdit('Nou Gust')}>
             + Nou Gust
           </ActionButton>
@@ -910,6 +1148,12 @@ export const IceCreamDashboardTab: React.FC<IceCreamDashboardTabProps> = ({
 
               {/* Actions */}
               <ActionRow>
+                <SmallButton
+                  onClick={() => setEditStockFlavor(f)}
+                  title="Editar estoc directament"
+                >
+                  📝 Edit stock
+                </SmallButton>
                 <SmallButton
                   onClick={() => setConvertFlavor(f)}
                   disabled={f.iceCreamMixKg <= 0}
@@ -987,6 +1231,26 @@ export const IceCreamDashboardTab: React.FC<IceCreamDashboardTabProps> = ({
           isPending={moveMutation.isPending}
         />
       )}
+
+      {editStockFlavor && (
+        <EditStockModal
+          flavor={editStockFlavor}
+          onClose={() => setEditStockFlavor(null)}
+          onConfirm={(flavorId, dto) =>
+            editStockMutation.mutate({ flavorId, dto })
+          }
+          isPending={editStockMutation.isPending}
+        />
+      )}
+
+      <ResetConfirmModal
+        isOpen={resetModal !== null}
+        title={resetModal?.title || ''}
+        message={resetModal?.message || ''}
+        onConfirm={() => resetModal?.onConfirm()}
+        onCancel={() => setResetModal(null)}
+        isPending={resetModal?.isPending ?? false}
+      />
     </Container>
   );
 };
