@@ -10,14 +10,14 @@
   },
   "workers": [
     {
-      "id": "worker_2",
-      "worktree": "/home/patata/Repos/gelatari--worker_2",
-      "branch": "piparallel/worker_2",
+      "id": "worker_1",
+      "worktree": "/home/patata/Repos/gelatari--worker_1",
+      "branch": "piparallel/worker_1",
       "status": "working",
-      "session_id": "019ea2c0-184e-7431-95ef-bc4a7241d681",
-      "pid": 134611,
-      "started_at": 1780846959076,
-      "last_seen": 1780846959076,
+      "session_id": "019ea317-301f-7eaa-bb9d-477a1d937ac7",
+      "pid": 175880,
+      "started_at": 1780852666806,
+      "last_seen": 1780852666806,
       "changed_files": {},
       "summary": "",
       "merge_status": null

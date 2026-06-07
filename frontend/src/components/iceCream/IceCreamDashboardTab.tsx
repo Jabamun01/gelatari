@@ -1048,6 +1048,15 @@ const TableHead = styled.thead`
   }
 `;
 
+const SortableTh = styled.th<{ active?: boolean }>`
+  cursor: pointer;
+  &:hover {
+    background: var(--surface-color);
+    color: var(--text-color-strong);
+  }
+  ${({ active }) => active ? `color: var(--primary-color, #007bff) !important;` : ''}
+`;
+
 const TableRow = styled.tr<{ alertLevel?: 'critical' | 'low' | 'normal' }>`
   background: ${({ alertLevel }) =>
     alertLevel === 'critical' ? 'var(--danger-color-light, #fff0f0)'
@@ -1239,6 +1248,16 @@ export const IceCreamDashboardTab: React.FC<IceCreamDashboardTabProps> = ({
   // View mode: detail (cards) or overview (compact table)
   const [viewMode, setViewMode] = useState<'detail' | 'overview'>('detail');
 
+  // Overview table click-to-sort state
+  const [tableSort, setTableSort] = useState<{ col: string; dir: 'asc' | 'desc' }>({ col: 'name', dir: 'asc' });
+
+  const handleTableSort = (col: string) => {
+    setTableSort(prev => ({
+      col,
+      dir: prev.col === col ? (prev.dir === 'asc' ? 'desc' : 'asc') : 'asc',
+    }));
+  };
+
   // Reset confirmation modal state: { title, message, onConfirm } | null
   const [resetModal, setResetModal] = useState<{
     title: string;
@@ -1296,13 +1315,44 @@ export const IceCreamDashboardTab: React.FC<IceCreamDashboardTabProps> = ({
 
     // Sort
     return [...filtered].sort((a, b) => {
-      // Essential first (if sorting by essential+alphabetical)
+      // Overview table: click-to-sort overrides the dropdown
+      if (viewMode === 'overview') {
+        const { col, dir } = tableSort;
+        const mul = dir === 'asc' ? 1 : -1;
+        switch (col) {
+          case 'name': {
+            // Essentials first in asc mode
+            if (dir === 'asc') {
+              const aEss = a.essentialLarge || a.essentialSmall;
+              const bEss = b.essentialLarge || b.essentialSmall;
+              if (aEss && !bEss) return -1;
+              if (!aEss && bEss) return 1;
+            }
+            return mul * a.name.localeCompare(b.name, 'ca');
+          }
+          case 'mix':
+            return mul * (a.iceCreamMixKg - b.iceCreamMixKg);
+          case 'frozen':
+            return mul * (a.totalFrozenLiters - b.totalFrozenLiters);
+          case 'large':
+            return mul * (a.totalLargeContainers - b.totalLargeContainers);
+          case 'small':
+            return mul * (a.totalSmallCount - b.totalSmallCount);
+          case 'warehouse':
+            return mul * (a.largeWarehouseLiters - b.largeWarehouseLiters);
+          case 'paradeta':
+            return mul * (a.largeParadetaLiters - b.largeParadetaLiters);
+          default:
+            return 0;
+        }
+      }
+
+      // Detail view: dropdown sort
       if (sortBy === 'alphabetical-essential') {
         const aEss = a.essentialLarge || a.essentialSmall;
         const bEss = b.essentialLarge || b.essentialSmall;
         if (aEss && !bEss) return -1;
         if (!aEss && bEss) return 1;
-        // Then alphabetical
         return a.name.localeCompare(b.name, 'ca');
       }
 
@@ -1321,7 +1371,7 @@ export const IceCreamDashboardTab: React.FC<IceCreamDashboardTabProps> = ({
           return 0;
       }
     });
-  }, [typedFlavors, debouncedSearchTerm, sortBy]);
+  }, [typedFlavors, debouncedSearchTerm, sortBy, viewMode, tableSort]);
 
   // ── Pagination derived values ─────────────────────────────────────
   const totalPages = Math.max(1, Math.ceil((filteredAndSortedFlavors?.length || 0) / PAGE_SIZE));
@@ -1514,13 +1564,27 @@ export const IceCreamDashboardTab: React.FC<IceCreamDashboardTabProps> = ({
           <OverviewTable>
             <TableHead>
               <tr>
-                <th>Gust</th>
-                <th>🧊 Mix</th>
-                <th>❄️ Frozen</th>
-                <th>📦 Grans</th>
-                <th>🥫 Petits</th>
-                <th>📍 Magatzem</th>
-                <th>🏪 Paradeta</th>
+                <SortableTh active={tableSort.col === 'name'} onClick={() => handleTableSort('name')}>
+                  Gust {tableSort.col === 'name' ? (tableSort.dir === 'asc' ? '▲' : '▼') : ''}
+                </SortableTh>
+                <SortableTh active={tableSort.col === 'mix'} onClick={() => handleTableSort('mix')}>
+                  🧊 Mix {tableSort.col === 'mix' ? (tableSort.dir === 'asc' ? '▲' : '▼') : ''}
+                </SortableTh>
+                <SortableTh active={tableSort.col === 'frozen'} onClick={() => handleTableSort('frozen')}>
+                  ❄️ Frozen {tableSort.col === 'frozen' ? (tableSort.dir === 'asc' ? '▲' : '▼') : ''}
+                </SortableTh>
+                <SortableTh active={tableSort.col === 'large'} onClick={() => handleTableSort('large')}>
+                  📦 Grans {tableSort.col === 'large' ? (tableSort.dir === 'asc' ? '▲' : '▼') : ''}
+                </SortableTh>
+                <SortableTh active={tableSort.col === 'small'} onClick={() => handleTableSort('small')}>
+                  🥫 Petits {tableSort.col === 'small' ? (tableSort.dir === 'asc' ? '▲' : '▼') : ''}
+                </SortableTh>
+                <SortableTh active={tableSort.col === 'warehouse'} onClick={() => handleTableSort('warehouse')}>
+                  📍 Magatzem {tableSort.col === 'warehouse' ? (tableSort.dir === 'asc' ? '▲' : '▼') : ''}
+                </SortableTh>
+                <SortableTh active={tableSort.col === 'paradeta'} onClick={() => handleTableSort('paradeta')}>
+                  🏪 Paradeta {tableSort.col === 'paradeta' ? (tableSort.dir === 'asc' ? '▲' : '▼') : ''}
+                </SortableTh>
                 <th>⚠️</th>
                 <th></th>
               </tr>
