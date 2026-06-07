@@ -314,7 +314,14 @@ export const RecipeTab = ({
     return (
       <RecipeContainer>
         <RecipeHeader>
-          <RecipeName>{recipe.name}</RecipeName>
+          <div>
+            <RecipeName>{recipe.name}</RecipeName>
+            {recipe.productionLossPercent > 0 && (
+              <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--warning-color-dark)', marginLeft: 'var(--space-sm)' }}>
+                Pèrdua de producció: {recipe.productionLossPercent}%
+              </span>
+            )}
+          </div>
           <HeaderActions>
             <ActionButton
               onClick={() => onOpenEditor(recipeId, recipe.name)}

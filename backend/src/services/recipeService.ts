@@ -1,4 +1,5 @@
 import Recipe, { IRecipe, IRecipeIngredient } from '../models/Recipe';
+import Ingredient from '../models/Ingredient';
 import { Types } from 'mongoose';
 import { updateIngredientStock } from './ingredientService';
 import IceCreamFlavor from '../models/IceCreamFlavor';
@@ -67,8 +68,8 @@ export const createRecipe = async (
     const newRecipeInstance = new Recipe(dataToSave); // Use potentially scaled data
     const savedRecipe = await newRecipeInstance.save(); // Save the instance
     // Populate the saved document before returning
-    await savedRecipe.populate('ingredients.ingredient', 'name isAllergen');
-    await savedRecipe.populate('linkedRecipes.recipe', 'name');
+    await savedRecipe.populate('ingredients.ingredient', 'name isAllergen mermaPercent');
+    await savedRecipe.populate('linkedRecipes.recipe', 'name mermaPercent');
     return savedRecipe;
   } catch (error) {
     console.error('Error creating recipe:', error);
@@ -104,7 +105,7 @@ export const getAllRecipes = async (
     const totalCount = await Recipe.countDocuments(query);
 
     let recipesQuery = Recipe.find(query)
-      .populate('ingredients.ingredient', 'name isAllergen')
+      .populate('ingredients.ingredient', 'name isAllergen mermaPercent')
       .populate('linkedRecipes.recipe', 'name')
       .sort({ name: 1 });
 
@@ -138,8 +139,8 @@ export const getRecipeById = async (id: string): Promise<IRecipe | null> => {
     }
 
     const recipe = await Recipe.findById(id)
-      .populate('ingredients.ingredient', 'name isAllergen') // Populate ingredient details
-      .populate('linkedRecipes.recipe', 'name') // Populate linked recipe names
+      .populate('ingredients.ingredient', 'name isAllergen mermaPercent') // Populate ingredient details
+      .populate('linkedRecipes.recipe', 'name mermaPercent') // Populate linked recipe names
       .exec();
 
     if (!recipe) {
@@ -175,7 +176,7 @@ export const updateRecipe = async (
       new: true, // Return the modified document rather than the original
       runValidators: true, // Ensure updates adhere to schema validation
     })
-      .populate('ingredients.ingredient', 'name isAllergen')
+      .populate('ingredients.ingredient', 'name isAllergen mermaPercent')
       .populate('linkedRecipes.recipe', 'name')
       .exec();
 
@@ -319,7 +320,7 @@ export const finalizeRecipeProduction = async (
       throw new Error(`Recipe not found with ID: ${recipeId}`);
     }
 
-    // --- Step 1: Deduct ingredient stock ---
+    // --- Step 1: Deduct direct ingredient stock (applying each ingredient's own merma) ---
     if (recipe.ingredients && recipe.ingredients.length > 0) {
       for (const recipeIngredient of recipe.ingredients) {
         if (
@@ -334,7 +335,23 @@ export const finalizeRecipeProduction = async (
         }
 
         const ingredientId = recipeIngredient.ingredient._id.toString();
-        const changeInQuantity = -recipeIngredient.amountGrams;
+
+        // Fetch the ingredient to get its mermaPercent (handling loss for the raw material)
+        let mermaMultiplier = 1;
+        try {
+          const fullIngredient = await Ingredient.findById(ingredientId).select('mermaPercent').lean();
+          if (fullIngredient && fullIngredient.mermaPercent) {
+            mermaMultiplier = 1 + fullIngredient.mermaPercent / 100;
+          }
+        } catch (fetchError) {
+          console.warn(
+            `Could not fetch mermaPercent for ingredient ID ${ingredientId}. Using default (no merma).`,
+            fetchError,
+          );
+        }
+
+        const adjustedAmount = recipeIngredient.amountGrams * mermaMultiplier;
+        const changeInQuantity = -adjustedAmount;
 
         try {
           const updatedIngredient = await updateIngredientStock(
@@ -369,7 +386,149 @@ export const finalizeRecipeProduction = async (
       );
     }
 
-    // --- Step 2: Increment ice-cream mix (if flavorId provided) ---
+    // --- Step 2: Deduct linked recipes (sub-recipes used as ingredients) from their product stock ---
+    if (recipe.linkedRecipes && recipe.linkedRecipes.length > 0) {
+      for (const linked of recipe.linkedRecipes) {
+        if (
+          !linked.recipe ||
+          typeof linked.recipe === 'string' ||
+          !linked.recipe._id
+        ) {
+          console.warn(
+            `Linked recipe details missing for a linked recipe in ${recipeId}. Skipping stock deduction.`,
+          );
+          continue;
+        }
+
+        const linkedRecipeId = linked.recipe._id.toString();
+
+        // Fetch the linked recipe to get its productIngredientId
+        let linkedRecipeDoc: { productIngredientId?: any; name?: string } | null = null;
+        try {
+          linkedRecipeDoc = await Recipe.findById(linkedRecipeId).select('productIngredientId name').lean();
+        } catch (fetchError) {
+          console.warn(
+            `Could not fetch linked recipe ${linkedRecipeId} for stock deduction. Skipping.`,
+            fetchError,
+          );
+          continue;
+        }
+
+        if (!linkedRecipeDoc || !linkedRecipeDoc.productIngredientId) {
+          console.warn(
+            `Linked recipe "${linkedRecipeDoc?.name || linkedRecipeId}" has no product ingredient tracking. It may not have been finalized yet, or it may be an ice-cream recipe. Skipping stock deduction.`,
+          );
+          continue;
+        }
+
+        // Fetch the product Ingredient to get its mermaPercent
+        const productIngId = linkedRecipeDoc.productIngredientId.toString();
+        let productMermaMultiplier = 1;
+        try {
+          const productIng = await Ingredient.findById(productIngId).select('mermaPercent').lean();
+          if (productIng && productIng.mermaPercent) {
+            productMermaMultiplier = 1 + productIng.mermaPercent / 100;
+          }
+        } catch (fetchError) {
+          console.warn(
+            `Could not fetch product ingredient ${productIngId} for merma. Using default.`,
+            fetchError,
+          );
+        }
+
+        const deductionAmount = linked.amountGrams * productMermaMultiplier;
+
+        try {
+          const updatedProduct = await updateIngredientStock(
+            productIngId,
+            -deductionAmount,
+          );
+
+          if (!updatedProduct) {
+            console.warn(
+              `Product ingredient with ID ${productIngId} not found during linked-recipe stock deduction for recipe ${recipeId}.`,
+            );
+          } else {
+            console.log(
+              `Deducted ${deductionAmount.toFixed(3)}g of "${updatedProduct.name}" (linked recipe: ${linkedRecipeDoc.name}) for recipe ${recipeId}. New stock: ${updatedProduct.quantityInStock.toFixed(3)}g.`,
+            );
+            if (updatedProduct.quantityInStock < 0) {
+              console.warn(
+                `Stock for product "${updatedProduct.name}" is now negative: ${updatedProduct.quantityInStock.toFixed(3)}g.`,
+              );
+            }
+          }
+        } catch (stockUpdateError) {
+          console.error(
+            `Failed to deduct linked-recipe stock for product ID ${productIngId} in recipe ${recipeId}:`,
+            stockUpdateError,
+          );
+        }
+      }
+    }
+
+    // --- Step 3: If this is a non-ice-cream recipe, track its output as a product Ingredient ---
+    if (recipe.type !== 'ice cream recipe') {
+      // Apply production loss: what's lost to evaporation, sticking to equipment, etc.
+      const productionLossMultiplier = 1 - (recipe.productionLossPercent || 0) / 100;
+      const netYieldGrams = recipe.baseYieldGrams * productionLossMultiplier;
+
+      if (netYieldGrams > 0) {
+        try {
+          // Determine the product Ingredient ID: use existing or find/create one
+          let productIngId = recipe.productIngredientId
+            ? recipe.productIngredientId.toString()
+            : null;
+
+          if (!productIngId) {
+            // Look for an existing Ingredient with the same name
+            const existingIng = await Ingredient.findOne({
+              name: { $regex: `^${recipe.name}$`, $options: 'i' },
+            }).select('_id').lean();
+
+            if (existingIng) {
+              productIngId = existingIng._id.toString();
+            } else {
+              // Create a new Ingredient to track this recipe's output.
+              // Its mermaPercent defaults to 0; user can configure it in the ingredients tab.
+              const newProductIng = new Ingredient({
+                name: recipe.name,
+                aliases: [],
+                quantityInStock: 0,
+                mermaPercent: 0,
+              });
+              await newProductIng.save();
+              productIngId = newProductIng._id.toString();
+            }
+
+            // Store the reference on the recipe for future lookups
+            await Recipe.findByIdAndUpdate(
+              recipeId,
+              { $set: { productIngredientId: new Types.ObjectId(productIngId) } },
+            );
+          }
+
+          // Add the net yield (after production loss) to product stock
+          const updatedProduct = await updateIngredientStock(
+            productIngId,
+            netYieldGrams,
+          );
+
+          if (updatedProduct) {
+            console.log(
+              `Added ${netYieldGrams.toFixed(3)}g of "${updatedProduct.name}" (product of recipe "${recipe.name}", production loss: ${recipe.productionLossPercent || 0}%). New stock: ${updatedProduct.quantityInStock.toFixed(3)}g.`,
+            );
+          }
+        } catch (productError) {
+          console.error(
+            `Failed to track product output for recipe ${recipeId}:`,
+            productError,
+          );
+        }
+      }
+    }
+
+    // --- Step 4: Increment ice-cream mix (if flavorId provided, for ice-cream/sorbet recipes) ---
     if (flavorId) {
       const mixKg = recipe.baseYieldGrams / 1000;
 

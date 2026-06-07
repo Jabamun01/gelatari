@@ -22,6 +22,8 @@ export interface IRecipe extends Document {
   steps: string[];
   baseYieldGrams: number;
   linkedRecipes: ILinkedRecipe[];
+  productionLossPercent: number;
+  productIngredientId?: Types.ObjectId; // Reference to Ingredient for sub-recipe stock tracking
 }
 
 // Mongoose schema definition for Recipe
@@ -89,6 +91,17 @@ const recipeSchema = new Schema<IRecipe>(
         _id: false, // Don't create an _id for subdocuments
       },
     ],
+    productionLossPercent: {
+      type: Number,
+      default: 0,
+      min: 0,
+      max: 100,
+    },
+    productIngredientId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Ingredient',
+      default: undefined,
+    },
   },
   {
     timestamps: true, // Automatically add createdAt and updatedAt fields

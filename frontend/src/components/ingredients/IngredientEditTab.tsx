@@ -126,6 +126,7 @@ const IngredientEditTab: React.FC<IngredientEditTabProps> = ({ tab, onCloseTab }
   const [ingredientName, setIngredientName] = useState<string>('');
   const [aliases, setAliases] = useState<string[]>(['']);
   const [stockQuantity, setStockQuantity] = useState<number>(0);
+  const [mermaPercent, setMermaPercent] = useState<number>(0);
   const [isLoading, setIsLoading] = useState<boolean>(isEditMode);
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -140,6 +141,7 @@ const IngredientEditTab: React.FC<IngredientEditTabProps> = ({ tab, onCloseTab }
           setIngredientName(data.name);
           setAliases(data.aliases && data.aliases.length > 0 ? data.aliases : ['']);
           setStockQuantity(data.quantityInStock || 0);
+          setMermaPercent(data.mermaPercent || 0);
           setIsLoading(false);
         })
         .catch((err) => {
@@ -154,6 +156,7 @@ const IngredientEditTab: React.FC<IngredientEditTabProps> = ({ tab, onCloseTab }
       setIngredientName('');
       setAliases(['']);
       setStockQuantity(0);
+      setMermaPercent(0);
       setIsLoading(false);
       setError(null);
     }
@@ -181,6 +184,7 @@ const IngredientEditTab: React.FC<IngredientEditTabProps> = ({ tab, onCloseTab }
       name: ingredientName.trim(),
       aliases: aliases.filter((alias) => alias.trim() !== '').map((alias) => alias.trim()),
       quantityInStock: stockQuantity,
+      mermaPercent: mermaPercent,
     };
 
     if (!commonData.name) {
@@ -300,6 +304,20 @@ const IngredientEditTab: React.FC<IngredientEditTabProps> = ({ tab, onCloseTab }
             value={stockQuantity}
             onChange={(e) => setStockQuantity(Math.max(0, Number(e.target.value)))}
             min="0"
+            disabled={isSaving}
+          />
+        </FormGroup>
+
+        <FormGroup>
+          <FormLabel htmlFor="mermaPercent">Merma (%):</FormLabel>
+          <FormInput
+            type="number"
+            id="mermaPercent"
+            value={mermaPercent}
+            onChange={(e) => setMermaPercent(Math.max(0, Math.min(100, Number(e.target.value))))}
+            min="0"
+            max="100"
+            step="0.1"
             disabled={isSaving}
           />
         </FormGroup>

@@ -3,6 +3,7 @@ export interface RecipeIngredient {
   ingredient: {
     _id: string;
     name: string;
+    mermaPercent?: number;
   };
   amountGrams: number;
 }
@@ -26,7 +27,8 @@ export interface RecipeDetails {
   steps: string[];
   baseYieldGrams: number;
   linkedRecipes: LinkedRecipeInfo[];
-  // Add other fields here if the backend API provides more details
+  productionLossPercent: number;
+  productIngredientId?: string; // Reference to Ingredient for sub-recipe stock tracking
 }
 
 // Structure matching backend API expectations for POST /api/recipes
@@ -38,6 +40,7 @@ export interface CreateRecipeDto {
     steps: string[];
     baseYieldGrams: number;
     linkedRecipes: { recipe: string; amountGrams: number }[]; // recipe is ID string
+    productionLossPercent?: number;
 }
 // Structure matching backend API expectations for PUT /api/recipes/:id
 export type UpdateRecipeDto = Partial<CreateRecipeDto>; // Allow partial updates

@@ -429,9 +429,18 @@ export const IngredientList = ({
           </>
         );
       } else {
+        const ingredientItem = item as RecipeIngredient;
+        const mermaPct = ingredientItem.ingredient.mermaPercent;
         return (
           <>
-            <BaseIngredientName>{itemName}</BaseIngredientName>
+            <BaseIngredientName>
+              {itemName}
+              {mermaPct ? (
+                <span style={{ color: 'var(--warning-color-dark)', marginLeft: 'var(--space-sm)', fontSize: 'var(--font-size-xs)' }}>
+                  (merma: {mermaPct}%)
+                </span>
+              ) : null}
+            </BaseIngredientName>
             <IngredientAmount>{formattedAmount}</IngredientAmount>
           </>
         );

@@ -8,7 +8,7 @@ const isValidObjectId = (id: string): boolean => Types.ObjectId.isValid(id);
 
 export const createIngredientHandler = async (req: Request, res: Response) => {
   try {
-    const { name, aliases, quantityInStock } = req.body;
+    const { name, aliases, quantityInStock, mermaPercent } = req.body;
 
     // Basic input validation
     if (!name || typeof name !== 'string' || name.trim() === '') {
@@ -20,10 +20,14 @@ export const createIngredientHandler = async (req: Request, res: Response) => {
     if (quantityInStock !== undefined && (typeof quantityInStock !== 'number' || isNaN(quantityInStock))) {
         return res.status(400).json({ message: 'QuantityInStock must be a number if provided.' });
     }
+    if (mermaPercent !== undefined && (typeof mermaPercent !== 'number' || isNaN(mermaPercent) || mermaPercent < 0 || mermaPercent > 100)) {
+        return res.status(400).json({ message: 'MermaPercent must be a number between 0 and 100 if provided.' });
+    }
 
     const trimmedName = name.trim();
     const finalAliases = aliases ? aliases.map((a: string) => a.trim()).filter((a: string) => a) : []; // Trim and filter empty aliases
     const finalQuantityInStock = quantityInStock !== undefined ? Number(quantityInStock) : undefined;
+    const finalMermaPercent = mermaPercent !== undefined ? Number(mermaPercent) : undefined;
 
     // Check if name or any alias conflicts with existing names or aliases (case-insensitive)
     const potentialConflicts = [trimmedName, ...finalAliases];
@@ -51,6 +55,7 @@ export const createIngredientHandler = async (req: Request, res: Response) => {
         name: trimmedName,
         aliases: finalAliases,
         quantityInStock: finalQuantityInStock,
+        mermaPercent: finalMermaPercent,
     };
 
     // The conflict check above already handles duplicates based on name and aliases.
@@ -60,7 +65,8 @@ export const createIngredientHandler = async (req: Request, res: Response) => {
     const newIngredient = await ingredientService.createIngredient(
         ingredientData.name,
         ingredientData.aliases,
-        ingredientData.quantityInStock
+        ingredientData.quantityInStock,
+        ingredientData.mermaPercent
     );
     res.status(201).json(newIngredient);
   } catch (error: unknown) {
@@ -128,14 +134,14 @@ export const getIngredientByIdHandler = async (req: Request, res: Response) => {
 export const updateIngredientHandler = async (req: Request, res: Response, next: Function) => {
   try {
     const { id } = req.params;
-    const { name, aliases, quantityInStock } = req.body;
+    const { name, aliases, quantityInStock, mermaPercent } = req.body;
 
     if (!isValidObjectId(id)) {
       return res.status(400).json({ message: 'Invalid ingredient ID format.' });
     }
 
     // --- Input Validation ---
-    const updateData: { name?: string; aliases?: string[]; quantityInStock?: number } = {};
+    const updateData: { name?: string; aliases?: string[]; quantityInStock?: number; mermaPercent?: number } = {};
     let hasValidUpdateField = false;
 
     if (name !== undefined) {
@@ -164,9 +170,17 @@ export const updateIngredientHandler = async (req: Request, res: Response, next:
       hasValidUpdateField = true;
     }
 
+    if (mermaPercent !== undefined) {
+      if (typeof mermaPercent !== 'number' || isNaN(mermaPercent) || mermaPercent < 0 || mermaPercent > 100) {
+        return res.status(400).json({ message: 'MermaPercent must be a number between 0 and 100 if provided.' });
+      }
+      updateData.mermaPercent = mermaPercent;
+      hasValidUpdateField = true;
+    }
+
     if (!hasValidUpdateField && Object.keys(req.body).length > 0) {
         // If body is not empty but no valid fields were extracted (e.g. only extraneous fields sent)
-        return res.status(400).json({ message: 'No valid fields provided for update. Allowed fields are: name, aliases, quantityInStock.' });
+        return res.status(400).json({ message: 'No valid fields provided for update. Allowed fields are: name, aliases, quantityInStock, mermaPercent.' });
     }
     // If req.body is empty, service layer will handle it by returning current ingredient.
 

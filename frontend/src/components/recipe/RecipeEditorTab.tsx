@@ -269,6 +269,7 @@ const initialRecipeState: Omit<RecipeDetails, '_id' | 'baseYieldGrams'> = {
   ingredients: [],
   steps: [],
   linkedRecipes: [],
+  productionLossPercent: 0,
 };
 
 export const RecipeEditorTab = ({ recipeId, onClose, onOpenRecipeTab }: RecipeEditorTabProps) => {
@@ -302,6 +303,7 @@ export const RecipeEditorTab = ({ recipeId, onClose, onOpenRecipeTab }: RecipeEd
         ingredients: existingRecipe.ingredients ?? [],
         steps: existingRecipe.steps ?? [],
         linkedRecipes: existingRecipe.linkedRecipes ?? [],
+        productionLossPercent: existingRecipe.productionLossPercent ?? 0,
       });
     } else {
       setRecipeData(initialRecipeState);
@@ -641,6 +643,7 @@ export const RecipeEditorTab = ({ recipeId, onClose, onOpenRecipeTab }: RecipeEd
         recipe: item.recipe._id,
         amountGrams: item.amountGrams,
       })) || [],
+      productionLossPercent: recipeData.productionLossPercent,
     };
 
     if (isEditing) {
@@ -720,6 +723,25 @@ export const RecipeEditorTab = ({ recipeId, onClose, onOpenRecipeTab }: RecipeEd
               </FormSelect>
             </FormGroup>
           )}
+          <FormGroup>
+            <FormLabel htmlFor="recipe-production-loss">Pèrdua de Producció (%)</FormLabel>
+            <FormInput
+              type="number"
+              id="recipe-production-loss"
+              name="productionLossPercent"
+              value={recipeData.productionLossPercent || 0}
+              onChange={(e) =>
+                setRecipeData((prev) => ({
+                  ...prev,
+                  productionLossPercent: Math.max(0, Math.min(100, Number(e.target.value))),
+                }))
+              }
+              min="0"
+              max="100"
+              step="0.1"
+              disabled={isLoading}
+            />
+          </FormGroup>
         </div>
 
         <div>

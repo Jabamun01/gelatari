@@ -6,6 +6,7 @@ export interface Ingredient {
   name: string;
   aliases: string[];
   quantityInStock: number;
+  mermaPercent: number;
 }
 
 /**
@@ -16,6 +17,7 @@ export interface CreateIngredientDto {
   name: string;
   aliases?: string[]; // Optional when creating
   quantityInStock?: number; // Optional when creating
+  mermaPercent?: number;
 }
 
 /**
@@ -27,4 +29,5 @@ export interface UpdateIngredientDto {
   name?: string; // Allow name updates
   aliases?: string[];
   quantityInStock?: number;
+  mermaPercent?: number;
 }
