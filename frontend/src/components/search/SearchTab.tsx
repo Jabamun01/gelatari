@@ -6,6 +6,7 @@ import { PaginationControls } from '../common/PaginationControls';
 import { fetchRecipes, RecipeApiResponse, RecipeSearchResult } from '../../api/recipes';
 import { RecipeDetails } from '../../types/recipe';
 import { useDebounce } from '../../utils/hooks';
+import { normalizeText } from '../../utils/formatting';
 import { UnifiedDependencyModal } from '../common/UnifiedDependencyModal';
 import { ConfirmationModal } from '../common/ConfirmationModal';
 import { useItemDeletion, ItemToDelete, DeletionCycleStatus } from '../../utils/useItemDeletion';
@@ -196,7 +197,7 @@ export const SearchTab = ({ onOpenRecipeTab, onOpenRecipeEditor }: SearchTabProp
     readonly (string | number)[]
   >({
     queryKey: ['recipes', debouncedSearchTerm, currentPage, limit],
-    queryFn: () => fetchRecipes(currentPage, limit, debouncedSearchTerm),
+    queryFn: () => fetchRecipes(currentPage, limit, normalizeText(debouncedSearchTerm)),
     placeholderData: keepPreviousData,
   });
 

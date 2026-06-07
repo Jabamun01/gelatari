@@ -1,4 +1,29 @@
 /**
+ * Normalizes a string by removing combining diacritical marks (accents),
+ * so accented characters like à, é, ç are treated as their base vowels.
+ * Uses NFD Unicode normalization to decompose then strip combining marks.
+ * Also handles the Icelandic Ð/ð (eth) and the German ß (sharp s).
+ *
+ * @param text - The input string (may contain accented characters).
+ * @returns The normalized string with accents removed.
+ */
+export const normalizeText = (text: string): string => {
+  if (!text) return text;
+  return text
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '') // strip combining diacritical marks
+    .replace(/\u00D0/g, 'D')          // Ð → D  (Icelandic eth)
+    .replace(/\u00F0/g, 'd')          // ð → d
+    .replace(/\u00DF/g, 'ss')         // ß → ss (German sharp s)
+    .replace(/\u0141/g, 'L')          // Ł → L
+    .replace(/\u0142/g, 'l')          // ł → l
+    .replace(/\u0152/g, 'OE')         // Œ → OE
+    .replace(/\u0153/g, 'oe')         // œ → oe
+    .replace(/\u00D8/g, 'O')          // Ø → O
+    .replace(/\u00F8/g, 'o');         // ø → o
+};
+
+/**
  * Formats a number representing grams into a string with 'g' or 'kg', applying specific rounding rules.
  * - For quantities >= 1000g, converts to kg and rounds to 3 decimal places (e.g., 1723.6g -> "1.724kg").
  * - For quantities < 1000g and >= 50g, rounds to the nearest whole number (e.g., 125.6g -> "126g").

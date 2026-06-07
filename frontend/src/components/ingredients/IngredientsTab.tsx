@@ -13,6 +13,7 @@ import {
 import { Ingredient, UpdateIngredientDto } from '../../types/ingredient';
 import { RecipeDetails } from '../../types/recipe';
 import { useDebounce } from '../../utils/hooks';
+import { normalizeText } from '../../utils/formatting';
 import { formatAmount } from '../../utils/formatting';
 import { UnifiedDependencyModal } from '../common/UnifiedDependencyModal';
 import { ConfirmationModal } from '../common/ConfirmationModal';
@@ -234,7 +235,7 @@ export const IngredientsTab = ({ onOpenIngredientEditTab, onOpenRecipeEditTab }:
     readonly (string | number)[]
   >({
     queryKey: ['ingredients', currentPage, limit, debouncedSearchTerm],
-    queryFn: () => getAllIngredients(currentPage, limit, debouncedSearchTerm),
+    queryFn: () => getAllIngredients(currentPage, limit, normalizeText(debouncedSearchTerm)),
     placeholderData: keepPreviousData,
   });
 

@@ -20,6 +20,7 @@ import {
   SetFlavorStockDto,
 } from '../../types/iceCreamFlavor';
 import { useDebounce } from '../../utils/hooks';
+import { normalizeText } from '../../utils/formatting';
 
 // ---------------------------------------------------------------------------
 // Styled components
@@ -1077,7 +1078,7 @@ export const IceCreamDashboardTab: React.FC<IceCreamDashboardTabProps> = ({
     // Filter by debounced search term
     const filtered = debouncedSearchTerm
       ? list.filter((f) =>
-          f.name.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
+          normalizeText(f.name).toLowerCase().includes(normalizeText(debouncedSearchTerm).toLowerCase())
         )
       : list;
 
