@@ -48,7 +48,7 @@ export const getAllIngredients = async (
 ): Promise<PaginatedIngredientsResponse> => {
   try {
     // Construct the URL with query parameters for pagination and filtering
-    const url = new URL(ingredientsApiUrl);
+    const url = new URL(ingredientsApiUrl, window.location.origin);
     url.searchParams.append('page', page.toString());
     url.searchParams.append('limit', limit.toString());
     if (searchTerm && searchTerm.trim() !== '') { // Add searchTerm filter if provided
