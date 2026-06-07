@@ -522,6 +522,85 @@ export const updateIngredientStock = async (
 };
 
 /**
+ * Reset all ingredients' quantityInStock to 0.
+ * @returns The number of modified documents.
+ */
+// ── Types for batch purchase ────────────────────────────────────────────
+
+export interface BatchPurchaseItem {
+  /** Existing ingredient ID — omit for new ingredients */
+  ingredientId?: string;
+  /** Required for new ingredients */
+  name?: string;
+  /** Optional aliases for new ingredients */
+  aliases?: string[];
+  /** Amount in grams to add to stock */
+  quantityToAdd: number;
+}
+
+/**
+ * Batch add a purchase receipt.
+ * For existing ingredients (ingredientId provided) — adds stock.
+ * For new ingredients (no ingredientId) — creates the ingredient first, then adds stock.
+ */
+export const batchAddPurchase = async (
+  items: BatchPurchaseItem[],
+): Promise<IIngredient[]> => {
+  const results: IIngredient[] = [];
+  const errors: { item: BatchPurchaseItem; error: string }[] = [];
+
+  for (const item of items) {
+    try {
+      if (item.ingredientId) {
+        if (!mongoose.Types.ObjectId.isValid(item.ingredientId)) {
+          errors.push({ item, error: `Invalid ingredient ID: ${item.ingredientId}` });
+          continue;
+        }
+        const updated = await updateIngredientStock(item.ingredientId, item.quantityToAdd);
+        if (updated) {
+          results.push(updated);
+        } else {
+          errors.push({ item, error: `Ingredient not found: ${item.ingredientId}` });
+        }
+      } else {
+        // New ingredient
+        if (!item.name || item.name.trim() === '') {
+          errors.push({ item, error: 'Name is required for new ingredients.' });
+          continue;
+        }
+        const created = await createIngredient(
+          item.name.trim(),
+          item.aliases,
+          item.quantityToAdd,
+        );
+        results.push(created);
+      }
+    } catch (err: any) {
+      errors.push({ item, error: err.message || 'Unknown error' });
+    }
+  }
+
+  if (errors.length > 0) {
+    console.warn('Batch purchase had errors:', errors);
+  }
+
+  return results;
+};
+
+export const resetAllIngredientStock = async (): Promise<number> => {
+  try {
+    const result = await Ingredient.updateMany(
+      {},
+      { $set: { quantityInStock: 0 } },
+    );
+    return result.modifiedCount;
+  } catch (error) {
+    console.error('Error resetting all ingredient stock:', error);
+    throw new Error('Failed to reset ingredient stock.');
+  }
+};
+
+/**
  * Retrieves all recipes that include a specific ingredient.
  * @param ingredientId - The ID of the ingredient to search for in recipes.
  * @returns A promise that resolves to an array of recipe documents.

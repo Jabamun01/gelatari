@@ -500,6 +500,126 @@ export const moveContainers = async (
 };
 
 // ---------------------------------------------------------------------------
+// Manual stock overrides & resets
+// ---------------------------------------------------------------------------
+
+/**
+ * Directly set stock values for a flavor (manual override).
+ * Accepts any subset of mix / container fields and sets them exactly.
+ */
+export const setFlavorStock = async (
+  id: string,
+  data: {
+    iceCreamMixKg?: number;
+    largeWarehouseContainers?: number;
+    largeWarehouseLiters?: number;
+    largeParadetaContainers?: number;
+    largeParadetaLiters?: number;
+    smallWarehouseCount?: number;
+    smallParadetaCount?: number;
+  },
+): Promise<IIceCreamFlavor | null> => {
+  if (!isValidObjectId(id)) {
+    const err: any = new Error('Invalid flavor ID format.');
+    err.statusCode = 400;
+    throw err;
+  }
+
+  const allowedFields = [
+    'iceCreamMixKg',
+    'largeWarehouseContainers',
+    'largeWarehouseLiters',
+    'largeParadetaContainers',
+    'largeParadetaLiters',
+    'smallWarehouseCount',
+    'smallParadetaCount',
+  ];
+
+  const update: Record<string, number> = {};
+  for (const field of allowedFields) {
+    if (data[field as keyof typeof data] !== undefined) {
+      const val = data[field as keyof typeof data] as number;
+      if (typeof val !== 'number' || isNaN(val) || val < 0) {
+        const err: any = new Error(`${field} must be a non-negative number.`);
+        err.statusCode = 400;
+        throw err;
+      }
+      update[field] = val;
+    }
+  }
+
+  if (Object.keys(update).length === 0) {
+    const err: any = new Error('No valid fields provided to update.');
+    err.statusCode = 400;
+    throw err;
+  }
+
+  const updated = await IceCreamFlavor.findByIdAndUpdate(
+    id,
+    { $set: update },
+    { new: true, runValidators: true },
+  );
+  return updated;
+};
+
+/**
+ * Reset iceCreamMixKg to 0 for all flavors.
+ */
+export const resetAllMix = async (): Promise<number> => {
+  const result = await IceCreamFlavor.updateMany(
+    {},
+    { $set: { iceCreamMixKg: 0 } },
+  );
+  return result.modifiedCount;
+};
+
+/**
+ * Reset all container fields to 0 for all flavors.
+ */
+export const resetAllContainers = async (): Promise<number> => {
+  const result = await IceCreamFlavor.updateMany(
+    {},
+    {
+      $set: {
+        largeWarehouseContainers: 0,
+        largeWarehouseLiters: 0,
+        largeParadetaContainers: 0,
+        largeParadetaLiters: 0,
+        smallWarehouseCount: 0,
+        smallParadetaCount: 0,
+        // Also reset overrun tracking so history stays clean
+        totalMixConvertedKg: 0,
+        totalFrozenProducedL: 0,
+      },
+    },
+  );
+  return result.modifiedCount;
+};
+
+/**
+ * Reset everything (mix + containers + overrun tracking) for all flavors.
+ */
+export const resetAllFlavors = async (): Promise<number> => {
+  const result = await IceCreamFlavor.updateMany(
+    {},
+    {
+      $set: {
+        iceCreamMixKg: 0,
+        largeWarehouseContainers: 0,
+        largeWarehouseLiters: 0,
+        largeParadetaContainers: 0,
+        largeParadetaLiters: 0,
+        smallWarehouseCount: 0,
+        smallParadetaCount: 0,
+        totalMixConvertedKg: 0,
+        totalFrozenProducedL: 0,
+      },
+    },
+  );
+  return result.modifiedCount;
+};
+
+// ---------------------------------------------------------------------------
 // Dashboard
 // ---------------------------------------------------------------------------
 

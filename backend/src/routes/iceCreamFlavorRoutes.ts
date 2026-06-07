@@ -10,6 +10,10 @@ import {
   moveContainersHandler,
   getDashboardHandler,
   getEventsHandler,
+  setFlavorStockHandler,
+  resetAllMixHandler,
+  resetAllContainersHandler,
+  resetAllFlavorsHandler,
 } from '../controllers/iceCreamFlavorController';
 
 const router = Router();
@@ -39,6 +43,24 @@ router.patch(
 router.patch(
   '/:id/move-containers',
   moveContainersHandler as RequestHandler,
+);
+
+// Manual stock overrides & resets (must be before /:id catches)
+router.patch(
+  '/:id/set-stock',
+  setFlavorStockHandler as RequestHandler,
+);
+router.post(
+  '/reset-mix',
+  resetAllMixHandler as RequestHandler,
+);
+router.post(
+  '/reset-containers',
+  resetAllContainersHandler as RequestHandler,
+);
+router.post(
+  '/reset-all',
+  resetAllFlavorsHandler as RequestHandler,
 );
 
 export default router;

@@ -7,6 +7,7 @@ import {
   getAllIngredients,
   updateIngredient,
   addStockToIngredientApi,
+  resetAllIngredientStockApi,
   PaginatedIngredientsResponse,
 } from '../../api/ingredients';
 import { Ingredient, UpdateIngredientDto } from '../../types/ingredient';
@@ -16,6 +17,7 @@ import { formatAmount } from '../../utils/formatting';
 import { UnifiedDependencyModal } from '../common/UnifiedDependencyModal';
 import { ConfirmationModal } from '../common/ConfirmationModal';
 import { useItemDeletion, ItemToDelete, DeletionCycleStatus } from '../../utils/useItemDeletion';
+import AddPurchaseModal from './AddPurchaseModal';
 
 const DEFAULT_LIMIT = 5;
 const LIMIT_OPTIONS = [5, 10, 20, 50];
@@ -201,6 +203,7 @@ export const IngredientsTab = ({ onOpenIngredientEditTab, onOpenRecipeEditTab }:
   const [searchTerm, setSearchTerm] = useState('');
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
   const [addStockQuantities, setAddStockQuantities] = useState<Record<string, number>>({});
+  const [showPurchaseModal, setShowPurchaseModal] = useState(false);
 
   const queryClient = useQueryClient();
 
@@ -254,6 +257,17 @@ export const IngredientsTab = ({ onOpenIngredientEditTab, onOpenRecipeEditTab }:
     onError: (error: Error) => {
       console.error(`Error adding stock:`, error);
       alert(`Error en afegir stock: ${error.message || 'Error desconegut'}`);
+    },
+  });
+
+  const resetStockMutation = useMutation({
+    mutationFn: () => resetAllIngredientStockApi(),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['ingredients'] });
+    },
+    onError: (error: Error) => {
+      console.error('Error resetting stock:', error);
+      alert(`Error en restablir stock: ${error.message || 'Error desconegut'}`);
     },
   });
 
@@ -367,6 +381,26 @@ export const IngredientsTab = ({ onOpenIngredientEditTab, onOpenRecipeEditTab }:
             disabled={isLoading || isFetching}
           >
             + Afegir
+          </ActionButton>
+          <DangerButton
+            onClick={() => {
+              if (window.confirm('Restablir TOT l\'stock d\'ingredients a 0? Aquesta acció no es pot desfer.')) {
+                resetStockMutation.mutate();
+              }
+            }}
+            disabled={isLoading || isFetching || resetStockMutation.isPending}
+            title="Restablir tot l'stock d'ingredients a 0"
+            style={{ flexShrink: 0 }}
+          >
+            {resetStockMutation.isPending ? 'Restablint...' : '🔄 Restablir Stock'}
+          </DangerButton>
+          <ActionButton
+            onClick={() => setShowPurchaseModal(true)}
+            title="Afegir compra de multiples ingredients"
+            style={{ flexShrink: 0 }}
+            disabled={isLoading || isFetching}
+          >
+            🛒 Afegir compra
           </ActionButton>
         </ControlsContainer>
 
@@ -507,6 +541,10 @@ export const IngredientsTab = ({ onOpenIngredientEditTab, onOpenRecipeEditTab }:
         confirmButtonText={itemDeletionHook.confirmationModalProps?.confirmText || 'Confirm'}
         cancelButtonText={itemDeletionHook.confirmationModalProps?.cancelText || 'Cancel'}
       />
+
+      {showPurchaseModal && (
+        <AddPurchaseModal onClose={() => setShowPurchaseModal(false)} />
+      )}
     </>
   );
 };

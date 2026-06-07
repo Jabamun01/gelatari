@@ -8,6 +8,8 @@ import {
   ConvertMixDto,
   SellContainerDto,
   MoveContainersDto,
+  SetFlavorStockDto,
+  ResetResponse,
 } from '../types/iceCreamFlavor';
 
 const BASE = `${API_BASE_URL}/ice-cream`;
@@ -131,6 +133,59 @@ export const moveContainers = async (
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
     throw new Error(err.message || 'Failed to move containers.');
+  }
+  return res.json();
+};
+
+// ---------------------------------------------------------------------------
+// Manual stock override & resets
+// ---------------------------------------------------------------------------
+
+export const setFlavorStock = async (
+  flavorId: string,
+  dto: SetFlavorStockDto,
+): Promise<IceCreamFlavor> => {
+  const res = await authFetch(`${BASE}/${flavorId}/set-stock`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(dto),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.message || 'Failed to set flavor stock.');
+  }
+  return res.json();
+};
+
+export const resetAllMix = async (): Promise<ResetResponse> => {
+  const res = await authFetch(`${BASE}/reset-mix`, {
+    method: 'POST',
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.message || 'Failed to reset all mix.');
+  }
+  return res.json();
+};
+
+export const resetAllContainers = async (): Promise<ResetResponse> => {
+  const res = await authFetch(`${BASE}/reset-containers`, {
+    method: 'POST',
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.message || 'Failed to reset all containers.');
+  }
+  return res.json();
+};
+
+export const resetAllFlavors = async (): Promise<ResetResponse> => {
+  const res = await authFetch(`${BASE}/reset-all`, {
+    method: 'POST',
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.message || 'Failed to reset all flavors.');
   }
   return res.json();
 };

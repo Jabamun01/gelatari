@@ -210,3 +210,43 @@ export const addStockToIngredientApi = async (ingredientId: string, quantityToAd
 export const getIngredientDependencies = async (ingredientId: string): Promise<RecipeDetails[]> => {
   return apiFetch<RecipeDetails[]>(`${ingredientsApiUrl}/${ingredientId}/dependencies`);
 };
+
+/**
+ * Reset all ingredients' quantityInStock to 0.
+ * @returns A promise resolving to { message, modifiedCount }.
+ */
+export const resetAllIngredientStockApi = async (): Promise<{ message: string; modifiedCount: number }> => {
+  return apiFetch(`${ingredientsApiUrl}/reset-stock`, {
+    method: 'POST',
+  });
+};
+
+export interface BatchPurchaseInputItem {
+  /** Existing ingredient ID — omit for new ingredients */
+  ingredientId?: string;
+  /** Required for new ingredients */
+  name?: string;
+  /** Optional aliases for new ingredients */
+  aliases?: string[];
+  /** Amount to add (grams) */
+  quantityToAdd: number;
+}
+
+export interface BatchPurchaseResponse {
+  ingredients: Ingredient[];
+  count: number;
+}
+
+/**
+ * Batch-add a purchase receipt.
+ * Accepts a mix of existing ingredients (by ID) and new ones (by name+aliases).
+ */
+export const batchAddPurchaseApi = async (
+  items: BatchPurchaseInputItem[],
+): Promise<BatchPurchaseResponse> => {
+  return apiFetch<BatchPurchaseResponse>(`${ingredientsApiUrl}/batch-purchase`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ items }),
+  });
+};

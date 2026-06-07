@@ -242,6 +242,105 @@ export const moveContainersHandler = async (
 };
 
 // ---------------------------------------------------------------------------
+// Manual stock override & reset handlers
+// ---------------------------------------------------------------------------
+
+export const setFlavorStockHandler = async (
+  req: Request,
+  res: Response,
+): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const allowedFields = [
+      'iceCreamMixKg',
+      'largeWarehouseContainers',
+      'largeWarehouseLiters',
+      'largeParadetaContainers',
+      'largeParadetaLiters',
+      'smallWarehouseCount',
+      'smallParadetaCount',
+    ] as const;
+
+    const data: Record<string, number> = {};
+    for (const field of allowedFields) {
+      if (req.body[field] !== undefined) {
+        data[field] = req.body[field];
+      }
+    }
+
+    if (Object.keys(data).length === 0) {
+      res.status(400).json({
+        message:
+          'No valid fields provided. Allowed: ' + allowedFields.join(', '),
+      });
+      return;
+    }
+
+    const flavor = await iceCreamService.setFlavorStock(id, data);
+    if (!flavor) {
+      res.status(404).json({ message: 'Flavor not found.' });
+      return;
+    }
+    res.status(200).json(flavor);
+  } catch (error: any) {
+    if (error.statusCode) {
+      res.status(error.statusCode).json({ message: error.message });
+      return;
+    }
+    console.error('Error setting flavor stock:', error);
+    res.status(500).json({ message: 'Failed to set flavor stock.' });
+  }
+};
+
+export const resetAllMixHandler = async (
+  _req: Request,
+  res: Response,
+): Promise<void> => {
+  try {
+    const count = await iceCreamService.resetAllMix();
+    res.status(200).json({
+      message: 'All flavor mix reset to 0.',
+      modifiedCount: count,
+    });
+  } catch (error) {
+    console.error('Error resetting all mix:', error);
+    res.status(500).json({ message: 'Failed to reset all mix.' });
+  }
+};
+
+export const resetAllContainersHandler = async (
+  _req: Request,
+  res: Response,
+): Promise<void> => {
+  try {
+    const count = await iceCreamService.resetAllContainers();
+    res.status(200).json({
+      message: 'All flavor containers reset to 0.',
+      modifiedCount: count,
+    });
+  } catch (error) {
+    console.error('Error resetting all containers:', error);
+    res.status(500).json({ message: 'Failed to reset all containers.' });
+  }
+};
+
+export const resetAllFlavorsHandler = async (
+  _req: Request,
+  res: Response,
+): Promise<void> => {
+  try {
+    const count = await iceCreamService.resetAllFlavors();
+    res.status(200).json({
+      message: 'All flavor stock (mix + containers) reset to 0.',
+      modifiedCount: count,
+    });
+  } catch (error) {
+    console.error('Error resetting all flavors:', error);
+    res.status(500).json({ message: 'Failed to reset all flavors.' });
+  }
+};
+
+// ---------------------------------------------------------------------------
 // Dashboard handler
 // ---------------------------------------------------------------------------
 

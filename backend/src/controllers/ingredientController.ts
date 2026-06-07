@@ -319,6 +319,58 @@ export const addStockToIngredientHandler = async (req: Request, res: Response) =
     res.status(500).json({ message: 'Internal server error while updating ingredient stock.' });
   }
 };
+export const batchAddPurchaseHandler = async (
+  req: Request,
+  res: Response,
+): Promise<void> => {
+  try {
+    const { items } = req.body;
+
+    if (!Array.isArray(items) || items.length === 0) {
+      res.status(400).json({ message: 'items array is required and must not be empty.' });
+      return;
+    }
+
+    // Basic validation
+    for (const [idx, item] of items.entries()) {
+      if (!item.ingredientId && (!item.name || typeof item.name !== 'string' || item.name.trim() === '')) {
+        res.status(400).json({
+          message: `Item ${idx}: ingredientId or a valid name is required.`,
+        });
+        return;
+      }
+      if (typeof item.quantityToAdd !== 'number' || item.quantityToAdd <= 0) {
+        res.status(400).json({
+          message: `Item ${idx}: quantityToAdd must be a positive number.`,
+        });
+        return;
+      }
+    }
+
+    const results = await ingredientService.batchAddPurchase(items);
+    res.status(200).json({ ingredients: results, count: results.length });
+  } catch (error) {
+    console.error('Error in batch purchase:', error);
+    res.status(500).json({ message: 'Failed to process batch purchase.' });
+  }
+};
+
+export const resetAllIngredientStockHandler = async (
+  _req: Request,
+  res: Response,
+): Promise<void> => {
+  try {
+    const count = await ingredientService.resetAllIngredientStock();
+    res.status(200).json({
+      message: 'All ingredient stock reset to 0.',
+      modifiedCount: count,
+    });
+  } catch (error) {
+    console.error('Error resetting all ingredient stock:', error);
+    res.status(500).json({ message: 'Failed to reset ingredient stock.' });
+  }
+};
+
 export const getIngredientDependencies = async (req: Request, res: Response) => {
   try {
     const { ingredientId } = req.params;

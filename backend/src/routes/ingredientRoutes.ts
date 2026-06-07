@@ -8,9 +8,15 @@ import {
   addAliasToIngredientHandler,
   addStockToIngredientHandler,
   getIngredientDependencies,
+  resetAllIngredientStockHandler,
+  batchAddPurchaseHandler,
 } from '../controllers/ingredientController';
 
 const router = Router();
+
+// Bulk operations (must be before /:id routes)
+router.post('/batch-purchase', batchAddPurchaseHandler as RequestHandler);
+router.post('/reset-stock', resetAllIngredientStockHandler as RequestHandler);
 
 // Define ingredient routes
 router.post('/', createIngredientHandler as RequestHandler);

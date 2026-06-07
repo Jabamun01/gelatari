@@ -88,3 +88,20 @@ export interface MoveContainersDto {
   from: 'warehouse' | 'paradeta';
   to: 'warehouse' | 'paradeta';
 }
+
+/** DTO for directly setting stock values on a flavor. */
+export interface SetFlavorStockDto {
+  iceCreamMixKg?: number;
+  largeWarehouseContainers?: number;
+  largeWarehouseLiters?: number;
+  largeParadetaContainers?: number;
+  largeParadetaLiters?: number;
+  smallWarehouseCount?: number;
+  smallParadetaCount?: number;
+}
+
+/** Response from a reset endpoint. */
+export interface ResetResponse {
+  message: string;
+  modifiedCount: number;
+}
