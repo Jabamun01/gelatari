@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { styled } from '@linaria/react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { fetchEvents, IceCreamEventItem } from '../../api/iceCreamFlavors';
@@ -18,6 +18,7 @@ import {
   ConvertMixDto,
   SetFlavorStockDto,
 } from '../../types/iceCreamFlavor';
+import { useDebounce } from '../../utils/hooks';
 
 // ---------------------------------------------------------------------------
 // Styled components
@@ -115,6 +116,32 @@ const EmptyMessage = styled.div`
   padding: var(--space-2xl);
   color: var(--text-color-light);
   font-style: italic;
+`;
+
+const SearchSortRow = styled.div`
+  display: flex;
+  gap: var(--space-md);
+  align-items: center;
+  flex-wrap: wrap;
+`;
+
+const SearchInput = styled.input`
+  flex: 1;
+  min-width: 200px;
+  font-size: var(--font-size-base);
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--border-radius-lg);
+`;
+
+const SortSelect = styled.select`
+  padding: var(--space-sm) var(--space-md);
+  border: var(--border-width) solid var(--border-color);
+  border-radius: var(--border-radius-lg);
+  background: var(--surface-color);
+  color: var(--text-color);
+  font-size: var(--font-size-sm);
+  min-height: 44px;
+  cursor: pointer;
 `;
 
 // ---------------------------------------------------------------------------
@@ -1008,6 +1035,11 @@ export const IceCreamDashboardTab: React.FC<IceCreamDashboardTabProps> = ({
     isPending: boolean;
   } | null>(null);
 
+  // ── Search & sort state ──────────────────────────────────────────────
+  const [searchTerm, setSearchTerm] = useState('');
+  const debouncedSearchTerm = useDebounce(searchTerm, 300);
+  const [sortBy, setSortBy] = useState<'alphabetical-essential' | 'alphabetical' | 'mix-low' | 'mix-high' | 'frozen-low' | 'frozen-high'>('alphabetical-essential');
+
   // Determine overall alert level for a card
   const getAlertLevel = (f: DashboardFlavor): 'critical' | 'low' | undefined => {
     if (!f.essentialLarge && !f.essentialSmall) return undefined;
@@ -1025,6 +1057,46 @@ export const IceCreamDashboardTab: React.FC<IceCreamDashboardTabProps> = ({
   if (isError) return <Container><ErrorMessage>Error: {error?.message}</ErrorMessage></Container>;
 
   const typedFlavors = flavors as DashboardFlavor[] | undefined;
+
+  // ── Filter & sort flavors ────────────────────────────────────────────
+  const filteredAndSortedFlavors = useMemo(() => {
+    const list = typedFlavors || [];
+
+    // Filter by debounced search term
+    const filtered = debouncedSearchTerm
+      ? list.filter((f) =>
+          f.name.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
+        )
+      : list;
+
+    // Sort
+    return [...filtered].sort((a, b) => {
+      // Essential first (if sorting by essential+alphabetical)
+      if (sortBy === 'alphabetical-essential') {
+        const aEss = a.essentialLarge || a.essentialSmall;
+        const bEss = b.essentialLarge || b.essentialSmall;
+        if (aEss && !bEss) return -1;
+        if (!aEss && bEss) return 1;
+        // Then alphabetical
+        return a.name.localeCompare(b.name, 'ca');
+      }
+
+      switch (sortBy) {
+        case 'alphabetical':
+          return a.name.localeCompare(b.name, 'ca');
+        case 'mix-low':
+          return a.iceCreamMixKg - b.iceCreamMixKg;
+        case 'mix-high':
+          return b.iceCreamMixKg - a.iceCreamMixKg;
+        case 'frozen-low':
+          return a.totalFrozenLiters - b.totalFrozenLiters;
+        case 'frozen-high':
+          return b.totalFrozenLiters - a.totalFrozenLiters;
+        default:
+          return 0;
+      }
+    });
+  }, [typedFlavors, debouncedSearchTerm, sortBy]);
 
   return (
     <Container>
@@ -1084,12 +1156,41 @@ export const IceCreamDashboardTab: React.FC<IceCreamDashboardTabProps> = ({
         </HeaderActions>
       </HeaderRow>
 
+      {/* ── Search & sort controls ───────────────────────────────────── */}
+      {(typedFlavors && typedFlavors.length > 0) && (
+        <SearchSortRow>
+          <SearchInput
+            type="search"
+            placeholder="Cerca gustos..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            aria-label="Cerca gustos"
+          />
+          <SortSelect
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+            aria-label="Ordenar per"
+          >
+            <option value="alphabetical-essential">ABCD (essencials primer) ⭐</option>
+            <option value="alphabetical">ABCD</option>
+            <option value="mix-low">Mix (menys primer)</option>
+            <option value="mix-high">Mix (més primer)</option>
+            <option value="frozen-low">Congelat (menys primer)</option>
+            <option value="frozen-high">Congelat (més primer)</option>
+          </SortSelect>
+        </SearchSortRow>
+      )}
+
       {(!typedFlavors || typedFlavors.length === 0) ? (
         <EmptyMessage>
           No hi ha gustos de gelat definits. Creeu el primer gust!
         </EmptyMessage>
+      ) : filteredAndSortedFlavors.length === 0 ? (
+        <EmptyMessage>
+          {`No s'han trobat gustos que coincideixin amb "${debouncedSearchTerm}".`}
+        </EmptyMessage>
       ) : (
-        typedFlavors.map((f) => {
+        filteredAndSortedFlavors.map((f) => {
           const alertLevel = getAlertLevel(f);
           return (
             <Card key={f._id} alertLevel={alertLevel}>
