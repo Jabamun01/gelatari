@@ -600,8 +600,12 @@ export const finalizeRecipeProduction = async (
     }
 
     // --- Step 4: For ice cream recipes, auto-increment the linked flavor's mix stock ---
+    // Production loss applies uniformly to all recipe types (evaporation, sticking to equipment, etc.)
+    // Users set productionLossPercent per recipe; 0 means no loss.
     if (recipe.type === 'ice cream recipe' && recipe.flavorId) {
-      const mixKg = recipe.baseYieldGrams / 1000;
+      const productionLossMultiplier = 1 - (recipe.productionLossPercent || 0) / 100;
+      const netYieldGrams = recipe.baseYieldGrams * productionLossMultiplier;
+      const mixKg = netYieldGrams / 1000;
 
       if (mixKg > 0) {
         const updatedFlavor = await IceCreamFlavor.findByIdAndUpdate(
@@ -616,7 +620,7 @@ export const finalizeRecipeProduction = async (
           );
         } else {
           console.log(
-            `Added ${mixKg.toFixed(3)} kg of mix to flavor "${updatedFlavor.name}" (auto-linked from recipe "${recipe.name}"). New mix: ${updatedFlavor.iceCreamMixKg.toFixed(3)} kg.`,
+            `Added ${mixKg.toFixed(3)} kg of mix to flavor "${updatedFlavor.name}" (auto-linked from recipe "${recipe.name}", production loss: ${recipe.productionLossPercent || 0}%). New mix: ${updatedFlavor.iceCreamMixKg.toFixed(3)} kg.`,
           );
 
           // Log the production event
