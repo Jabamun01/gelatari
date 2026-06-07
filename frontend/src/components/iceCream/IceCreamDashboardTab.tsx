@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { styled } from '@linaria/react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { PaginationControls } from '../common/PaginationControls';
 import { fetchEvents, IceCreamEventItem } from '../../api/iceCreamFlavors';
 import {
   fetchDashboard,
@@ -994,6 +995,23 @@ export const IceCreamDashboardTab: React.FC<IceCreamDashboardTabProps> = ({
     },
   });
 
+  // ── Client-side pagination ────────────────────────────────────────────
+  const PAGE_SIZE = 5;
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const totalPages = Math.max(1, Math.ceil((typedFlavors?.length || 0) / PAGE_SIZE));
+
+  // Reset to last page if current page exceeds total after a deletion
+  if (typedFlavors && currentPage > Math.ceil(typedFlavors.length / PAGE_SIZE)) {
+    setCurrentPage(Math.max(1, Math.ceil(typedFlavors.length / PAGE_SIZE)));
+  }
+
+  const paginatedFlavors = useMemo(() => {
+    if (!typedFlavors) return [];
+    const start = (currentPage - 1) * PAGE_SIZE;
+    return typedFlavors.slice(start, start + PAGE_SIZE);
+  }, [typedFlavors, currentPage]);
+
   // Modal state
   const [convertFlavor, setConvertFlavor] = useState<DashboardFlavor | null>(null);
   const [sellFlavor, setSellFlavor] = useState<DashboardFlavor | null>(null);
@@ -1089,7 +1107,7 @@ export const IceCreamDashboardTab: React.FC<IceCreamDashboardTabProps> = ({
           No hi ha gustos de gelat definits. Creeu el primer gust!
         </EmptyMessage>
       ) : (
-        typedFlavors.map((f) => {
+        paginatedFlavors.map((f) => {
           const alertLevel = getAlertLevel(f);
           return (
             <Card key={f._id} alertLevel={alertLevel}>
@@ -1211,6 +1229,15 @@ export const IceCreamDashboardTab: React.FC<IceCreamDashboardTabProps> = ({
             </Card>
           );
         })
+      )}
+
+      {totalPages > 1 && typedFlavors && typedFlavors.length > 0 && (
+        <PaginationControls
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={(p) => setCurrentPage(p)}
+          isLoading={isLoading}
+        />
       )}
 
       {/* Modals */}
