@@ -13,53 +13,46 @@
       "id": "worker_1",
       "worktree": "/home/patata/Repos/gelatari--worker_1",
       "branch": "piparallel/worker_1",
-      "status": "working",
-      "session_id": "019ea1cd-c8d5-7dac-bac3-f64bb65fb8c5",
-      "pid": 13212,
-      "started_at": 1780831079015,
-      "last_seen": 1780833656085,
-      "changed_files": {},
-      "summary": "",
-      "merge_status": "merged"
+      "status": "ready_to_merge",
+      "session_id": "019ea215-07a8-7205-a1d5-1f645c2a983f",
+      "pid": 67159,
+      "started_at": 1780835748149,
+      "last_seen": 1780836013756,
+      "changed_files": {
+        ".../components/iceCream/IceCreamDashboardTab.tsx": "+20/-1"
+      },
+      "summary": "Add search bar and sort controls to Estoc de Gelats dashboard (IceCreamDashboardTab.tsx)\n\nChanges:\n- Added a real-time search bar with 300ms debouncing (uses existing `useDebounce` hook)\n- Added a sort dropdown with 6 options: ABCD with essentials first (default), plain ABCD, mix ascending/descending, frozen liters ascending/descending\n- Essentials are determined by `essentialLarge || essentialSmall` per user's requirement\n- Filtering and sorting are computed client-side via `useMemo` on the already-fetched dashboard data\n- Search/sort controls only appear when flavors exist; \"no results\" messaging is shown when filtering yields empty\n- Added styled components: SearchSortRow, SearchInput, SortSelect",
+      "merge_status": null
     },
     {
       "id": "worker_2",
       "worktree": "/home/patata/Repos/gelatari--worker_2",
       "branch": "piparallel/worker_2",
-      "status": "working",
-      "session_id": "019ea1cf-c6c7-701f-a20e-f78e77150b53",
-      "pid": 15638,
-      "started_at": 1780831209548,
-      "last_seen": 1780833647174,
-      "changed_files": {},
-      "summary": "",
-      "merge_status": "merged"
+      "status": "ready_to_merge",
+      "session_id": "019ea215-d45f-7c00-a4bd-4e0f20f3ea06",
+      "pid": 68003,
+      "started_at": 1780835800554,
+      "last_seen": 1780836013961,
+      "changed_files": {
+        ".../components/iceCream/IceCreamDashboardTab.tsx": "+20/-2"
+      },
+      "summary": "Add client-side pagination to \"Estoc de Gelats\" (Ice Cream Dashboard)\n\nThe IceCreamDashboardTab previously rendered all flavor cards in one long list. Added client-side pagination (5 items per page) using the existing PaginationControls component, with useMemo to slice the flavors array by the current page and auto-reset to the last valid page when a flavor is deleted.",
+      "merge_status": null
     },
     {
       "id": "worker_3",
       "worktree": "/home/patata/Repos/gelatari--worker_3",
       "branch": "piparallel/worker_3",
-      "status": "working",
-      "session_id": "019ea1d2-5512-7bf1-8073-d43b47b8da8a",
-      "pid": 17296,
-      "started_at": 1780831377047,
-      "last_seen": 1780834025760,
-      "changed_files": {},
-      "summary": "",
-      "merge_status": "merged"
-    },
-    {
-      "id": "worker_4",
-      "worktree": "/home/patata/Repos/gelatari--worker_4",
-      "branch": "piparallel/worker_4",
-      "status": "working",
-      "session_id": "019ea1d8-3051-7442-87c8-8bc77f9a701d",
-      "pid": 22473,
-      "started_at": 1780831760866,
-      "last_seen": 1780833661815,
-      "changed_files": {},
-      "summary": "",
-      "merge_status": "merged"
+      "status": "ready_to_merge",
+      "session_id": "019ea216-c31b-75fe-8fb7-a39a06f271f3",
+      "pid": 68785,
+      "started_at": 1780835861678,
+      "last_seen": 1780836264430,
+      "changed_files": {
+        "backend/src/services/recipeService.ts": "+6/-2"
+      },
+      "summary": "Fixed production loss exclusion for ice cream/sorbet recipes.\n\n**Problem:** In `finalizeRecipeProduction`, Step 4 (ice cream/sorbet) used `baseYieldGrams / 1000` directly, completely ignoring the `productionLossPercent` field. This meant production loss was only applied to non-ice-cream recipes (Step 3), even if the user explicitly set a non-zero value on an ice cream recipe.\n\n**Fix:** Applied the same `productionLossMultiplier` formula to Step 4 that Step 3 already uses. Now `productionLossPercent` affects all recipe types uniformly. Users control it per recipe (default 0, which preserves prior behavior). Also updated the log message to display the loss percentage for consistency.",
+      "merge_status": null
     }
   ]
 }

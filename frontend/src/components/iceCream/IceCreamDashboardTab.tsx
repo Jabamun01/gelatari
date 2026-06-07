@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { styled } from '@linaria/react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { PaginationControls } from '../common/PaginationControls';
 import { fetchEvents, IceCreamEventItem } from '../../api/iceCreamFlavors';
 import {
   fetchDashboard,
@@ -1098,6 +1099,22 @@ export const IceCreamDashboardTab: React.FC<IceCreamDashboardTabProps> = ({
     });
   }, [typedFlavors, debouncedSearchTerm, sortBy]);
 
+  // ── Client-side pagination on filtered+sorted data ──────────────────
+  const PAGE_SIZE = 5;
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const totalPages = Math.max(1, Math.ceil((filteredAndSortedFlavors?.length || 0) / PAGE_SIZE));
+
+  // Reset to last page if current page exceeds total after a deletion
+  if (filteredAndSortedFlavors && currentPage > Math.ceil(filteredAndSortedFlavors.length / PAGE_SIZE)) {
+    setCurrentPage(Math.max(1, Math.ceil(filteredAndSortedFlavors.length / PAGE_SIZE)));
+  }
+
+  const paginatedFlavors = useMemo(() => {
+    const start = (currentPage - 1) * PAGE_SIZE;
+    return filteredAndSortedFlavors.slice(start, start + PAGE_SIZE);
+  }, [filteredAndSortedFlavors, currentPage]);
+
   return (
     <Container>
       <HeaderRow>
@@ -1190,7 +1207,7 @@ export const IceCreamDashboardTab: React.FC<IceCreamDashboardTabProps> = ({
           {`No s'han trobat gustos que coincideixin amb "${debouncedSearchTerm}".`}
         </EmptyMessage>
       ) : (
-        filteredAndSortedFlavors.map((f) => {
+        paginatedFlavors.map((f) => {
           const alertLevel = getAlertLevel(f);
           return (
             <Card key={f._id} alertLevel={alertLevel}>
@@ -1312,6 +1329,15 @@ export const IceCreamDashboardTab: React.FC<IceCreamDashboardTabProps> = ({
             </Card>
           );
         })
+      )}
+
+      {totalPages > 1 && filteredAndSortedFlavors && filteredAndSortedFlavors.length > 0 && (
+        <PaginationControls
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={(p) => setCurrentPage(p)}
+          isLoading={isLoading}
+        />
       )}
 
       {/* Modals */}
