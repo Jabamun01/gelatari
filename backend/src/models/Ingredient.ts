@@ -5,6 +5,7 @@ export interface IIngredient extends Document {
   name: string;
   aliases: string[];
   quantityInStock: number;
+  mermaPercent: number;
 }
 
 // Mongoose schema definition for Ingredient
@@ -24,6 +25,12 @@ const ingredientSchema = new Schema<IIngredient>({
     type: Number,
     // required: true, // Made optional, default will apply on creation if not provided
     default: 0,
+  },
+  mermaPercent: {
+    type: Number,
+    default: 0,
+    min: 0,
+    max: 100,
   },
 });
 

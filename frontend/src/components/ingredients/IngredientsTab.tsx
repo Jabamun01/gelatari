@@ -85,6 +85,17 @@ const BaseIngredientName = styled.span`
   font-size: var(--font-size-sm);
 `;
 
+const MermaBadge = styled.span`
+  font-size: var(--font-size-xs);
+  color: var(--warning-color-dark);
+  background-color: var(--warning-color-light);
+  padding: 1px 6px;
+  border-radius: var(--border-radius-sm);
+  margin-top: 2px;
+  display: inline-block;
+  width: fit-content;
+`;
+
 const StockInfo = styled.span`
   font-size: var(--font-size-xs);
   color: var(--text-color-light);
@@ -397,6 +408,9 @@ export const IngredientsTab = ({ onOpenIngredientEditTab, onOpenRecipeEditTab }:
                         <BaseIngredientName>{ingredient.name}</BaseIngredientName>
                         {typeof ingredient.quantityInStock === 'number' && (
                           <StockInfo>Stock: {formatAmount(ingredient.quantityInStock)}</StockInfo>
+                        )}
+                        {ingredient.mermaPercent > 0 && (
+                          <MermaBadge>Merma: {ingredient.mermaPercent}%</MermaBadge>
                         )}
                       </IngredientDetails>
                       <AddStockForm>

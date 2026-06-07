@@ -36,6 +36,12 @@ export const createRecipeHandler = async (req: Request<{}, {}, CreateRecipeReque
       return; // Explicit return void
     }
 
+    // Validate productionLossPercent if provided
+    if (recipeData.productionLossPercent !== undefined && (typeof recipeData.productionLossPercent !== 'number' || recipeData.productionLossPercent < 0 || recipeData.productionLossPercent > 100)) {
+      res.status(400).json({ message: 'ProductionLossPercent must be a number between 0 and 100 if provided.' });
+      return; // Explicit return void
+    }
+
     // --- Type/Category Validation ---
     if (recipeData.type === 'ice cream recipe') {
         if (!recipeData.category || (recipeData.category !== 'ice cream' && recipeData.category !== 'sorbet')) {
@@ -221,6 +227,12 @@ export const updateRecipeHandler = async (req: Request<{ id: string }, {}, Updat
         // handled by fetching the document first or relying heavily on robust schema validation.
         // Let's rely on Mongoose validation for now.
     }
+    // Validate productionLossPercent if provided
+    if (updates.productionLossPercent !== undefined && (typeof updates.productionLossPercent !== 'number' || updates.productionLossPercent < 0 || updates.productionLossPercent > 100)) {
+      res.status(400).json({ message: 'ProductionLossPercent must be a number between 0 and 100 if provided.' });
+      return; // Explicit return void
+    }
+
     // Validate ingredient/linked recipe structures if they are part of the update
      if (updates.ingredients && Array.isArray(updates.ingredients)) {
         for (const ing of updates.ingredients) {

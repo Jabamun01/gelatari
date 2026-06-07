@@ -104,7 +104,8 @@ const findConflictingTermInDB = async (
 export const createIngredient = async (
   name: string,
   aliases?: string[],
-  quantityInStock?: number // Added for clarity, though model defaults
+  quantityInStock?: number, // Added for clarity, though model defaults
+  mermaPercent?: number
 ): Promise<IIngredient> => {
   try {
     const checkName = name ? name.trim() : "";
@@ -126,6 +127,9 @@ export const createIngredient = async (
     const ingredientData: any = { name: checkName, aliases: checkAliases };
     if (quantityInStock !== undefined) {
       ingredientData.quantityInStock = quantityInStock;
+    }
+    if (mermaPercent !== undefined) {
+      ingredientData.mermaPercent = mermaPercent;
     }
     const newIngredient = new Ingredient(ingredientData);
     await newIngredient.save();
@@ -263,7 +267,7 @@ export const updateIngredient = async (
  */
 export const updateIngredientById = async (
   id: string,
-  updateData: { name?: string; aliases?: string[]; quantityInStock?: number }
+  updateData: { name?: string; aliases?: string[]; quantityInStock?: number; mermaPercent?: number }
 ): Promise<IIngredient | null> => {
   if (!mongoose.Types.ObjectId.isValid(id)) {
     console.warn(`Invalid ingredient ID format for update: ${id}`);
@@ -297,6 +301,9 @@ export const updateIngredientById = async (
     }
     if (updateData.hasOwnProperty('quantityInStock')) {
       updatesToApply.quantityInStock = updateData.quantityInStock;
+    }
+    if (updateData.hasOwnProperty('mermaPercent')) {
+      updatesToApply.mermaPercent = updateData.mermaPercent;
     }
 
     if (Object.keys(updatesToApply).length === 0) {
