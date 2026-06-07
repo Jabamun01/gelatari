@@ -142,7 +142,7 @@ const TabButton = styled.button<{ isActive: boolean }>`
     min-width: 80px;
     max-width: 140px;
   }
-`;}]}
+`;
 
 const UserMenuContainer = styled.div`
   position: relative;

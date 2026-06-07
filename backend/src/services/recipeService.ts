@@ -476,7 +476,7 @@ export const finalizeRecipeProduction = async (
       if (netYieldGrams > 0) {
         try {
           // Determine the product Ingredient ID: use existing or find/create one
-          let productIngId = recipe.productIngredientId
+          let productIngId: string | null = recipe.productIngredientId
             ? recipe.productIngredientId.toString()
             : null;
 
@@ -484,21 +484,20 @@ export const finalizeRecipeProduction = async (
             // Look for an existing Ingredient with the same name
             const existingIng = await Ingredient.findOne({
               name: { $regex: `^${recipe.name}$`, $options: 'i' },
-            }).select('_id').lean();
+            }).select('_id').lean() as { _id: unknown } | null;
 
             if (existingIng) {
-              productIngId = existingIng._id.toString();
+              productIngId = String(existingIng._id);
             } else {
               // Create a new Ingredient to track this recipe's output.
               // Its mermaPercent defaults to 0; user can configure it in the ingredients tab.
-              const newProductIng = new Ingredient({
+              const newProductIng = await Ingredient.create({
                 name: recipe.name,
                 aliases: [],
                 quantityInStock: 0,
                 mermaPercent: 0,
               });
-              await newProductIng.save();
-              productIngId = newProductIng._id.toString();
+              productIngId = String(newProductIng._id);
             }
 
             // Store the reference on the recipe for future lookups
@@ -512,7 +511,7 @@ export const finalizeRecipeProduction = async (
           const updatedProduct = await updateIngredientStock(
             productIngId,
             netYieldGrams,
-          );
+  );
 
           if (updatedProduct) {
             console.log(

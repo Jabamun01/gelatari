@@ -166,6 +166,7 @@ export const deleteIngredient = async (id: string): Promise<void> => {
               type: 'ice cream recipe',
               baseYieldGrams: 0,
               linkedRecipes: [],
+              productionLossPercent: 0,
             }))
           : [];
         const customError: IngredientInUseErrorType = {

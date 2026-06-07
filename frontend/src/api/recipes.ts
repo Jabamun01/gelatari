@@ -153,6 +153,7 @@ export const deleteRecipe = async (id: string): Promise<DeleteRecipeResult> => {
         steps: [] as string[],
         type: 'ice cream recipe' as const,
         baseYieldGrams: 0,
+        productionLossPercent: 0,
         linkedRecipes: [] as { recipe: { _id: string; name: string }; amountGrams: number }[],
       }));
       return {
