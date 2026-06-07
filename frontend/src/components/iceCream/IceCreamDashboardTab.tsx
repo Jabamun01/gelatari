@@ -909,7 +909,7 @@ const ResetConfirmModal: React.FC<ResetConfirmModalProps> = ({
 // ---------------------------------------------------------------------------
 
 interface IceCreamDashboardTabProps {
-  onOpenFlavorEdit: (flavorName: string, flavorId?: string) => void;
+  onOpenFlavorEdit: (flavorName: string, flavorId?: string, sourceRecipeId?: string, sourceRecipeName?: string) => void;
   onOpenRecipeTab?: (recipeId: string, recipeName: string) => void;
 }
 
@@ -1325,6 +1325,21 @@ export const IceCreamDashboardTab: React.FC<IceCreamDashboardTabProps> = ({
                 <SmallButton onClick={() => onOpenFlavorEdit(f.name, f._id)}>
                   ✏️ Editar
                 </SmallButton>
+                {f.sourceRecipeId && (
+                  <SmallButton
+                    onClick={() =>
+                      onOpenFlavorEdit(
+                        'Nova variant',
+                        undefined,
+                        f.sourceRecipeId,
+                        f.sourceRecipeName || f.name,
+                      )
+                    }
+                    title="Crear una variant d'aquest gust amb mix-ins"
+                  >
+                    ➕ Nova Variant
+                  </SmallButton>
+                )}
                 <DangerButton
                   onClick={() => {
                     if (window.confirm(`Eliminar el gust "${f.name}"?`)) {
