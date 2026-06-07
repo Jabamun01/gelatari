@@ -6,17 +6,30 @@ import * as eventService from '../services/iceCreamEventService';
 // CRUD handlers
 // ---------------------------------------------------------------------------
 
+/**
+ * Create a new flavor variant linked to an existing ice cream recipe.
+ * Requires sourceRecipeId and optional mixIns.
+ */
 export const createFlavorHandler = async (
   req: Request,
   res: Response,
 ): Promise<void> => {
   try {
-    const { name } = req.body;
+    const { name, sourceRecipeId, mixIns } = req.body;
     if (!name || typeof name !== 'string' || name.trim() === '') {
       res.status(400).json({ message: 'Flavor name is required.' });
       return;
     }
-    const flavor = await iceCreamService.createFlavor(name.trim());
+    if (!sourceRecipeId || typeof sourceRecipeId !== 'string') {
+      res.status(400).json({ message: 'sourceRecipeId is required.' });
+      return;
+    }
+
+    const flavor = await iceCreamService.createFlavor({
+      name: name.trim(),
+      sourceRecipeId,
+      mixIns: mixIns || [],
+    });
     res.status(201).json(flavor);
   } catch (error: any) {
     if (error.statusCode) {
@@ -65,12 +78,13 @@ export const updateFlavorHandler = async (
 ): Promise<void> => {
   try {
     const { id } = req.params;
-    const { name, essentialLarge, essentialSmall } = req.body;
+    const { name, essentialLarge, essentialSmall, mixIns } = req.body;
 
     const updates: any = {};
     if (name !== undefined) updates.name = name;
     if (essentialLarge !== undefined) updates.essentialLarge = essentialLarge;
     if (essentialSmall !== undefined) updates.essentialSmall = essentialSmall;
+    if (mixIns !== undefined) updates.mixIns = mixIns;
 
     if (Object.keys(updates).length === 0) {
       res.status(400).json({ message: 'No valid fields to update.' });
@@ -252,7 +266,6 @@ export const setFlavorStockHandler = async (
   try {
     const { id } = req.params;
     const allowedFields = [
-      'iceCreamMixKg',
       'largeWarehouseContainers',
       'largeWarehouseLiters',
       'largeParadetaContainers',

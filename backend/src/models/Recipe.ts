@@ -24,7 +24,15 @@ export interface IRecipe extends Document {
   linkedRecipes: ILinkedRecipe[];
   productionLossPercent: number;
   productIngredientId?: Types.ObjectId; // Reference to Ingredient for sub-recipe stock tracking
-  flavorId?: Types.ObjectId; // Reference to IceCreamFlavor for 1:1 link
+  baseFlavorId?: Types.ObjectId; // Reference to the auto-created base IceCreamFlavor (no mix-ins)
+
+  // --- Mix tracking (shared across all flavors of this recipe) ---
+  iceCreamMixKg: number;           // kg of mix currently available
+  totalMixConvertedKg: number;     // cumulative kg of mix ever converted to frozen
+  totalFrozenProducedL: number;    // cumulative L of frozen ever produced from mix
+
+  // --- Computed virtuals ---
+  overrunPercent: number;
 }
 
 // Mongoose schema definition for Recipe
@@ -103,10 +111,27 @@ const recipeSchema = new Schema<IRecipe>(
       ref: 'Ingredient',
       default: undefined,
     },
-    flavorId: {
+    baseFlavorId: {
       type: Schema.Types.ObjectId,
       ref: 'IceCreamFlavor',
       default: undefined,
+    },
+
+    // --- Mix tracking (shared per recipe, across all flavor variants) ---
+    iceCreamMixKg: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    totalMixConvertedKg: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    totalFrozenProducedL: {
+      type: Number,
+      default: 0,
+      min: 0,
     },
   },
   {
@@ -128,6 +153,16 @@ recipeSchema.pre('save', function (next) {
   // Otherwise, validation passes
   next();
 });
+
+// Virtuals for computed fields
+recipeSchema.virtual('overrunPercent').get(function () {
+  if (this.totalMixConvertedKg <= 0) return 0;
+  return ((this.totalFrozenProducedL / this.totalMixConvertedKg) - 1) * 100;
+});
+
+// Ensure virtuals are included in JSON and Object output
+recipeSchema.set('toJSON', { virtuals: true });
+recipeSchema.set('toObject', { virtuals: true });
 
 // Create and export the Mongoose model
 const Recipe = model<IRecipe>('Recipe', recipeSchema);

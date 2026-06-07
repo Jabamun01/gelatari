@@ -35,17 +35,15 @@ export interface IIceCreamEvent extends Document {
   movedTo?: 'warehouse' | 'paradeta';
   movedContainerType?: 'large' | 'small';
 
-  // --- Full state snapshot AFTER the event (for point-in-time analysis) ---
+  // --- Full state snapshot of the flavor AFTER the event (for point-in-time analysis) ---
+  // Mix-level fields are on the Recipe, not on the Flavor — they are NOT in this snapshot.
   snapshot: {
-    iceCreamMixKg: number;
     largeWarehouseContainers: number;
     largeWarehouseLiters: number;
     largeParadetaContainers: number;
     largeParadetaLiters: number;
     smallWarehouseCount: number;
     smallParadetaCount: number;
-    totalMixConvertedKg: number;
-    totalFrozenProducedL: number;
   };
 }
 
@@ -92,15 +90,12 @@ const iceCreamEventSchema = new Schema<IIceCreamEvent>(
     snapshot: {
       type: new Schema(
         {
-          iceCreamMixKg: { type: Number, required: true },
           largeWarehouseContainers: { type: Number, required: true },
           largeWarehouseLiters: { type: Number, required: true },
           largeParadetaContainers: { type: Number, required: true },
           largeParadetaLiters: { type: Number, required: true },
           smallWarehouseCount: { type: Number, required: true },
           smallParadetaCount: { type: Number, required: true },
-          totalMixConvertedKg: { type: Number, required: true },
-          totalFrozenProducedL: { type: Number, required: true },
         },
         { _id: false },
       ),

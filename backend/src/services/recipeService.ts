@@ -26,8 +26,8 @@ export interface RecipeDeletionDependencies {
 }
 
 /**
- * Auto-create an IceCreamFlavor for an ice cream recipe.
- * Sets recipe.flavorId and saves the recipe.
+ * Auto-create the base IceCreamFlavor for an ice cream recipe (no mix-ins).
+ * Sets recipe.baseFlavorId and saves the recipe.
  */
 async function autoCreateFlavorForRecipe(recipe: IRecipe): Promise<void> {
   if (recipe.type !== 'ice cream recipe') return;
@@ -35,11 +35,11 @@ async function autoCreateFlavorForRecipe(recipe: IRecipe): Promise<void> {
   const newFlavor = new IceCreamFlavor({
     name: recipe.name,
     sourceRecipeId: recipe._id,
-    iceCreamMixKg: 0,
+    mixIns: [],
   });
   const savedFlavor = await newFlavor.save();
 
-  recipe.flavorId = savedFlavor._id as Types.ObjectId;
+  recipe.baseFlavorId = savedFlavor._id as Types.ObjectId;
   await recipe.save();
 }
 
@@ -208,12 +208,12 @@ export const updateRecipe = async (
     const isLeavingIceCream = updates.type && updates.type !== 'ice cream recipe' && currentRecipe.type === 'ice cream recipe';
     const nameChanged = updates.name && updates.name !== currentRecipe.name;
 
-    // If type changed to ice cream recipe and no flavorId yet, auto-create
-    if (isBecomingIceCream && !currentRecipe.flavorId) {
+    // If type changed to ice cream recipe and no baseFlavorId yet, auto-create
+    if (isBecomingIceCream && !currentRecipe.baseFlavorId) {
       // Apply the type update first so autoCreateFlavorForRecipe sees the right type
       currentRecipe.set(updates);
       await autoCreateFlavorForRecipe(currentRecipe);
-      // Re-fetch to get the saved document with flavorId
+      // Re-fetch to get the saved document with baseFlavorId
       const refreshed = await Recipe.findById(id)
         .populate('ingredients.ingredient', 'name isAllergen mermaPercent')
         .populate('linkedRecipes.recipe', 'name')
@@ -221,11 +221,11 @@ export const updateRecipe = async (
       return refreshed;
     }
 
-    // If type changed away from ice cream recipe, delete the linked flavor
-    if (isLeavingIceCream && currentRecipe.flavorId) {
-      await IceCreamFlavor.findByIdAndDelete(currentRecipe.flavorId);
-      // Remove the flavorId reference from updates so it's not preserved
-      delete (updates as any).flavorId;
+    // If type changed away from ice cream recipe, delete ALL flavors linked to this recipe
+    if (isLeavingIceCream && currentRecipe.baseFlavorId) {
+      await IceCreamFlavor.deleteMany({ sourceRecipeId: new Types.ObjectId(id) });
+      // Remove the baseFlavorId reference from updates so it's not preserved
+      delete (updates as any).baseFlavorId;
     }
 
     // Find and update the recipe, return the *new* document after update
@@ -242,10 +242,11 @@ export const updateRecipe = async (
       return null;
     }
 
-    // If the recipe name changed and it has a flavorId, sync the flavor name
-    if (nameChanged && updatedRecipe.flavorId) {
+    // If the recipe name changed and it has a baseFlavorId, sync the BASE flavor name
+    // (variant flavors keep their own names)
+    if (nameChanged && updatedRecipe.baseFlavorId) {
       await IceCreamFlavor.findByIdAndUpdate(
-        updatedRecipe.flavorId,
+        updatedRecipe.baseFlavorId,
         { $set: { name: updatedRecipe.name } },
       );
     }
@@ -348,9 +349,6 @@ export const deleteRecipe = async (
       };
     }
 
-    // Fetch the recipe to check for a linked flavor before deleting
-    const recipeToDelete = await Recipe.findById(id).select('flavorId').lean().exec();
-
     // If no dependencies, proceed with deletion
     const deletedRecipe = await Recipe.findByIdAndDelete(id).exec();
 
@@ -359,10 +357,10 @@ export const deleteRecipe = async (
       return null;
     }
 
-    // Cascade delete the linked flavor if it exists
-    if (recipeToDelete?.flavorId) {
-      await IceCreamFlavor.findByIdAndDelete(recipeToDelete.flavorId);
-      console.log(`Deleted linked flavor ${recipeToDelete.flavorId} for recipe ${id}`);
+    // Cascade delete ALL flavors linked to this recipe
+    const deleteResult = await IceCreamFlavor.deleteMany({ sourceRecipeId: new Types.ObjectId(id) });
+    if (deleteResult.deletedCount > 0) {
+      console.log(`Deleted ${deleteResult.deletedCount} linked flavor(s) for recipe ${id}`);
     }
 
     // Note: The deleted document is returned.
@@ -599,37 +597,38 @@ export const finalizeRecipeProduction = async (
       }
     }
 
-    // --- Step 4: For ice cream recipes, auto-increment the linked flavor's mix stock ---
-    // Production loss applies uniformly to all recipe types (evaporation, sticking to equipment, etc.)
-    // Users set productionLossPercent per recipe; 0 means no loss.
-    if (recipe.type === 'ice cream recipe' && recipe.flavorId) {
+    // --- Step 4: For ice cream recipes, auto-increment the recipe's mix stock ---
+    // Mix is now on the Recipe, shared across all flavor variants.
+    // Production loss applies uniformly.
+    if (recipe.type === 'ice cream recipe') {
       const productionLossMultiplier = 1 - (recipe.productionLossPercent || 0) / 100;
       const netYieldGrams = recipe.baseYieldGrams * productionLossMultiplier;
       const mixKg = netYieldGrams / 1000;
 
-      if (mixKg > 0) {
-        const updatedFlavor = await IceCreamFlavor.findByIdAndUpdate(
-          recipe.flavorId,
+      if (mixKg > 0 && recipe.baseFlavorId) {
+        const updatedRecipe = await Recipe.findByIdAndUpdate(
+          recipeId,
           { $inc: { iceCreamMixKg: mixKg } },
           { new: true },
         );
 
-        if (!updatedFlavor) {
-          console.warn(
-            `Ice-cream flavor with ID ${recipe.flavorId} not found for recipe ${recipeId}. Mix not added.`,
-          );
+        if (!updatedRecipe) {
+          console.warn(`Recipe ${recipeId} not found for mix increment.`);
         } else {
           console.log(
-            `Added ${mixKg.toFixed(3)} kg of mix to flavor "${updatedFlavor.name}" (auto-linked from recipe "${recipe.name}", production loss: ${recipe.productionLossPercent || 0}%). New mix: ${updatedFlavor.iceCreamMixKg.toFixed(3)} kg.`,
+            `Added ${mixKg.toFixed(3)} kg of mix to recipe "${updatedRecipe.name}". New mix: ${updatedRecipe.iceCreamMixKg.toFixed(3)} kg.`,
           );
 
-          // Log the production event
-          await iceCreamEventService.logProduction(
-            updatedFlavor,
-            recipeId,
-            recipe.name,
-            mixKg,
-          );
+          // Log the production event on the base flavor
+          const baseFlavor = await IceCreamFlavor.findById(recipe.baseFlavorId);
+          if (baseFlavor) {
+            await iceCreamEventService.logProduction(
+              baseFlavor,
+              recipeId,
+              recipe.name,
+              mixKg,
+            );
+          }
         }
       }
     }

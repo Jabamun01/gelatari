@@ -30,6 +30,10 @@ export const fetchDashboard = async (): Promise<DashboardFlavor[]> => {
 // CRUD – paths match the router mounted at /api/ice-cream
 // ---------------------------------------------------------------------------
 
+/**
+ * Create a new flavor variant linked to an existing ice cream recipe.
+ * Requires sourceRecipeId.
+ */
 export const createFlavor = async (
   dto: CreateFlavorDto,
 ): Promise<IceCreamFlavor> => {
@@ -215,15 +219,12 @@ export interface IceCreamEventItem {
   movedTo?: 'warehouse' | 'paradeta';
   movedContainerType?: 'large' | 'small';
   snapshot: {
-    iceCreamMixKg: number;
     largeWarehouseContainers: number;
     largeWarehouseLiters: number;
     largeParadetaContainers: number;
     largeParadetaLiters: number;
     smallWarehouseCount: number;
     smallParadetaCount: number;
-    totalMixConvertedKg: number;
-    totalFrozenProducedL: number;
   };
 }
 

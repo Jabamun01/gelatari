@@ -1,10 +1,15 @@
+/** A mix-in ingredient folded into the ice cream at churn time. */
+export interface MixIn {
+  ingredient: { _id: string; name: string };
+  amountPerKg: number; // grams per kg of mix used
+}
+
 /** Full flavor document as returned by the API. */
 export interface IceCreamFlavor {
   _id: string;
   name: string;
-  iceCreamMixKg: number;
-  totalMixConvertedKg: number;
-  totalFrozenProducedL: number;
+  sourceRecipeId?: string;
+  mixIns: MixIn[];
 
   // Large containers
   largeWarehouseContainers: number;
@@ -26,17 +31,23 @@ export interface IceCreamFlavor {
   totalSmallCount?: number;
   totalFrozenLiters?: number;
   averageLargeContainerLiters?: number;
-  overrunPercent?: number;
 }
 
-/** Dashboard item with computed alert fields. */
+/** Dashboard item with computed alert fields. Mix info comes from the parent recipe. */
 export interface DashboardFlavor {
   _id: string;
   name: string;
   sourceRecipeId?: string;
   sourceRecipeName?: string;
+  mixIns: Array<{
+    ingredient: string;
+    ingredientName?: string;
+    amountPerKg: number;
+  }>;
+  // Mix info (pulled from parent recipe, shared across all flavor variants)
   iceCreamMixKg: number;
   overrunPercent: number;
+  // Container stats (on the flavor itself)
   totalFrozenLiters: number;
   totalLargeContainers: number;
   totalLargeLiters: number;
@@ -57,9 +68,11 @@ export interface DashboardFlavor {
   };
 }
 
-/** DTO for creating a flavor. */
+/** DTO for creating a flavor variant (linked to an existing recipe). */
 export interface CreateFlavorDto {
   name: string;
+  sourceRecipeId: string;
+  mixIns?: Array<{ ingredient: string; amountPerKg: number }>;
 }
 
 /** DTO for updating a flavor. */
@@ -67,6 +80,7 @@ export interface UpdateFlavorDto {
   name?: string;
   essentialLarge?: boolean;
   essentialSmall?: boolean;
+  mixIns?: Array<{ ingredient: string; amountPerKg: number }>;
 }
 
 /** DTO for converting mix to frozen containers. */
@@ -91,9 +105,8 @@ export interface MoveContainersDto {
   to: 'warehouse' | 'paradeta';
 }
 
-/** DTO for directly setting stock values on a flavor. */
+/** DTO for directly setting stock values on a flavor (containers only; mix is on the recipe). */
 export interface SetFlavorStockDto {
-  iceCreamMixKg?: number;
   largeWarehouseContainers?: number;
   largeWarehouseLiters?: number;
   largeParadetaContainers?: number;

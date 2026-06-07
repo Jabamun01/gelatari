@@ -20,7 +20,7 @@ interface TabContentProps {
   onOpenIngredientEditTab: (ingredientName: string, ingredientId?: string) => void;
   // Ice-cream tab handlers
   onOpenIceCreamDashboardTab?: () => void;
-  onOpenIceCreamFlavorEditTab?: (flavorName: string, flavorId?: string) => void;
+  onOpenIceCreamFlavorEditTab?: (flavorName: string, flavorId?: string, sourceRecipeId?: string, sourceRecipeName?: string) => void;
   scaleFactor: number;
   onScaleChange: (tabId: string, newScaleFactor: number) => void;
 }
@@ -113,8 +113,8 @@ export const TabContent = ({
         if (activeTab.type !== 'iceCreamDashboard') return null;
         return (
           <IceCreamDashboardTab
-            onOpenFlavorEdit={(flavorName, flavorId) =>
-              onOpenIceCreamFlavorEditTab?.(flavorName, flavorId)
+            onOpenFlavorEdit={(flavorName, flavorId, sourceRecipeId, sourceRecipeName) =>
+              onOpenIceCreamFlavorEditTab?.(flavorName, flavorId, sourceRecipeId, sourceRecipeName)
             }
             onOpenRecipeTab={onOpenRecipeTab}
           />
