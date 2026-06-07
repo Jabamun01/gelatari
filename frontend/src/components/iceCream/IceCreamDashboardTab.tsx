@@ -783,23 +783,29 @@ const EditStockModal: React.FC<EditStockModalProps> = ({
   onConfirm,
   isPending,
 }) => {
-  const [mixKg, setMixKg] = useState(flavor.iceCreamMixKg);
-  const [largeWH, setLargeWH] = useState(flavor.largeWarehouseContainers);
-  const [largeWHL, setLargeWHL] = useState(flavor.largeWarehouseLiters);
-  const [largePar, setLargePar] = useState(flavor.largeParadetaContainers);
-  const [largeParL, setLargeParL] = useState(flavor.largeParadetaLiters);
-  const [smallWH, setSmallWH] = useState(flavor.smallWarehouseCount);
-  const [smallPar, setSmallPar] = useState(flavor.smallParadetaCount);
+  // Use string state so users can clear and retype values in number inputs
+  const [mixKg, setMixKg] = useState(() => String(flavor.iceCreamMixKg));
+  const [largeWH, setLargeWH] = useState(() => String(flavor.largeWarehouseContainers));
+  const [largeWHL, setLargeWHL] = useState(() => String(flavor.largeWarehouseLiters));
+  const [largePar, setLargePar] = useState(() => String(flavor.largeParadetaContainers));
+  const [largeParL, setLargeParL] = useState(() => String(flavor.largeParadetaLiters));
+  const [smallWH, setSmallWH] = useState(() => String(flavor.smallWarehouseCount));
+  const [smallPar, setSmallPar] = useState(() => String(flavor.smallParadetaCount));
+
+  const parseNum = (s: string): number => {
+    const n = parseFloat(s);
+    return isNaN(n) ? 0 : n;
+  };
 
   const handleSubmit = () => {
     onConfirm(flavor._id, {
-      iceCreamMixKg: mixKg,
-      largeWarehouseContainers: largeWH,
-      largeWarehouseLiters: largeWHL,
-      largeParadetaContainers: largePar,
-      largeParadetaLiters: largeParL,
-      smallWarehouseCount: smallWH,
-      smallParadetaCount: smallPar,
+      iceCreamMixKg: parseNum(mixKg),
+      largeWarehouseContainers: parseNum(largeWH),
+      largeWarehouseLiters: parseNum(largeWHL),
+      largeParadetaContainers: parseNum(largePar),
+      largeParadetaLiters: parseNum(largeParL),
+      smallWarehouseCount: parseNum(smallWH),
+      smallParadetaCount: parseNum(smallPar),
     });
   };
 
@@ -813,32 +819,32 @@ const EditStockModal: React.FC<EditStockModalProps> = ({
 
         <FieldGroup>
           <FieldLabel>Mix disponible (kg)</FieldLabel>
-          <FieldInput type="number" min={0} step={0.1} value={mixKg} onChange={(e) => setMixKg(parseFloat(e.target.value) || 0)} />
+          <FieldInput type="number" min={0} step={0.1} value={mixKg} onChange={(e) => setMixKg(e.target.value)} />
         </FieldGroup>
 
         <FieldGroup>
           <FieldLabel>📍 Magatzem — Envasos grans (comptador)</FieldLabel>
-          <FieldInput type="number" min={0} step={1} value={largeWH} onChange={(e) => setLargeWH(parseInt(e.target.value) || 0)} />
+          <FieldInput type="number" min={0} step={1} value={largeWH} onChange={(e) => setLargeWH(e.target.value)} />
         </FieldGroup>
         <FieldGroup>
           <FieldLabel>📍 Magatzem — Envasos grans (litres)</FieldLabel>
-          <FieldInput type="number" min={0} step={0.1} value={largeWHL} onChange={(e) => setLargeWHL(parseFloat(e.target.value) || 0)} />
+          <FieldInput type="number" min={0} step={0.1} value={largeWHL} onChange={(e) => setLargeWHL(e.target.value)} />
         </FieldGroup>
         <FieldGroup>
           <FieldLabel>🏪 Paradeta — Envasos grans (comptador)</FieldLabel>
-          <FieldInput type="number" min={0} step={1} value={largePar} onChange={(e) => setLargePar(parseInt(e.target.value) || 0)} />
+          <FieldInput type="number" min={0} step={1} value={largePar} onChange={(e) => setLargePar(e.target.value)} />
         </FieldGroup>
         <FieldGroup>
           <FieldLabel>🏪 Paradeta — Envasos grans (litres)</FieldLabel>
-          <FieldInput type="number" min={0} step={0.1} value={largeParL} onChange={(e) => setLargeParL(parseFloat(e.target.value) || 0)} />
+          <FieldInput type="number" min={0} step={0.1} value={largeParL} onChange={(e) => setLargeParL(e.target.value)} />
         </FieldGroup>
         <FieldGroup>
           <FieldLabel>📍 Magatzem — Envasos petits (comptador)</FieldLabel>
-          <FieldInput type="number" min={0} step={1} value={smallWH} onChange={(e) => setSmallWH(parseInt(e.target.value) || 0)} />
+          <FieldInput type="number" min={0} step={1} value={smallWH} onChange={(e) => setSmallWH(e.target.value)} />
         </FieldGroup>
         <FieldGroup>
           <FieldLabel>🏪 Paradeta — Envasos petits (comptador)</FieldLabel>
-          <FieldInput type="number" min={0} step={1} value={smallPar} onChange={(e) => setSmallPar(parseInt(e.target.value) || 0)} />
+          <FieldInput type="number" min={0} step={1} value={smallPar} onChange={(e) => setSmallPar(e.target.value)} />
         </FieldGroup>
 
         <ModalActions>
