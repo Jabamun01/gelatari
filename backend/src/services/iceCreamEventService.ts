@@ -3,18 +3,16 @@ import { IIceCreamFlavor } from '../models/IceCreamFlavor';
 import { Types } from 'mongoose';
 
 /**
- * Build a snapshot from the current flavor state.
+ * Build a snapshot from the current flavor state (container fields only).
+ * Mix-level fields (iceCreamMixKg, overrun tracking) live on the Recipe.
  */
 const buildSnapshot = (f: IIceCreamFlavor) => ({
-  iceCreamMixKg: f.iceCreamMixKg,
   largeWarehouseContainers: f.largeWarehouseContainers,
   largeWarehouseLiters: f.largeWarehouseLiters,
   largeParadetaContainers: f.largeParadetaContainers,
   largeParadetaLiters: f.largeParadetaLiters,
   smallWarehouseCount: f.smallWarehouseCount,
   smallParadetaCount: f.smallParadetaCount,
-  totalMixConvertedKg: f.totalMixConvertedKg,
-  totalFrozenProducedL: f.totalFrozenProducedL,
 });
 
 // ---------------------------------------------------------------------------

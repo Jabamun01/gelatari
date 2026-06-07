@@ -575,6 +575,29 @@ const ConvertMixModal: React.FC<ConvertModalProps> = ({
           />
         </FieldGroup>
 
+        {/* Mix-in deduction preview */}
+        {flavor.mixIns.length > 0 && mixKg > 0 && (
+          <div style={{
+            fontSize: 'var(--font-size-sm)',
+            color: 'var(--text-color)',
+            padding: 'var(--space-sm) var(--space-md)',
+            background: 'var(--surface-color-light)',
+            borderRadius: 'var(--border-radius)',
+            marginBottom: 'var(--space-md)',
+          }}>
+            <strong style={{ display: 'block', marginBottom: 4 }}>🧩 Mix-ins a descomptar:</strong>
+            {flavor.mixIns.map(m => {
+              const grams = (m.amountPerKg * mixKg).toFixed(1);
+              return (
+                <div key={m.ingredient} style={{ fontSize: 'var(--font-size-xs)' }}>
+                  {m.ingredientName || '?'}: <strong>{grams} g</strong>
+                  {' '}({m.amountPerKg} g/kg × {mixKg.toFixed(1)} kg)
+                </div>
+              );
+            })}
+          </div>
+        )}
+
         <ModalActions>
           <SecondaryButton onClick={onClose} disabled={isPending}>
             Cancel·lar
@@ -784,7 +807,6 @@ const EditStockModal: React.FC<EditStockModalProps> = ({
   isPending,
 }) => {
   // Use string state so users can clear and retype values in number inputs
-  const [mixKg, setMixKg] = useState(() => String(flavor.iceCreamMixKg));
   const [largeWH, setLargeWH] = useState(() => String(flavor.largeWarehouseContainers));
   const [largeWHL, setLargeWHL] = useState(() => String(flavor.largeWarehouseLiters));
   const [largePar, setLargePar] = useState(() => String(flavor.largeParadetaContainers));
@@ -799,7 +821,6 @@ const EditStockModal: React.FC<EditStockModalProps> = ({
 
   const handleSubmit = () => {
     onConfirm(flavor._id, {
-      iceCreamMixKg: parseNum(mixKg),
       largeWarehouseContainers: parseNum(largeWH),
       largeWarehouseLiters: parseNum(largeWHL),
       largeParadetaContainers: parseNum(largePar),
@@ -814,13 +835,8 @@ const EditStockModal: React.FC<EditStockModalProps> = ({
       <ModalBox onClick={(e) => e.stopPropagation()}>
         <ModalTitle>Editar estoc directe — {flavor.name}</ModalTitle>
         <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--text-color-light)', marginBottom: 'var(--space-md)' }}>
-          Estableix els valors exactes que vulguis. Això sobreescriu les dades actuals.
+          Edita els valors dels envasos directament. El mix es gestiona des de la recepta.
         </p>
-
-        <FieldGroup>
-          <FieldLabel>Mix disponible (kg)</FieldLabel>
-          <FieldInput type="number" min={0} step={0.1} value={mixKg} onChange={(e) => setMixKg(e.target.value)} />
-        </FieldGroup>
 
         <FieldGroup>
           <FieldLabel>📍 Magatzem — Envasos grans (comptador)</FieldLabel>
@@ -909,7 +925,7 @@ const ResetConfirmModal: React.FC<ResetConfirmModalProps> = ({
 // ---------------------------------------------------------------------------
 
 interface IceCreamDashboardTabProps {
-  onOpenFlavorEdit: (flavorName: string, flavorId?: string) => void;
+  onOpenFlavorEdit: (flavorName: string, flavorId?: string, sourceRecipeId?: string, sourceRecipeName?: string) => void;
   onOpenRecipeTab?: (recipeId: string, recipeName: string) => void;
 }
 
@@ -1177,9 +1193,7 @@ export const IceCreamDashboardTab: React.FC<IceCreamDashboardTabProps> = ({
           >
             ⚠️ Restablir TOT
           </DangerButton>
-          <ActionButton onClick={() => onOpenFlavorEdit('Nou Gust')}>
-            + Nou Gust
-          </ActionButton>
+          {/* Flavors are auto-created when an ice cream recipe is created — no standalone creation */}
         </HeaderActions>
       </HeaderRow>
 

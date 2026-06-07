@@ -144,6 +144,8 @@ const App = () => {
   const [showFlavorEditModal, setShowFlavorEditModal] = useState(false);
   const [flavorEditId, setFlavorEditId] = useState<string | undefined>(undefined);
   const [flavorEditName, setFlavorEditName] = useState<string | undefined>(undefined);
+  const [flavorEditSourceRecipeId, setFlavorEditSourceRecipeId] = useState<string | undefined>(undefined);
+  const [flavorEditSourceRecipeName, setFlavorEditSourceRecipeName] = useState<string | undefined>(undefined);
 
   // Effect to save state to localStorage whenever tabs or activeTabId change
   useEffect(() => {
@@ -330,9 +332,11 @@ const App = () => {
     setShowDefaultStepsModal(false);
   };
 
-  const handleOpenFlavorEditModal = (flavorName: string, flavorId?: string) => {
+  const handleOpenFlavorEditModal = (flavorName: string, flavorId?: string, sourceRecipeId?: string, sourceRecipeName?: string) => {
     setFlavorEditName(flavorName);
     setFlavorEditId(flavorId);
+    setFlavorEditSourceRecipeId(sourceRecipeId);
+    setFlavorEditSourceRecipeName(sourceRecipeName);
     setShowFlavorEditModal(true);
   };
 
@@ -340,6 +344,8 @@ const App = () => {
     setShowFlavorEditModal(false);
     setFlavorEditId(undefined);
     setFlavorEditName(undefined);
+    setFlavorEditSourceRecipeId(undefined);
+    setFlavorEditSourceRecipeName(undefined);
   };
 
   // Ice-cream dashboard tab
@@ -423,6 +429,8 @@ const activeTab: TabData | undefined = tabs.find(tab => tab.id === activeTabId);
         onClose={handleCloseFlavorEditModal}
         flavorId={flavorEditId}
         flavorName={flavorEditName}
+        sourceRecipeId={flavorEditSourceRecipeId}
+        sourceRecipeName={flavorEditSourceRecipeName}
       />
     </AppContainer>
   );

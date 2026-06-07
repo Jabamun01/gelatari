@@ -1,19 +1,26 @@
 import { Schema, model, Document, Types } from 'mongoose';
 
+// --- Mix-in subdocument ---
+export interface IMixIn {
+  ingredient: Types.ObjectId;  // reference to an Ingredient
+  amountPerKg: number;          // grams of mix-in per kg of mix used at churn
+}
+
 /**
- * Represents an ice cream flavor for tracking mix, frozen product,
- * containers, locations, and essential status.
+ * Represents an ice cream flavor variant.
+ * Each flavor belongs to a recipe (via sourceRecipeId) and
+ * is a distinct SKU with its own mix-ins (inclusions folded in at churn time),
+ * container inventory, and essential-stock alert settings.
+ *
+ * Multiple flavors can share the same recipe — they share the recipe's mix pool
+ * but differ in their mix-in inclusions (e.g. "Xocolata" vs "Xocolata + ametlles").
  */
 export interface IIceCreamFlavor extends Document {
   name: string;
-  sourceRecipeId?: Types.ObjectId; // set automatically for recipe-linked flavors, 1:1 link
+  sourceRecipeId?: Types.ObjectId; // reference to the Recipe (many:1 — multiple flavors per recipe)
 
-  // --- Mix tracking (kg) ---
-  iceCreamMixKg: number;
-
-  // --- Overrun tracking: cumulative values for historical average ---
-  totalMixConvertedKg: number;   // total kg of mix ever converted to frozen
-  totalFrozenProducedL: number;  // total L of frozen ever produced from mix
+  // --- Mix-ins (inclusions added at churn time, e.g. chocolate chips, nuts) ---
+  mixIns: IMixIn[];
 
   // --- Large containers (averaged size ~5L each) ---
   largeWarehouseContainers: number;
@@ -50,23 +57,25 @@ const iceCreamFlavorSchema = new Schema<IIceCreamFlavor>(
       type: Schema.Types.ObjectId,
       ref: 'Recipe',
       default: undefined,
-      unique: true, // 1:1 enforcement when set
-      sparse: true, // allow multiple nulls
+      sparse: true, // allow multiple nulls and many:1
     },
-    iceCreamMixKg: {
-      type: Number,
-      default: 0,
-      min: 0,
-    },
-    totalMixConvertedKg: {
-      type: Number,
-      default: 0,
-      min: 0,
-    },
-    totalFrozenProducedL: {
-      type: Number,
-      default: 0,
-      min: 0,
+    mixIns: {
+      type: [
+        {
+          ingredient: {
+            type: Schema.Types.ObjectId,
+            ref: 'Ingredient',
+            required: true,
+          },
+          amountPerKg: {
+            type: Number,
+            required: true,
+            min: 0,
+          },
+          _id: false,
+        },
+      ],
+      default: [],
     },
     largeWarehouseContainers: {
       type: Number,
@@ -132,11 +141,6 @@ iceCreamFlavorSchema.virtual('totalFrozenLiters').get(function () {
 iceCreamFlavorSchema.virtual('averageLargeContainerLiters').get(function () {
   const total = this.totalLargeContainers;
   return total > 0 ? this.totalLargeLiters / total : 0;
-});
-
-iceCreamFlavorSchema.virtual('overrunPercent').get(function () {
-  if (this.totalMixConvertedKg <= 0) return 0;
-  return ((this.totalFrozenProducedL / this.totalMixConvertedKg) - 1) * 100;
 });
 
 // Ensure virtuals are included in JSON and Object output

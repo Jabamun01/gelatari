@@ -1,5 +1,7 @@
-import IceCreamFlavor, { IIceCreamFlavor } from '../models/IceCreamFlavor';
+import IceCreamFlavor, { IIceCreamFlavor, IMixIn } from '../models/IceCreamFlavor';
 import Recipe from '../models/Recipe';
+import Ingredient from '../models/Ingredient';
+import { updateIngredientStock } from './ingredientService';
 import mongoose from 'mongoose';
 import * as eventService from './iceCreamEventService';
 
@@ -26,13 +28,33 @@ export interface MoveContainersInput {
   to: 'warehouse' | 'paradeta';
 }
 
+export interface CreateFlavorInput {
+  name: string;
+  sourceRecipeId: string;
+  mixIns?: Array<{ ingredient: string; amountPerKg: number }>;
+}
+
+export interface UpdateFlavorInput {
+  name?: string;
+  essentialLarge?: boolean;
+  essentialSmall?: boolean;
+  mixIns?: Array<{ ingredient: string; amountPerKg: number }>;
+}
+
 export interface DashboardFlavor {
   _id: string;
   name: string;
   sourceRecipeId?: string;
   sourceRecipeName?: string;
+  mixIns: Array<{
+    ingredient: string;       // ObjectId
+    ingredientName?: string;  // populated
+    amountPerKg: number;
+  }>;
+  // Mix info pulled from the parent recipe
   iceCreamMixKg: number;
   overrunPercent: number;
+  // Container counts (on the flavor itself)
   totalFrozenLiters: number;
   totalLargeContainers: number;
   totalLargeLiters: number;
@@ -54,38 +76,33 @@ export interface DashboardFlavor {
 }
 
 // Thresholds for essential-flavor alerts (tweak as needed)
-const PARADETA_LOW_THRESHOLD_LARGE_L = 15;  // < 15 L in paradeta = low
-const PARADETA_LOW_THRESHOLD_SMALL_COUNT = 5; // < 5 small in paradeta = low
-const OVERALL_LOW_THRESHOLD_LARGE_L = 25;     // < 25 L total large = overall low
-const OVERALL_LOW_THRESHOLD_SMALL_COUNT = 10;  // < 10 small total = overall low
+const PARADETA_LOW_THRESHOLD_LARGE_L = 15;
+const PARADETA_LOW_THRESHOLD_SMALL_COUNT = 5;
+const OVERALL_LOW_THRESHOLD_LARGE_L = 25;
+const OVERALL_LOW_THRESHOLD_SMALL_COUNT = 10;
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
-/**
- * Check whether a string is a valid MongoDB ObjectId.
- */
 const isValidObjectId = (id: string): boolean =>
   mongoose.Types.ObjectId.isValid(id);
 
 /**
- * Build a typed dashboard item from a flavor document.
+ * Build a typed dashboard item from a flavor document + recipe mix data.
  */
-/**
- * Build a typed dashboard item from a flavor document.
- * Expects sourceRecipeId to be populated (or just an ObjectId).
- */
-const toDashboardItem = (f: IIceCreamFlavor & { sourceRecipeId?: any }): DashboardFlavor => {
+const toDashboardItem = (
+  f: IIceCreamFlavor & { sourceRecipeId?: any },
+  recipeMixKg: number,
+  recipeOverrunPercent: number,
+): DashboardFlavor => {
   const totalLargeL = f.largeWarehouseLiters + f.largeParadetaLiters;
   const totalSmall = f.smallWarehouseCount + f.smallParadetaCount;
-  const paradetaL =
-    f.largeParadetaLiters + f.smallParadetaCount; // small = 1 L each
-  const warehouseL =
-    f.largeWarehouseLiters + f.smallWarehouseCount;
+  const paradetaL = f.largeParadetaLiters + f.smallParadetaCount;
+  const warehouseL = f.largeWarehouseLiters + f.smallWarehouseCount;
   const totalFrozenL = totalLargeL + totalSmall;
 
-  // Alert logic – only applies when the flavor is essential for that container type
+  // Alert logic
   let paradetaLow = false;
   let overallLow = false;
 
@@ -105,7 +122,7 @@ const toDashboardItem = (f: IIceCreamFlavor & { sourceRecipeId?: any }): Dashboa
     }
   }
 
-  // Extract source recipe info (may be populated or just an ObjectId)
+  // Extract source recipe info
   const sourceRecipeId = f.sourceRecipeId
     ? (typeof f.sourceRecipeId === 'object' && f.sourceRecipeId._id
         ? f.sourceRecipeId._id.toString()
@@ -116,16 +133,23 @@ const toDashboardItem = (f: IIceCreamFlavor & { sourceRecipeId?: any }): Dashboa
       ? (f.sourceRecipeId as any).name
       : undefined;
 
+  // Build mixIns with ingredient names if populated
+  const mixIns = (f.mixIns || []).map((m: any) => ({
+    ingredient: typeof m.ingredient === 'object' && m.ingredient._id
+      ? m.ingredient._id.toString()
+      : m.ingredient.toString(),
+    ingredientName: typeof m.ingredient === 'object' ? (m.ingredient as any).name : undefined,
+    amountPerKg: m.amountPerKg,
+  }));
+
   return {
     _id: (f._id as string).toString(),
     name: f.name,
     sourceRecipeId,
     sourceRecipeName,
-    iceCreamMixKg: f.iceCreamMixKg,
-    overrunPercent:
-      f.totalMixConvertedKg > 0
-        ? ((f.totalFrozenProducedL / f.totalMixConvertedKg) - 1) * 100
-        : 0,
+    mixIns,
+    iceCreamMixKg: recipeMixKg,
+    overrunPercent: recipeOverrunPercent,
     totalFrozenLiters: totalFrozenL,
     totalLargeContainers: f.largeWarehouseContainers + f.largeParadetaContainers,
     totalLargeLiters: totalLargeL,
@@ -148,16 +172,40 @@ const toDashboardItem = (f: IIceCreamFlavor & { sourceRecipeId?: any }): Dashboa
 // CRUD operations
 // ---------------------------------------------------------------------------
 
+/**
+ * Create a new flavor variant linked to an existing recipe.
+ * Requires sourceRecipeId — flavors must always belong to a recipe.
+ */
 export const createFlavor = async (
-  name: string,
+  input: CreateFlavorInput,
 ): Promise<IIceCreamFlavor> => {
-  const trimmed = name.trim();
+  const trimmed = input.name.trim();
   if (!trimmed) {
     const err: any = new Error('Flavor name cannot be empty.');
     err.statusCode = 400;
     throw err;
   }
 
+  if (!input.sourceRecipeId || !isValidObjectId(input.sourceRecipeId)) {
+    const err: any = new Error('sourceRecipeId is required and must be a valid ObjectId.');
+    err.statusCode = 400;
+    throw err;
+  }
+
+  // Verify the recipe exists and is an ice cream recipe
+  const recipe = await Recipe.findById(input.sourceRecipeId);
+  if (!recipe) {
+    const err: any = new Error('Referenced recipe not found.');
+    err.statusCode = 404;
+    throw err;
+  }
+  if (recipe.type !== 'ice cream recipe') {
+    const err: any = new Error('Flavors can only be linked to ice cream recipes.');
+    err.statusCode = 400;
+    throw err;
+  }
+
+  // Check name uniqueness
   const existing = await IceCreamFlavor.findOne({
     name: { $regex: `^${trimmed}$`, $options: 'i' },
   });
@@ -167,7 +215,14 @@ export const createFlavor = async (
     throw err;
   }
 
-  const flavor = new IceCreamFlavor({ name: trimmed });
+  const flavor = new IceCreamFlavor({
+    name: trimmed,
+    sourceRecipeId: new mongoose.Types.ObjectId(input.sourceRecipeId),
+    mixIns: (input.mixIns || []).map(m => ({
+      ingredient: new mongoose.Types.ObjectId(m.ingredient),
+      amountPerKg: m.amountPerKg,
+    })),
+  });
   await flavor.save();
   return flavor;
 };
@@ -180,16 +235,12 @@ export const getFlavorById = async (
   id: string,
 ): Promise<IIceCreamFlavor | null> => {
   if (!isValidObjectId(id)) return null;
-  return IceCreamFlavor.findById(id);
+  return IceCreamFlavor.findById(id).populate('mixIns.ingredient', 'name');
 };
 
 export const updateFlavor = async (
   id: string,
-  updates: {
-    name?: string;
-    essentialLarge?: boolean;
-    essentialSmall?: boolean;
-  },
+  updates: UpdateFlavorInput,
 ): Promise<IIceCreamFlavor | null> => {
   if (!isValidObjectId(id)) {
     const err: any = new Error('Invalid flavor ID format.');
@@ -197,8 +248,9 @@ export const updateFlavor = async (
     throw err;
   }
 
-  // If renaming, check uniqueness
-  if (updates.name) {
+  const setFields: Record<string, any> = {};
+
+  if (updates.name !== undefined) {
     const trimmed = updates.name.trim();
     const conflict = await IceCreamFlavor.findOne({
       _id: { $ne: new mongoose.Types.ObjectId(id) },
@@ -209,15 +261,30 @@ export const updateFlavor = async (
       err.statusCode = 409;
       throw err;
     }
-    updates.name = trimmed;
+    setFields.name = trimmed;
   }
 
-  const updated = await IceCreamFlavor.findByIdAndUpdate(id, updates, {
+  if (updates.essentialLarge !== undefined) {
+    setFields.essentialLarge = updates.essentialLarge;
+  }
+  if (updates.essentialSmall !== undefined) {
+    setFields.essentialSmall = updates.essentialSmall;
+  }
+  if (updates.mixIns !== undefined) {
+    setFields.mixIns = updates.mixIns.map(m => ({
+      ingredient: new mongoose.Types.ObjectId(m.ingredient),
+      amountPerKg: m.amountPerKg,
+    }));
+  }
+
+  const updated = await IceCreamFlavor.findByIdAndUpdate(id, { $set: setFields }, {
     new: true,
     runValidators: true,
   });
 
   // Bidirectional sync: if flavor name changed, update the linked recipe name
+  // (only sync for the BASE flavor, not variant ones — but we don't know which is base here,
+  //  so let the caller handle this; just update the recipe name unconditionally for now)
   if (updated && updates.name) {
     await Recipe.findByIdAndUpdate(
       updated.sourceRecipeId,
@@ -243,11 +310,12 @@ export const deleteFlavor = async (
 // ---------------------------------------------------------------------------
 
 /**
- * Convert a batch of mix into frozen containers.
+ * Convert a batch of mix into frozen containers for a specific flavor variant.
  *
- * - Deducts `mixKg` from `iceCreamMixKg`
- * - Adds `frozenLiters` to cumulative overrun tracking
- * - Creates containers (all go to warehouse)
+ * - Deducts `mixKg` from the parent Recipe's `iceCreamMixKg` (shared mix pool)
+ * - Deducts the flavor's mix-in ingredients from stock (amountPerKg × mixKg / 1000)
+ * - Creates containers on the flavor (all go to warehouse)
+ * - Updates the recipe's cumulative overrun tracking
  */
 export const convertMixToFrozen = async (
   flavorId: string,
@@ -262,9 +330,7 @@ export const convertMixToFrozen = async (
   const { mixKg, frozenLiters, largeContainers, smallContainers } = input;
 
   if (mixKg <= 0 || frozenLiters <= 0) {
-    const err: any = new Error(
-      'mixKg and frozenLiters must be positive numbers.',
-    );
+    const err: any = new Error('mixKg and frozenLiters must be positive numbers.');
     err.statusCode = 400;
     throw err;
   }
@@ -274,15 +340,11 @@ export const convertMixToFrozen = async (
     throw err;
   }
   if (largeContainers === 0 && smallContainers === 0) {
-    const err: any = new Error(
-      'At least one container must be specified.',
-    );
+    const err: any = new Error('At least one container must be specified.');
     err.statusCode = 400;
     throw err;
   }
 
-  // Compute liters assigned to large vs small containers
-  // Small containers are exactly 1 L each
   const smallLiters = smallContainers;
   const largeLiters = frozenLiters - smallLiters;
 
@@ -294,43 +356,79 @@ export const convertMixToFrozen = async (
     throw err;
   }
 
-  const flavor = await IceCreamFlavor.findById(flavorId);
+  // Look up the flavor (with mix-ins populated)
+  const flavor = await IceCreamFlavor.findById(flavorId).populate('mixIns.ingredient', 'name');
   if (!flavor) {
     const err: any = new Error('Flavor not found.');
     err.statusCode = 404;
     throw err;
   }
 
-  if (flavor.iceCreamMixKg < mixKg) {
+  // Look up the parent recipe for mix pool
+  if (!flavor.sourceRecipeId) {
+    const err: any = new Error('This flavor is not linked to a recipe and cannot be used for conversion.');
+    err.statusCode = 400;
+    throw err;
+  }
+
+  const recipe = await Recipe.findById(flavor.sourceRecipeId);
+  if (!recipe) {
+    const err: any = new Error('Parent recipe not found.');
+    err.statusCode = 404;
+    throw err;
+  }
+
+  // Check mix availability on the recipe
+  if (recipe.iceCreamMixKg < mixKg) {
     const err: any = new Error(
-      `Not enough mix. Available: ${flavor.iceCreamMixKg.toFixed(2)} kg, requested: ${mixKg.toFixed(2)} kg.`,
+      `Not enough mix. Available: ${recipe.iceCreamMixKg.toFixed(2)} kg, requested: ${mixKg.toFixed(2)} kg.`,
     );
     err.statusCode = 400;
     throw err;
   }
 
-  // Update mix
-  flavor.iceCreamMixKg -= mixKg;
+  // --- Deduct mix from the recipe's shared pool ---
+  recipe.iceCreamMixKg -= mixKg;
+  recipe.totalMixConvertedKg += mixKg;
+  recipe.totalFrozenProducedL += frozenLiters;
+  await recipe.save();
 
-  // Update overrun tracking
-  flavor.totalMixConvertedKg += mixKg;
-  flavor.totalFrozenProducedL += frozenLiters;
+  // --- Deduct mix-in ingredients from stock ---
+  const mixInDeductions: Array<{ name: string; grams: number }> = [];
+  for (const mixIn of flavor.mixIns || []) {
+    const ingredientId = mixIn.ingredient.toString();
+    // amountPerKg is grams per kg of mix
+    const gramsToDeduct = mixIn.amountPerKg * mixKg;
 
-  // Update large containers (go to warehouse by default)
+    const ingName = typeof mixIn.ingredient === 'object' && (mixIn.ingredient as any).name
+      ? (mixIn.ingredient as any).name
+      : ingredientId;
+
+    try {
+      await updateIngredientStock(ingredientId, -gramsToDeduct);
+      mixInDeductions.push({ name: ingName, grams: gramsToDeduct });
+    } catch (err) {
+      console.error(`Failed to deduct mix-in ingredient ${ingName} (${ingredientId}):`, err);
+    }
+  }
+
+  if (mixInDeductions.length > 0) {
+    console.log(
+      `Mix-in deductions for "${flavor.name}" (${mixKg} kg mix):`,
+      mixInDeductions.map(d => `${d.name}: ${d.grams.toFixed(1)}g`).join(', '),
+    );
+  }
+
+  // --- Create containers on the flavor ---
   if (largeContainers > 0) {
-    const avgPerContainer = largeLiters / largeContainers;
-
-    // Merge: add to existing totals (averaging happens implicitly)
     flavor.largeWarehouseContainers += largeContainers;
     flavor.largeWarehouseLiters += largeLiters;
   }
-
-  // Update small containers
   flavor.smallWarehouseCount += smallContainers;
 
   await flavor.save();
 
-  // Log the conversion event
+  // --- Log the conversion event ---
   await eventService.logConversion(
     flavor,
     mixKg,
@@ -345,8 +443,6 @@ export const convertMixToFrozen = async (
 
 /**
  * Sell (deduct) one container of a given type from a location.
- * For large containers, deducts the current average size.
- * For small containers, deducts exactly 1 L.
  */
 export const sellContainer = async (
   flavorId: string,
@@ -368,54 +464,31 @@ export const sellContainer = async (
   const { containerType, location } = input;
 
   if (containerType === 'large') {
-    const containersField =
-      location === 'warehouse'
-        ? 'largeWarehouseContainers'
-        : 'largeParadetaContainers';
-    const litersField =
-      location === 'warehouse'
-        ? 'largeWarehouseLiters'
-        : 'largeParadetaLiters';
+    const containersField = location === 'warehouse' ? 'largeWarehouseContainers' : 'largeParadetaContainers';
+    const litersField = location === 'warehouse' ? 'largeWarehouseLiters' : 'largeParadetaLiters';
 
     if (flavor[containersField] < 1) {
-      const err: any = new Error(
-        `No large containers available in ${location}.`,
-      );
+      const err: any = new Error(`No large containers available in ${location}.`);
       err.statusCode = 400;
       throw err;
     }
 
-    // Calculate current average size for this location
     const avgLiters = flavor[litersField] / flavor[containersField];
-
     flavor[containersField] -= 1;
     flavor[litersField] -= avgLiters;
-
-    // Clean up floating-point drift
     if (flavor[containersField] === 0) flavor[litersField] = 0;
   } else {
-    // small
-    const field =
-      location === 'warehouse'
-        ? 'smallWarehouseCount'
-        : 'smallParadetaCount';
-
+    const field = location === 'warehouse' ? 'smallWarehouseCount' : 'smallParadetaCount';
     if (flavor[field] < 1) {
-      const err: any = new Error(
-        `No small containers available in ${location}.`,
-      );
+      const err: any = new Error(`No small containers available in ${location}.`);
       err.statusCode = 400;
       throw err;
     }
-
     flavor[field] -= 1;
   }
 
   await flavor.save();
-
-  // Log the sale event
   await eventService.logSale(flavor, input.containerType, input.location);
-
   return flavor;
 };
 
@@ -452,36 +525,18 @@ export const moveContainers = async (
   const { containerType, count, from, to } = input;
 
   if (containerType === 'large') {
-    const fromContainersField =
-      from === 'warehouse'
-        ? 'largeWarehouseContainers'
-        : 'largeParadetaContainers';
-    const fromLitersField =
-      from === 'warehouse'
-        ? 'largeWarehouseLiters'
-        : 'largeParadetaLiters';
-    const toContainersField =
-      to === 'warehouse'
-        ? 'largeWarehouseContainers'
-        : 'largeParadetaContainers';
-    const toLitersField =
-      to === 'warehouse'
-        ? 'largeWarehouseLiters'
-        : 'largeParadetaLiters';
+    const fromContainersField = from === 'warehouse' ? 'largeWarehouseContainers' : 'largeParadetaContainers';
+    const fromLitersField = from === 'warehouse' ? 'largeWarehouseLiters' : 'largeParadetaLiters';
+    const toContainersField = to === 'warehouse' ? 'largeWarehouseContainers' : 'largeParadetaContainers';
+    const toLitersField = to === 'warehouse' ? 'largeWarehouseLiters' : 'largeParadetaLiters';
 
     if (flavor[fromContainersField] < count) {
-      const err: any = new Error(
-        `Not enough large containers in ${from}. Available: ${flavor[fromContainersField]}, requested: ${count}.`,
-      );
+      const err: any = new Error(`Not enough large containers in ${from}.`);
       err.statusCode = 400;
       throw err;
     }
 
-    // Average size from the source location
-    const avgLiters =
-      flavor[fromContainersField] > 0
-        ? flavor[fromLitersField] / flavor[fromContainersField]
-        : 0;
+    const avgLiters = flavor[fromContainersField] > 0 ? flavor[fromLitersField] / flavor[fromContainersField] : 0;
     const movedLiters = avgLiters * count;
 
     flavor[fromContainersField] -= count;
@@ -489,23 +544,13 @@ export const moveContainers = async (
     flavor[toContainersField] += count;
     flavor[toLitersField] += movedLiters;
 
-    // Clean up floating-point drift
     if (flavor[fromContainersField] === 0) flavor[fromLitersField] = 0;
   } else {
-    // small
-    const fromField =
-      from === 'warehouse'
-        ? 'smallWarehouseCount'
-        : 'smallParadetaCount';
-    const toField =
-      to === 'warehouse'
-        ? 'smallWarehouseCount'
-        : 'smallParadetaCount';
+    const fromField = from === 'warehouse' ? 'smallWarehouseCount' : 'smallParadetaCount';
+    const toField = to === 'warehouse' ? 'smallWarehouseCount' : 'smallParadetaCount';
 
     if (flavor[fromField] < count) {
-      const err: any = new Error(
-        `Not enough small containers in ${from}. Available: ${flavor[fromField]}, requested: ${count}.`,
-      );
+      const err: any = new Error(`Not enough small containers in ${from}.`);
       err.statusCode = 400;
       throw err;
     }
@@ -515,16 +560,7 @@ export const moveContainers = async (
   }
 
   await flavor.save();
-
-  // Log the movement event
-  await eventService.logMovement(
-    flavor,
-    input.containerType,
-    input.count,
-    input.from,
-    input.to,
-  );
-
+  await eventService.logMovement(flavor, input.containerType, input.count, input.from, input.to);
   return flavor;
 };
 
@@ -533,13 +569,12 @@ export const moveContainers = async (
 // ---------------------------------------------------------------------------
 
 /**
- * Directly set stock values for a flavor (manual override).
- * Accepts any subset of mix / container fields and sets them exactly.
+ * Directly set container stock values for a flavor (manual override).
+ * Mix is on the Recipe, not on the Flavor — use setRecipeMixStock for that.
  */
 export const setFlavorStock = async (
   id: string,
   data: {
-    iceCreamMixKg?: number;
     largeWarehouseContainers?: number;
     largeWarehouseLiters?: number;
     largeParadetaContainers?: number;
@@ -555,7 +590,6 @@ export const setFlavorStock = async (
   }
 
   const allowedFields = [
-    'iceCreamMixKg',
     'largeWarehouseContainers',
     'largeWarehouseLiters',
     'largeParadetaContainers',
@@ -583,20 +617,16 @@ export const setFlavorStock = async (
     throw err;
   }
 
-  const updated = await IceCreamFlavor.findByIdAndUpdate(
-    id,
-    { $set: update },
-    { new: true, runValidators: true },
-  );
+  const updated = await IceCreamFlavor.findByIdAndUpdate(id, { $set: update }, { new: true, runValidators: true });
   return updated;
 };
 
 /**
- * Reset iceCreamMixKg to 0 for all flavors.
+ * Reset iceCreamMixKg to 0 for all ice cream recipes (shared mix pool).
  */
 export const resetAllMix = async (): Promise<number> => {
-  const result = await IceCreamFlavor.updateMany(
-    {},
+  const result = await Recipe.updateMany(
+    { type: 'ice cream recipe' },
     { $set: { iceCreamMixKg: 0 } },
   );
   return result.modifiedCount;
@@ -616,36 +646,40 @@ export const resetAllContainers = async (): Promise<number> => {
         largeParadetaLiters: 0,
         smallWarehouseCount: 0,
         smallParadetaCount: 0,
-        // Also reset overrun tracking so history stays clean
-        totalMixConvertedKg: 0,
-        totalFrozenProducedL: 0,
       },
     },
+  );
+  // Also reset recipe overrun tracking
+  await Recipe.updateMany(
+    { type: 'ice cream recipe' },
+    { $set: { totalMixConvertedKg: 0, totalFrozenProducedL: 0 } },
   );
   return result.modifiedCount;
 };
 
 /**
- * Reset everything (mix + containers + overrun tracking) for all flavors.
+ * Reset everything: containers on all flavors + mix on all ice cream recipes.
  */
 export const resetAllFlavors = async (): Promise<number> => {
-  const result = await IceCreamFlavor.updateMany(
+  const flavorResult = await IceCreamFlavor.updateMany(
     {},
     {
       $set: {
-        iceCreamMixKg: 0,
         largeWarehouseContainers: 0,
         largeWarehouseLiters: 0,
         largeParadetaContainers: 0,
         largeParadetaLiters: 0,
         smallWarehouseCount: 0,
         smallParadetaCount: 0,
-        totalMixConvertedKg: 0,
-        totalFrozenProducedL: 0,
       },
     },
   );
-  return result.modifiedCount;
+  // Reset recipe-level mix and overrun tracking
+  await Recipe.updateMany(
+    { type: 'ice cream recipe' },
+    { $set: { iceCreamMixKg: 0, totalMixConvertedKg: 0, totalFrozenProducedL: 0 } },
+  );
+  return flavorResult.modifiedCount;
 };
 
 // ---------------------------------------------------------------------------
@@ -653,8 +687,43 @@ export const resetAllFlavors = async (): Promise<number> => {
 // ---------------------------------------------------------------------------
 
 export const getDashboard = async (): Promise<DashboardFlavor[]> => {
+  // 1. Fetch all flavors with populated sourceRecipeId and mixIn ingredients
   const flavors = await IceCreamFlavor.find()
-    .populate('sourceRecipeId', 'name')
+    .populate('sourceRecipeId', 'name iceCreamMixKg totalMixConvertedKg totalFrozenProducedL')
+    .populate('mixIns.ingredient', 'name')
     .sort({ name: 1 });
-  return flavors.map(toDashboardItem);
+
+  // 2. Build a map of recipe ID → recipe mix data
+  const recipeMap = new Map<string, { iceCreamMixKg: number; overrunPercent: number }>();
+  for (const f of flavors) {
+    const recipe = f.sourceRecipeId as any;
+    if (recipe && recipe._id) {
+      const rid = recipe._id.toString();
+      if (!recipeMap.has(rid)) {
+        const totalConv = recipe.totalMixConvertedKg || 0;
+        const totalFroz = recipe.totalFrozenProducedL || 0;
+        recipeMap.set(rid, {
+          iceCreamMixKg: recipe.iceCreamMixKg || 0,
+          overrunPercent: totalConv > 0 ? ((totalFroz / totalConv) - 1) * 100 : 0,
+        });
+      }
+    }
+  }
+
+  // 3. Map each flavor to a dashboard item with recipe mix data
+  return flavors.map(f => {
+    const recipeData = f.sourceRecipeId
+      ? recipeMap.get(
+          (typeof f.sourceRecipeId === 'object' && (f.sourceRecipeId as any)._id
+            ? (f.sourceRecipeId as any)._id.toString()
+            : f.sourceRecipeId.toString()),
+        )
+      : undefined;
+
+    return toDashboardItem(
+      f,
+      recipeData?.iceCreamMixKg ?? 0,
+      recipeData?.overrunPercent ?? 0,
+    );
+  });
 };
