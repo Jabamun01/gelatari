@@ -28,28 +28,9 @@ export interface RecipeEditorTabData extends BaseTabConfig {
   recipeId?: string; // Optional for new recipes, mandatory for editing existing
 }
 
-// New tab type for editing ingredients
-export interface IngredientEditTabData extends BaseTabConfig {
-  type: 'ingredientEdit';
-  ingredientId?: string; // Optional for new ingredients
-  ingredientName?: string; // For display in tab title or pre-filling form, optional for new
-}
-
-// New tab type for managing default recipe steps
-export interface DefaultStepsTabData extends BaseTabConfig {
-  type: 'defaultSteps';
-}
-
 // New tab type for the ice-cream stock dashboard
 export interface IceCreamDashboardTabData extends BaseTabConfig {
   type: 'iceCreamDashboard';
-}
-
-// New tab type for editing a single ice-cream flavor
-export interface IceCreamFlavorEditTabData extends BaseTabConfig {
-  type: 'iceCreamFlavorEdit';
-  flavorId?: string;
-  flavorName?: string;
 }
 
 // Union type for all possible tab data structures
@@ -58,9 +39,6 @@ export type TabData =
   | IngredientsTabData
   | RecipeTabData
   | RecipeEditorTabData
-  | IngredientEditTabData
-  | DefaultStepsTabData
-  | IceCreamDashboardTabData
-  | IceCreamFlavorEditTabData;
+  | IceCreamDashboardTabData;
 
 

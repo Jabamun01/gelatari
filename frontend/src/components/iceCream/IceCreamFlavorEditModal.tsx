@@ -1,40 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { styled } from '@linaria/react';
+import { Modal } from '../common/Modal';
 import { useQueryClient } from '@tanstack/react-query';
-import { IceCreamFlavorEditTabData } from '../../types/tabs';
 import {
   getFlavorById,
   createFlavor,
   updateFlavor,
 } from '../../api/iceCreamFlavors';
-import {
-  IceCreamFlavor,
-} from '../../types/iceCreamFlavor';
+import { IceCreamFlavor } from '../../types/iceCreamFlavor';
 
 // ---------------------------------------------------------------------------
 // Styled
 // ---------------------------------------------------------------------------
-
-const Container = styled.div`
-  max-width: 600px;
-  margin: var(--space-lg) auto;
-  padding: var(--space-xl);
-  background: var(--surface-color);
-  border-radius: var(--border-radius-lg);
-  box-shadow: var(--shadow-md);
-`;
-
-const Title = styled.h2`
-  text-align: center;
-  margin-bottom: var(--space-sm);
-`;
-
-const Subtitle = styled.p`
-  text-align: center;
-  color: var(--text-color-light);
-  font-size: var(--font-size-sm);
-  margin-bottom: var(--space-lg);
-`;
 
 const Form = styled.form`
   display: flex;
@@ -88,19 +65,19 @@ const ErrorMsg = styled.div`
 `;
 
 const LoadingMsg = styled.div`
-  padding: var(--space-2xl);
+  padding: var(--space-xl);
   text-align: center;
   color: var(--text-color-light);
   font-style: italic;
 `;
 
-const Actions = styled.div`
+const ModalFooter = styled.div`
   display: flex;
   justify-content: flex-end;
   gap: var(--space-md);
-  margin-top: var(--space-md);
   padding-top: var(--space-lg);
   border-top: var(--border-width) solid var(--border-color-light);
+  margin-top: var(--space-lg);
 `;
 
 const Button = styled.button<{ variant?: 'primary' | 'secondary' }>`
@@ -130,16 +107,19 @@ const Button = styled.button<{ variant?: 'primary' | 'secondary' }>`
 // Component
 // ---------------------------------------------------------------------------
 
-interface IceCreamFlavorEditTabProps {
-  tab: IceCreamFlavorEditTabData;
-  onCloseTab: (tabId: string) => void;
+interface IceCreamFlavorEditModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  flavorId?: string;
+  flavorName?: string;
 }
 
-export const IceCreamFlavorEditTab: React.FC<IceCreamFlavorEditTabProps> = ({
-  tab,
-  onCloseTab,
+export const IceCreamFlavorEditModal: React.FC<IceCreamFlavorEditModalProps> = ({
+  isOpen,
+  onClose,
+  flavorId,
+  flavorName,
 }) => {
-  const { id: tabId, flavorId } = tab;
   const isEditMode = !!flavorId;
   const queryClient = useQueryClient();
 
@@ -151,6 +131,16 @@ export const IceCreamFlavorEditTab: React.FC<IceCreamFlavorEditTabProps> = ({
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!isOpen) {
+      setName('');
+      setEssentialLarge(false);
+      setEssentialSmall(false);
+      setError(null);
+      setIsLoading(false);
+      setIsSaving(false);
+      return;
+    }
+
     if (isEditMode && flavorId) {
       setIsLoading(true);
       setError(null);
@@ -167,13 +157,13 @@ export const IceCreamFlavorEditTab: React.FC<IceCreamFlavorEditTabProps> = ({
           setIsLoading(false);
         });
     } else {
-      setName('');
+      setName(flavorName || '');
       setEssentialLarge(false);
       setEssentialSmall(false);
       setError(null);
       setIsLoading(false);
     }
-  }, [flavorId, isEditMode]);
+  }, [flavorId, isEditMode, isOpen]);
 
   const handleSave = async () => {
     const trimmedName = name.trim();
@@ -197,7 +187,7 @@ export const IceCreamFlavorEditTab: React.FC<IceCreamFlavorEditTabProps> = ({
       }
 
       queryClient.invalidateQueries({ queryKey: ['iceCreamDashboard'] });
-      onCloseTab(tabId);
+      onClose();
     } catch (err) {
       setError(
         err instanceof Error ? err.message : 'Error desant el gust.',
@@ -208,16 +198,23 @@ export const IceCreamFlavorEditTab: React.FC<IceCreamFlavorEditTabProps> = ({
   };
 
   if (isLoading) {
-    return <Container><LoadingMsg>Carregant...</LoadingMsg></Container>;
+    return (
+      <Modal
+        isOpen={isOpen}
+        onClose={onClose}
+        title={isEditMode ? 'Editar Gust' : 'Nou Gust'}
+      >
+        <LoadingMsg>Carregant...</LoadingMsg>
+      </Modal>
+    );
   }
 
   return (
-    <Container>
-      <Title>{isEditMode ? 'Editar Gust' : 'Nou Gust'}</Title>
-      {isEditMode && name && !error && (
-        <Subtitle>Editant: {name}</Subtitle>
-      )}
-
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={isEditMode ? `Editar: ${flavorName || 'Gust'}` : 'Nou Gust'}
+    >
       {error && <ErrorMsg>{error}</ErrorMsg>}
 
       <Form onSubmit={(e) => e.preventDefault()}>
@@ -258,10 +255,10 @@ export const IceCreamFlavorEditTab: React.FC<IceCreamFlavorEditTabProps> = ({
           </CheckboxRow>
         </FormGroup>
 
-        <Actions>
+        <ModalFooter>
           <Button
             variant="secondary"
-            onClick={() => onCloseTab(tabId)}
+            onClick={onClose}
             disabled={isSaving}
           >
             Cancel·lar
@@ -269,8 +266,8 @@ export const IceCreamFlavorEditTab: React.FC<IceCreamFlavorEditTabProps> = ({
           <Button onClick={handleSave} disabled={isSaving || !name.trim()}>
             {isSaving ? 'Desant...' : isEditMode ? 'Desa Canvis' : 'Crear Gust'}
           </Button>
-        </Actions>
+        </ModalFooter>
       </Form>
-    </Container>
+    </Modal>
   );
 };
