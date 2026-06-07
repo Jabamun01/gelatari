@@ -922,6 +922,191 @@ const ResetConfirmModal: React.FC<ResetConfirmModalProps> = ({
 };
 
 // ---------------------------------------------------------------------------
+// Summary & Overview styled components
+// ---------------------------------------------------------------------------
+
+const SummaryCardsRow = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: var(--space-md);
+  margin-bottom: var(--space-md);
+`;
+
+const SummaryCard = styled.div<{ variant?: 'info' | 'success' | 'warning' | 'danger' }>`
+  background: ${({ variant }) =>
+    variant === 'danger' ? 'var(--danger-color-light, #f8d7da)'
+    : variant === 'warning' ? '#fff3cd'
+    : variant === 'success' ? 'var(--primary-color-light, #d4edda)'
+    : 'var(--surface-color)'};
+  border: var(--border-width) solid
+    ${({ variant }) =>
+      variant === 'danger' ? 'var(--danger-color)'
+      : variant === 'warning' ? '#f0ad4e'
+      : variant === 'success' ? 'var(--primary-color)'
+      : 'var(--border-color)'};
+  border-radius: var(--border-radius-lg);
+  padding: var(--space-md) var(--space-lg);
+  text-align: center;
+  box-shadow: var(--shadow-sm);
+`;
+
+const SummaryValue = styled.div`
+  font-size: var(--font-size-2xl, 1.75rem);
+  font-weight: 800;
+  line-height: 1.1;
+  color: var(--text-color-strong);
+`;
+
+const SummaryLabel = styled.div`
+  font-size: var(--font-size-xs);
+  color: var(--text-color-light);
+  margin-top: 4px;
+  white-space: nowrap;
+`;
+
+const LocationSummaryRow = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-md);
+  margin-bottom: var(--space-lg);
+  @media (max-width: 640px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const LocationSummaryBox = styled.div`
+  background: var(--surface-color);
+  border: var(--border-width) solid var(--border-color);
+  border-radius: var(--border-radius-lg);
+  padding: var(--space-md) var(--space-lg);
+  box-shadow: var(--shadow-sm);
+`;
+
+const LocationSummaryTitle = styled.div`
+  font-weight: 600;
+  font-size: var(--font-size-sm);
+  margin-bottom: var(--space-sm);
+`;
+
+const LocationSummaryDetail = styled.div`
+  font-size: var(--font-size-sm);
+  color: var(--text-color);
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-md);
+  flex-wrap: wrap;
+`;
+
+const ViewToggleButton = styled.button`
+  padding: var(--space-sm) var(--space-md);
+  border: var(--border-width) solid var(--primary-color);
+  border-radius: var(--border-radius-lg);
+  background: transparent;
+  color: var(--primary-color);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  white-space: nowrap;
+  min-height: 44px;
+  font-weight: 500;
+  &:hover {
+    background: var(--primary-color);
+    color: var(--text-on-primary);
+  }
+`;
+
+// ── Overview table ─────────────────────────────────────────────────
+
+const OverviewTableWrapper = styled.div`
+  overflow-x: auto;
+  margin-bottom: var(--space-lg);
+`;
+
+const OverviewTable = styled.table`
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: var(--font-size-sm);
+  background: var(--surface-color);
+  border-radius: var(--border-radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+`;
+
+const TableHead = styled.thead`
+  th {
+    background: var(--surface-color-light, #f5f5f5);
+    padding: var(--space-sm) var(--space-md);
+    text-align: left;
+    font-weight: 600;
+    font-size: var(--font-size-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-color-light);
+    border-bottom: 2px solid var(--border-color);
+    white-space: nowrap;
+    user-select: none;
+  }
+`;
+
+const TableRow = styled.tr<{ alertLevel?: 'critical' | 'low' | 'normal' }>`
+  background: ${({ alertLevel }) =>
+    alertLevel === 'critical' ? 'var(--danger-color-light, #fff0f0)'
+    : alertLevel === 'low' ? '#fffff0'
+    : 'transparent'};
+  &:nth-child(even) {
+    background: ${({ alertLevel }) =>
+      alertLevel === 'critical' ? 'var(--danger-color-light, #fff0f0)'
+      : alertLevel === 'low' ? '#fffff0'
+      : 'var(--surface-color-light, #fafafa)'};
+  }
+  &:hover {
+    filter: brightness(0.97);
+  }
+  td {
+    padding: var(--space-sm) var(--space-md);
+    border-bottom: var(--border-width) solid var(--border-color-light);
+    vertical-align: middle;
+  }
+`;
+
+const TableFlavorName = styled.span`
+  font-weight: 600;
+  color: var(--text-color-strong);
+`;
+
+const TableStat = styled.span<{ highlight?: 'critical' | 'low' | 'ok' }>`
+  font-weight: 600;
+  color: ${({ highlight }) =>
+    highlight === 'critical' ? 'var(--danger-color)'
+    : highlight === 'low' ? '#856404'
+    : highlight === 'ok' ? 'var(--primary-color-dark, #155724)'
+    : 'var(--text-color)'};
+`;
+
+const TableAlert = styled.span<{ level: 'critical' | 'low' | 'none' }>`
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: ${({ level }) =>
+    level === 'critical' ? 'var(--danger-color)'
+    : level === 'low' ? '#f0ad4e'
+    : '#28a745'};
+`;
+
+const CompactActionBtn = styled.button`
+  padding: 2px 6px;
+  border: none;
+  border-radius: var(--border-radius);
+  background: transparent;
+  color: var(--text-color-light);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  &:hover { background: var(--surface-color-light); color: var(--text-color); }
+  &:disabled { opacity: 0.3; cursor: not-allowed; }
+`;
+
+// ---------------------------------------------------------------------------
 // Main dashboard component
 // ---------------------------------------------------------------------------
 
@@ -1051,6 +1236,9 @@ export const IceCreamDashboardTab: React.FC<IceCreamDashboardTabProps> = ({
   const [moveFlavor, setMoveFlavor] = useState<DashboardFlavor | null>(null);
   const [editStockFlavor, setEditStockFlavor] = useState<DashboardFlavor | null>(null);
 
+  // View mode: detail (cards) or overview (compact table)
+  const [viewMode, setViewMode] = useState<'detail' | 'overview'>('detail');
+
   // Reset confirmation modal state: { title, message, onConfirm } | null
   const [resetModal, setResetModal] = useState<{
     title: string;
@@ -1070,6 +1258,30 @@ export const IceCreamDashboardTab: React.FC<IceCreamDashboardTabProps> = ({
 
   // Derive typed flavors (always before guards so hooks are consistent)
   const typedFlavors = flavors as DashboardFlavor[] | undefined;
+
+  // ── Summary statistics (computed from all flavors) ────────────────────
+  const summaryData = useMemo(() => {
+    const list = typedFlavors || [];
+    const totalMix = list.reduce((s, f) => s + f.iceCreamMixKg, 0);
+    const totalFrozen = list.reduce((s, f) => s + f.totalFrozenLiters, 0);
+    const totalLarge = list.reduce((s, f) => s + f.totalLargeContainers, 0);
+    const totalSmall = list.reduce((s, f) => s + f.totalSmallCount, 0);
+    const criticalAlerts = list.filter((f) => f.alerts.overallLow).length;
+    const warningAlerts = list.filter((f) => !f.alerts.overallLow && f.alerts.paradetaLow).length;
+    const totalWarehouseL = list.reduce((s, f) => s + f.warehouseTotalLiters, 0);
+    const totalParadetaL = list.reduce((s, f) => s + f.paradetaTotalLiters, 0);
+    return {
+      totalMix,
+      totalFrozen,
+      totalFlavors: list.length,
+      totalLarge,
+      totalSmall,
+      criticalAlerts,
+      warningAlerts,
+      totalWarehouseL,
+      totalParadetaL,
+    };
+  }, [typedFlavors]);
 
   // ── Filter & sort flavors ────────────────────────────────────────────
   const filteredAndSortedFlavors = useMemo(() => {
@@ -1198,6 +1410,69 @@ export const IceCreamDashboardTab: React.FC<IceCreamDashboardTabProps> = ({
         </HeaderActions>
       </HeaderRow>
 
+      {/* ── Summary cards ──────────────────────────────────────────── */}
+      {typedFlavors && typedFlavors.length > 0 && (
+        <>
+          <SummaryCardsRow>
+            <SummaryCard variant="info">
+              <SummaryValue>{summaryData.totalMix.toFixed(1)}</SummaryValue>
+              <SummaryLabel>🧊 Mix total (kg)</SummaryLabel>
+            </SummaryCard>
+            <SummaryCard variant="info">
+              <SummaryValue>{summaryData.totalFrozen.toFixed(1)}</SummaryValue>
+              <SummaryLabel>❄️ Frozen total (L)</SummaryLabel>
+            </SummaryCard>
+            <SummaryCard variant="info">
+              <SummaryValue>{summaryData.totalFlavors}</SummaryValue>
+              <SummaryLabel>🍦 Gustos</SummaryLabel>
+            </SummaryCard>
+            <SummaryCard
+              variant={
+                summaryData.criticalAlerts > 0
+                  ? 'danger'
+                  : summaryData.warningAlerts > 0
+                    ? 'warning'
+                    : 'success'
+              }
+            >
+              <SummaryValue>
+                {summaryData.criticalAlerts > 0
+                  ? `🔴 ${summaryData.criticalAlerts}`
+                  : summaryData.warningAlerts > 0
+                    ? `🟡 ${summaryData.warningAlerts}`
+                    : '✅ 0'}
+              </SummaryValue>
+              <SummaryLabel>Alertes</SummaryLabel>
+            </SummaryCard>
+            <SummaryCard variant="info">
+              <SummaryValue>{summaryData.totalLarge}</SummaryValue>
+              <SummaryLabel>📦 Envasos grans</SummaryLabel>
+            </SummaryCard>
+            <SummaryCard variant="info">
+              <SummaryValue>{summaryData.totalSmall}</SummaryValue>
+              <SummaryLabel>🥫 Envasos petits</SummaryLabel>
+            </SummaryCard>
+          </SummaryCardsRow>
+
+          <LocationSummaryRow>
+            <LocationSummaryBox>
+              <LocationSummaryTitle>📍 Magatzem</LocationSummaryTitle>
+              <LocationSummaryDetail>
+                <span>Grans: <strong>{summaryData.totalWarehouseL.toFixed(1)} L</strong></span>
+                <span>Petits: <strong>{typedFlavors.reduce((s, f) => s + f.smallWarehouseCount, 0)}</strong></span>
+              </LocationSummaryDetail>
+            </LocationSummaryBox>
+            <LocationSummaryBox>
+              <LocationSummaryTitle>🏪 Paradeta</LocationSummaryTitle>
+              <LocationSummaryDetail>
+                <span>Grans: <strong>{summaryData.totalParadetaL.toFixed(1)} L</strong></span>
+                <span>Petits: <strong>{typedFlavors.reduce((s, f) => s + f.smallParadetaCount, 0)}</strong></span>
+              </LocationSummaryDetail>
+            </LocationSummaryBox>
+          </LocationSummaryRow>
+        </>
+      )}
+
       {/* ── Search & sort controls ───────────────────────────────────── */}
       {(typedFlavors && typedFlavors.length > 0) && (
         <SearchSortRow>
@@ -1220,6 +1495,9 @@ export const IceCreamDashboardTab: React.FC<IceCreamDashboardTabProps> = ({
             <option value="frozen-low">Congelat (menys primer)</option>
             <option value="frozen-high">Congelat (més primer)</option>
           </SortSelect>
+          <ViewToggleButton onClick={() => setViewMode(v => (v === 'detail' ? 'overview' : 'detail'))}>
+            {viewMode === 'detail' ? '👁️ Visió general' : '📋 Detall'}
+          </ViewToggleButton>
         </SearchSortRow>
       )}
 
@@ -1231,6 +1509,98 @@ export const IceCreamDashboardTab: React.FC<IceCreamDashboardTabProps> = ({
         <EmptyMessage>
           {`No s'han trobat gustos que coincideixin amb "${debouncedSearchTerm}".`}
         </EmptyMessage>
+      ) : viewMode === 'overview' ? (
+        <OverviewTableWrapper>
+          <OverviewTable>
+            <TableHead>
+              <tr>
+                <th>Gust</th>
+                <th>🧊 Mix</th>
+                <th>❄️ Frozen</th>
+                <th>📦 Grans</th>
+                <th>🥫 Petits</th>
+                <th>📍 Magatzem</th>
+                <th>🏪 Paradeta</th>
+                <th>⚠️</th>
+                <th></th>
+              </tr>
+            </TableHead>
+            <tbody>
+              {filteredAndSortedFlavors.map((f) => {
+                const alertLevel = getAlertLevel(f);
+                return (
+                  <TableRow key={f._id} alertLevel={alertLevel}>
+                    <td>
+                      <TableFlavorName>
+                        {(f.essentialLarge || f.essentialSmall) && '⭐ '}
+                        {f.name}
+                      </TableFlavorName>
+                    </td>
+                    <td>
+                      <TableStat highlight={f.iceCreamMixKg <= 0 ? 'critical' : 'ok'}>
+                        {f.iceCreamMixKg.toFixed(1)}
+                      </TableStat>
+                    </td>
+                    <td>
+                      <TableStat highlight={f.totalFrozenLiters <= 0 ? 'critical' : undefined}>
+                        {f.totalFrozenLiters.toFixed(1)}
+                      </TableStat>
+                    </td>
+                    <td>{f.totalLargeContainers}</td>
+                    <td>{f.totalSmallCount}</td>
+                    <td>
+                      <div>{f.largeWarehouseContainers} grans ({f.largeWarehouseLiters.toFixed(1)} L)</div>
+                      <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--text-color-light)' }}>
+                        {f.smallWarehouseCount} petits
+                      </div>
+                    </td>
+                    <td>
+                      <div>{f.largeParadetaContainers} grans ({f.largeParadetaLiters.toFixed(1)} L)</div>
+                      <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--text-color-light)' }}>
+                        {f.smallParadetaCount} petits
+                      </div>
+                    </td>
+                    <td>
+                      <TableAlert
+                        level={alertLevel === 'critical' ? 'critical' : alertLevel === 'low' ? 'low' : 'none'}
+                        title={
+                          alertLevel === 'critical'
+                            ? 'Estoc crític'
+                            : alertLevel === 'low'
+                              ? 'Paradeta baixa'
+                              : 'Correcte'
+                        }
+                      />
+                    </td>
+                    <td style={{ whiteSpace: 'nowrap' }}>
+                      <CompactActionBtn
+                        onClick={() => setConvertFlavor(f)}
+                        disabled={f.iceCreamMixKg <= 0}
+                        title="Convertir mix"
+                      >
+                        🧊
+                      </CompactActionBtn>
+                      <CompactActionBtn
+                        onClick={() => setSellFlavor(f)}
+                        disabled={f.totalFrozenLiters <= 0}
+                        title="Vendre envàs"
+                      >
+                        💰
+                      </CompactActionBtn>
+                      <CompactActionBtn
+                        onClick={() => setMoveFlavor(f)}
+                        disabled={f.totalFrozenLiters <= 0}
+                        title="Moure envasos"
+                      >
+                        📦
+                      </CompactActionBtn>
+                    </td>
+                  </TableRow>
+                );
+              })}
+            </tbody>
+          </OverviewTable>
+        </OverviewTableWrapper>
       ) : (
         paginatedFlavors.map((f) => {
           const alertLevel = getAlertLevel(f);
@@ -1371,7 +1741,7 @@ export const IceCreamDashboardTab: React.FC<IceCreamDashboardTabProps> = ({
         })
       )}
 
-      {totalPages > 1 && filteredAndSortedFlavors && filteredAndSortedFlavors.length > 0 && (
+      {viewMode === 'detail' && totalPages > 1 && filteredAndSortedFlavors && filteredAndSortedFlavors.length > 0 && (
         <PaginationControls
           currentPage={currentPage}
           totalPages={totalPages}
