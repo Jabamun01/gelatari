@@ -1,4 +1,4 @@
-import { Schema, model, Document } from 'mongoose';
+import { Schema, model, Document, Types } from 'mongoose';
 
 /**
  * Represents an ice cream flavor for tracking mix, frozen product,
@@ -6,6 +6,7 @@ import { Schema, model, Document } from 'mongoose';
  */
 export interface IIceCreamFlavor extends Document {
   name: string;
+  sourceRecipeId?: Types.ObjectId; // set automatically for recipe-linked flavors, 1:1 link
 
   // --- Mix tracking (kg) ---
   iceCreamMixKg: number;
@@ -44,6 +45,13 @@ const iceCreamFlavorSchema = new Schema<IIceCreamFlavor>(
       required: true,
       unique: true,
       trim: true,
+    },
+    sourceRecipeId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Recipe',
+      default: undefined,
+      unique: true, // 1:1 enforcement when set
+      sparse: true, // allow multiple nulls
     },
     iceCreamMixKg: {
       type: Number,

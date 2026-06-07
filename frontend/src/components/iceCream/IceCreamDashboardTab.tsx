@@ -876,10 +876,12 @@ const ResetConfirmModal: React.FC<ResetConfirmModalProps> = ({
 
 interface IceCreamDashboardTabProps {
   onOpenFlavorEdit: (flavorName: string, flavorId?: string) => void;
+  onOpenRecipeTab?: (recipeId: string, recipeName: string) => void;
 }
 
 export const IceCreamDashboardTab: React.FC<IceCreamDashboardTabProps> = ({
   onOpenFlavorEdit,
+  onOpenRecipeTab,
 }) => {
   const queryClient = useQueryClient();
 
@@ -1092,7 +1094,20 @@ export const IceCreamDashboardTab: React.FC<IceCreamDashboardTabProps> = ({
           return (
             <Card key={f._id} alertLevel={alertLevel}>
               <CardHeader>
-                <FlavorName>{f.name}</FlavorName>
+                <div>
+                  <FlavorName>{f.name}</FlavorName>
+                  {f.sourceRecipeId && onOpenRecipeTab && (
+                    <SmallButton
+                      onClick={() =>
+                        onOpenRecipeTab(f.sourceRecipeId!, f.sourceRecipeName || f.name)
+                      }
+                      title="Obrir recepta vinculada"
+                      style={{ marginTop: 4 }}
+                    >
+                      📖 {f.sourceRecipeName || 'Veure recepta'}
+                    </SmallButton>
+                  )}
+                </div>
                 <BadgeGroup>
                   {f.essentialLarge && <Badge variant="essential">Essencial GRAN</Badge>}
                   {f.essentialSmall && <Badge variant="essential">Essencial PETIT</Badge>}
