@@ -47,33 +47,28 @@ const TabsWrapper = styled.div`
 
 const CloseIcon = styled.button`
   flex-shrink: 0;
-  padding: 2px;
-  margin: 0;
-  border: none;
-  background: transparent;
-  cursor: pointer;
-  font-size: 0.75em;
-  color: var(--text-color-light);
-  opacity: 0.6;
-  border-radius: 50%;
   width: 22px;
   height: 22px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 300;
+  line-height: 1;
+  color: var(--text-color-light);
+  opacity: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  line-height: 1;
-  transition: background-color 0.15s ease, opacity 0.15s ease, color 0.15s ease;
-
-  button:hover & {
-    opacity: 1;
-    color: var(--text-color);
-  }
+  transition: opacity 0.15s ease, background-color 0.15s ease, color 0.15s ease;
 
   &:hover,
-  &:focus {
-    opacity: 1;
-    background-color: var(--danger-color);
-    color: white;
+  &:focus-visible {
+    opacity: 1 !important;
+    background: rgba(220, 53, 69, 0.12);
+    color: var(--danger-color);
     outline: none;
   }
 `;
@@ -99,9 +94,10 @@ const TabButton = styled.button<{ isActive: boolean }>`
   cursor: pointer;
   font-size: var(--font-size-sm);
   font-weight: ${({ isActive }) => (isActive ? '600' : '500')};
+  position: relative;
   display: inline-flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   white-space: nowrap;
   transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
   min-height: 52px;
@@ -111,12 +107,15 @@ const TabButton = styled.button<{ isActive: boolean }>`
   flex: 1 1 0;
   min-width: 100px;
   max-width: 220px;
-  gap: var(--space-sm);
 
   &:hover:not(:disabled) {
     background-color: var(--tab-hover-bg);
     color: ${({ isActive }) =>
       isActive ? 'var(--primary-color)' : 'var(--text-color)'};
+  }
+
+  &:hover:not(:disabled) ${CloseIcon} {
+    opacity: 0.5;
   }
 
   &:focus {
@@ -299,7 +298,7 @@ export const TabBar = ({
                 title={`Tanca ${tab.title}`}
                 aria-label={`Tanca ${tab.title}`}
               >
-                ✕
+                ×
               </CloseIcon>
             )}
           </TabButton>
