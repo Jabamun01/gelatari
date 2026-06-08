@@ -130,17 +130,6 @@ const SearchInput = styled.input`
   border-radius: var(--border-radius-lg);
 `;
 
-const SortSelect = styled.select`
-  padding: var(--space-sm) var(--space-md);
-  border: var(--border-width) solid var(--border-color);
-  border-radius: var(--border-radius-lg);
-  background: var(--surface-color);
-  color: var(--text-color);
-  font-size: var(--font-size-sm);
-  min-height: 44px;
-  cursor: pointer;
-`;
-
 // ---------------------------------------------------------------------------
 // Flavor card
 // ---------------------------------------------------------------------------
@@ -1297,8 +1286,6 @@ export const IceCreamDashboardTab: React.FC<IceCreamDashboardTabProps> = ({
   // ── Search & sort state ──────────────────────────────────────────────
   const [searchTerm, setSearchTerm] = useState('');
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
-  const [sortBy, setSortBy] = useState<'alphabetical-essential' | 'alphabetical' | 'mix-low' | 'mix-high' | 'frozen-low' | 'frozen-high'>('alphabetical-essential');
-
   // ── Client-side pagination state ────────────────────────────────────
   const PAGE_SIZE = 5;
   const [currentPage, setCurrentPage] = useState(1);
@@ -1375,31 +1362,8 @@ export const IceCreamDashboardTab: React.FC<IceCreamDashboardTabProps> = ({
         }
       }
 
-      // Detail view: dropdown sort
-      if (sortBy === 'alphabetical-essential') {
-        const aEss = a.essentialLarge || a.essentialSmall;
-        const bEss = b.essentialLarge || b.essentialSmall;
-        if (aEss && !bEss) return -1;
-        if (!aEss && bEss) return 1;
-        return a.name.localeCompare(b.name, 'ca');
-      }
-
-      switch (sortBy) {
-        case 'alphabetical':
-          return a.name.localeCompare(b.name, 'ca');
-        case 'mix-low':
-          return a.iceCreamMixKg - b.iceCreamMixKg;
-        case 'mix-high':
-          return b.iceCreamMixKg - a.iceCreamMixKg;
-        case 'frozen-low':
-          return a.totalFrozenLiters - b.totalFrozenLiters;
-        case 'frozen-high':
-          return b.totalFrozenLiters - a.totalFrozenLiters;
-        default:
-          return 0;
-      }
     });
-  }, [typedFlavors, debouncedSearchTerm, sortBy, viewMode, tableSort]);
+  }, [typedFlavors, debouncedSearchTerm, viewMode, tableSort]);
 
   // ── Pagination derived values ─────────────────────────────────────
   const totalPages = Math.max(1, Math.ceil((filteredAndSortedFlavors?.length || 0) / PAGE_SIZE));
@@ -1537,18 +1501,7 @@ export const IceCreamDashboardTab: React.FC<IceCreamDashboardTabProps> = ({
             onChange={(e) => setSearchTerm(e.target.value)}
             aria-label="Cerca gustos"
           />
-          <SortSelect
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-            aria-label="Ordenar per"
-          >
-            <option value="alphabetical-essential">ABCD (essencials primer) ⭐</option>
-            <option value="alphabetical">ABCD</option>
-            <option value="mix-low">Mix (menys primer)</option>
-            <option value="mix-high">Mix (més primer)</option>
-            <option value="frozen-low">Congelat (menys primer)</option>
-            <option value="frozen-high">Congelat (més primer)</option>
-          </SortSelect>
+
           <ViewToggleButton onClick={() => setViewMode(v => (v === 'detail' ? 'overview' : 'detail'))}>
             {viewMode === 'detail' ? '👁️ Visió general' : '📋 Detall'}
           </ViewToggleButton>
