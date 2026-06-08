@@ -46,7 +46,7 @@ const TabsWrapper = styled.div`
 `;
 
 const CloseIcon = styled.button`
-  margin-left: var(--space-xs);
+  flex-shrink: 0;
   padding: var(--space-xs);
   border: none;
   background: transparent;
@@ -85,6 +85,14 @@ const CloseIcon = styled.button`
   }
 `;
 
+const TabTitleSpan = styled.span`
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 0 1 auto;
+  min-width: 0;
+`;
+
 const TabButton = styled.button<{ isActive: boolean }>`
   padding: 0 var(--space-sm);
   border: none;
@@ -99,7 +107,7 @@ const TabButton = styled.button<{ isActive: boolean }>`
   position: relative;
   display: inline-flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   white-space: nowrap;
   transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
   min-height: 52px;
@@ -110,6 +118,7 @@ const TabButton = styled.button<{ isActive: boolean }>`
   min-width: 100px;
   max-width: 200px;
   overflow: hidden;
+  gap: var(--space-xs);
 
   ${({ isActive }) =>
     isActive
@@ -294,7 +303,7 @@ export const TabBar = ({
             onClick={() => onTabClick(tab.id)}
             title={tab.title}
           >
-            {tab.title}
+            <TabTitleSpan>{tab.title}</TabTitleSpan>
             {tab.isCloseable && (
               <CloseIcon
                 type="button"
