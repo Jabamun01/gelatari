@@ -47,27 +47,28 @@ const TabsWrapper = styled.div`
 
 const CloseIcon = styled.button`
   flex-shrink: 0;
-  width: 20px;
-  height: 20px;
+  width: 26px;
+  height: 26px;
   padding: 0;
   border: none;
-  border-radius: 3px;
+  border-radius: 50%;
   background: transparent;
   cursor: pointer;
-  font-size: 14px;
-  font-weight: 400;
+  font-size: 17px;
+  font-weight: 300;
   line-height: 1;
   color: var(--text-color-light);
-  opacity: 0.45;
+  opacity: 0.4;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  transition: opacity 0.15s ease, background-color 0.15s ease;
+  transition: opacity 0.15s ease, background-color 0.15s ease, color 0.15s ease;
 
   &:hover,
   &:focus-visible {
-    opacity: 0.85;
-    background: var(--surface-color-light);
+    opacity: 1;
+    background: var(--border-color-light);
+    color: var(--text-color-strong);
     outline: none;
   }
 `;
