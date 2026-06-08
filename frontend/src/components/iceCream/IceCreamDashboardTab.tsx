@@ -46,11 +46,6 @@ const PageTitle = styled.h2`
   margin: 0;
 `;
 
-const HeaderActions = styled.div`
-  display: flex;
-  gap: var(--space-sm);
-`;
-
 const ActionButton = styled.button`
   padding: var(--space-sm) var(--space-md);
   border: none;
@@ -1116,6 +1111,33 @@ const CompactActionBtn = styled.button`
 `;
 
 // ---------------------------------------------------------------------------
+// Advanced collapsible section (resets etc)
+// ---------------------------------------------------------------------------
+
+const AdvancedSection = styled.div`
+  margin-top: var(--space-lg);
+  padding-top: var(--space-lg);
+  border-top: 1px solid var(--border-color-light);
+`;
+
+const AdvancedToggle = styled.button`
+  background: none;
+  border: none;
+  color: var(--text-color-light);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  text-decoration: underline;
+  &:hover { color: var(--text-color); }
+`;
+
+const ResetGroup = styled.div`
+  display: flex;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+  margin-top: var(--space-sm);
+`;
+
+// ---------------------------------------------------------------------------
 // Main dashboard component
 // ---------------------------------------------------------------------------
 
@@ -1247,6 +1269,12 @@ export const IceCreamDashboardTab: React.FC<IceCreamDashboardTabProps> = ({
 
   // View mode: detail (cards) or overview (compact table)
   const [viewMode, setViewMode] = useState<'detail' | 'overview'>('detail');
+
+  // Container type filter
+  const [containerFilter, setContainerFilter] = useState<'all' | 'large' | 'small'>('all');
+
+  // Show/hide advanced (reset) actions
+  const [showAdvancedResets, setShowAdvancedResets] = useState(false);
 
   // Overview table click-to-sort state
   const [tableSort, setTableSort] = useState<{ col: string; dir: 'asc' | 'desc' }>({ col: 'name', dir: 'asc' });
@@ -1408,56 +1436,6 @@ export const IceCreamDashboardTab: React.FC<IceCreamDashboardTabProps> = ({
     <Container>
       <HeaderRow>
         <PageTitle>🍦 Estoc de Gelats</PageTitle>
-        <HeaderActions>
-          {/* ── Reset buttons ── */}
-          <SecondaryButton
-            onClick={() =>
-              setResetModal({
-                title: 'Restablir mix a 0',
-                message:
-                  'Això posarà iceCreamMixKg a 0 per a TOTS els gustos. Esteu segurs?',
-                onConfirm: () => resetMixMutation.mutate(),
-                isPending: resetMixMutation.isPending,
-              })
-            }
-            disabled={isAnyResetPending}
-            title="Restablir tot el mix a 0"
-          >
-            🔄 Restablir Mix
-          </SecondaryButton>
-          <SecondaryButton
-            onClick={() =>
-              setResetModal({
-                title: 'Restablir envasos a 0',
-                message:
-                  'Això posarà TOTS els envasos (grans, petits, magatzem, paradeta) a 0 per a TOTS els gustos. Esteu segurs?',
-                onConfirm: () => resetContainersMutation.mutate(),
-                isPending: resetContainersMutation.isPending,
-              })
-            }
-            disabled={isAnyResetPending}
-            title="Restablir tots els envasos a 0"
-          >
-            🔄 Restablir Envasos
-          </SecondaryButton>
-          <DangerButton
-            style={{ padding: 'var(--space-sm) var(--space-md)', fontSize: 'var(--font-size-sm)' }}
-            onClick={() =>
-              setResetModal({
-                title: '⚠️ Restablir TOT a 0',
-                message:
-                  'Això posarà mix + envasos + històric de overrun a 0 per a TOTS els gustos. Aquesta acció no es pot desfer. Esteu absolutament segurs?',
-                onConfirm: () => resetAllMutation.mutate(),
-                isPending: resetAllMutation.isPending,
-              })
-            }
-            disabled={isAnyResetPending}
-            title="Restablir tot (mix + envasos + overrun) a 0"
-          >
-            ⚠️ Restablir TOT
-          </DangerButton>
-          {/* Flavors are auto-created when an ice cream recipe is created — no standalone creation */}
-        </HeaderActions>
       </HeaderRow>
 
       {/* ── Summary cards ──────────────────────────────────────────── */}
@@ -1494,13 +1472,31 @@ export const IceCreamDashboardTab: React.FC<IceCreamDashboardTabProps> = ({
               </SummaryValue>
               <SummaryLabel>Alertes</SummaryLabel>
             </SummaryCard>
-            <SummaryCard variant="info">
+            <SummaryCard
+              variant={containerFilter === 'large' ? 'success' : 'info'}
+              onClick={() => setContainerFilter(prev => prev === 'large' ? 'all' : 'large')}
+              style={{ cursor: 'pointer' }}
+            >
               <SummaryValue>{summaryData.totalLarge}</SummaryValue>
               <SummaryLabel>📦 Envasos grans</SummaryLabel>
+              {containerFilter === 'large' && (
+                <SummaryLabel style={{ fontSize: '10px', color: 'var(--primary-color)' }}>
+                  ▼ Filtrant
+                </SummaryLabel>
+              )}
             </SummaryCard>
-            <SummaryCard variant="info">
+            <SummaryCard
+              variant={containerFilter === 'small' ? 'success' : 'info'}
+              onClick={() => setContainerFilter(prev => prev === 'small' ? 'all' : 'small')}
+              style={{ cursor: 'pointer' }}
+            >
               <SummaryValue>{summaryData.totalSmall}</SummaryValue>
               <SummaryLabel>🥫 Envasos petits</SummaryLabel>
+              {containerFilter === 'small' && (
+                <SummaryLabel style={{ fontSize: '10px', color: 'var(--primary-color)' }}>
+                  ▼ Filtrant
+                </SummaryLabel>
+              )}
             </SummaryCard>
           </SummaryCardsRow>
 
@@ -1508,15 +1504,23 @@ export const IceCreamDashboardTab: React.FC<IceCreamDashboardTabProps> = ({
             <LocationSummaryBox>
               <LocationSummaryTitle>📍 Magatzem</LocationSummaryTitle>
               <LocationSummaryDetail>
-                <span>Grans: <strong>{summaryData.totalWarehouseL.toFixed(1)} L</strong></span>
-                <span>Petits: <strong>{typedFlavors.reduce((s, f) => s + f.smallWarehouseCount, 0)}</strong></span>
+                {containerFilter !== 'small' && (
+                  <span>Grans: <strong>{summaryData.totalWarehouseL.toFixed(1)} L</strong></span>
+                )}
+                {containerFilter !== 'large' && (
+                  <span>Petits: <strong>{typedFlavors.reduce((s, f) => s + f.smallWarehouseCount, 0)}</strong></span>
+                )}
               </LocationSummaryDetail>
             </LocationSummaryBox>
             <LocationSummaryBox>
               <LocationSummaryTitle>🏪 Paradeta</LocationSummaryTitle>
               <LocationSummaryDetail>
-                <span>Grans: <strong>{summaryData.totalParadetaL.toFixed(1)} L</strong></span>
-                <span>Petits: <strong>{typedFlavors.reduce((s, f) => s + f.smallParadetaCount, 0)}</strong></span>
+                {containerFilter !== 'small' && (
+                  <span>Grans: <strong>{summaryData.totalParadetaL.toFixed(1)} L</strong></span>
+                )}
+                {containerFilter !== 'large' && (
+                  <span>Petits: <strong>{typedFlavors.reduce((s, f) => s + f.smallParadetaCount, 0)}</strong></span>
+                )}
               </LocationSummaryDetail>
             </LocationSummaryBox>
           </LocationSummaryRow>
@@ -1573,12 +1577,16 @@ export const IceCreamDashboardTab: React.FC<IceCreamDashboardTabProps> = ({
                 <SortableTh active={tableSort.col === 'frozen'} onClick={() => handleTableSort('frozen')}>
                   ❄️ Frozen {tableSort.col === 'frozen' ? (tableSort.dir === 'asc' ? '▲' : '▼') : ''}
                 </SortableTh>
-                <SortableTh active={tableSort.col === 'large'} onClick={() => handleTableSort('large')}>
-                  📦 Grans {tableSort.col === 'large' ? (tableSort.dir === 'asc' ? '▲' : '▼') : ''}
-                </SortableTh>
-                <SortableTh active={tableSort.col === 'small'} onClick={() => handleTableSort('small')}>
-                  🥫 Petits {tableSort.col === 'small' ? (tableSort.dir === 'asc' ? '▲' : '▼') : ''}
-                </SortableTh>
+                {containerFilter !== 'small' && (
+                  <SortableTh active={tableSort.col === 'large'} onClick={() => handleTableSort('large')}>
+                    📦 Grans {tableSort.col === 'large' ? (tableSort.dir === 'asc' ? '▲' : '▼') : ''}
+                  </SortableTh>
+                )}
+                {containerFilter !== 'large' && (
+                  <SortableTh active={tableSort.col === 'small'} onClick={() => handleTableSort('small')}>
+                    🥫 Petits {tableSort.col === 'small' ? (tableSort.dir === 'asc' ? '▲' : '▼') : ''}
+                  </SortableTh>
+                )}
                 <SortableTh active={tableSort.col === 'warehouse'} onClick={() => handleTableSort('warehouse')}>
                   📍 Magatzem {tableSort.col === 'warehouse' ? (tableSort.dir === 'asc' ? '▲' : '▼') : ''}
                 </SortableTh>
@@ -1610,19 +1618,27 @@ export const IceCreamDashboardTab: React.FC<IceCreamDashboardTabProps> = ({
                         {f.totalFrozenLiters.toFixed(1)}
                       </TableStat>
                     </td>
-                    <td>{f.totalLargeContainers}</td>
-                    <td>{f.totalSmallCount}</td>
+                    {containerFilter !== 'small' && <td>{f.totalLargeContainers}</td>}
+                    {containerFilter !== 'large' && <td>{f.totalSmallCount}</td>}
                     <td>
-                      <div>{f.largeWarehouseContainers} grans ({f.largeWarehouseLiters.toFixed(1)} L)</div>
-                      <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--text-color-light)' }}>
-                        {f.smallWarehouseCount} petits
-                      </div>
+                      {containerFilter !== 'small' && (
+                        <div>{f.largeWarehouseContainers} grans ({f.largeWarehouseLiters.toFixed(1)} L)</div>
+                      )}
+                      {containerFilter !== 'large' && (
+                        <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--text-color-light)' }}>
+                          {f.smallWarehouseCount} petits
+                        </div>
+                      )}
                     </td>
                     <td>
-                      <div>{f.largeParadetaContainers} grans ({f.largeParadetaLiters.toFixed(1)} L)</div>
-                      <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--text-color-light)' }}>
-                        {f.smallParadetaCount} petits
-                      </div>
+                      {containerFilter !== 'small' && (
+                        <div>{f.largeParadetaContainers} grans ({f.largeParadetaLiters.toFixed(1)} L)</div>
+                      )}
+                      {containerFilter !== 'large' && (
+                        <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--text-color-light)' }}>
+                          {f.smallParadetaCount} petits
+                        </div>
+                      )}
                     </td>
                     <td>
                       <TableAlert
@@ -1706,35 +1722,47 @@ export const IceCreamDashboardTab: React.FC<IceCreamDashboardTabProps> = ({
                   <StatValue>{f.totalFrozenLiters.toFixed(1)} L</StatValue>
                   <StatLabel>Total congelat</StatLabel>
                 </StatBox>
-                <StatBox>
-                  <StatValue>{f.totalLargeContainers}</StatValue>
-                  <StatLabel>Envasos grans</StatLabel>
-                </StatBox>
-                <StatBox>
-                  <StatValue>{f.totalSmallCount}</StatValue>
-                  <StatLabel>Envasos petits</StatLabel>
-                </StatBox>
+                {containerFilter !== 'small' && (
+                  <StatBox>
+                    <StatValue>{f.totalLargeContainers}</StatValue>
+                    <StatLabel>Envasos grans</StatLabel>
+                  </StatBox>
+                )}
+                {containerFilter !== 'large' && (
+                  <StatBox>
+                    <StatValue>{f.totalSmallCount}</StatValue>
+                    <StatLabel>Envasos petits</StatLabel>
+                  </StatBox>
+                )}
               </StatsGrid>
 
               {/* Location breakdown */}
               <LocationRow>
                 <LocationBlock>
                   <LocationLabel>📍 Magatzem</LocationLabel>
-                  <LocationDetail>
-                    Grans: {f.largeWarehouseContainers} ({f.largeWarehouseLiters.toFixed(1)} L)
-                  </LocationDetail>
-                  <LocationDetail>
-                    Petits: {f.smallWarehouseCount}
-                  </LocationDetail>
+                  {containerFilter !== 'small' && (
+                    <LocationDetail>
+                      Grans: {f.largeWarehouseContainers} ({f.largeWarehouseLiters.toFixed(1)} L)
+                    </LocationDetail>
+                  )}
+                  {containerFilter !== 'large' && (
+                    <LocationDetail>
+                      Petits: {f.smallWarehouseCount}
+                    </LocationDetail>
+                  )}
                 </LocationBlock>
                 <LocationBlock>
                   <LocationLabel>🏪 Paradeta</LocationLabel>
-                  <LocationDetail>
-                    Grans: {f.largeParadetaContainers} ({f.largeParadetaLiters.toFixed(1)} L)
-                  </LocationDetail>
-                  <LocationDetail>
-                    Petits: {f.smallParadetaCount}
-                  </LocationDetail>
+                  {containerFilter !== 'small' && (
+                    <LocationDetail>
+                      Grans: {f.largeParadetaContainers} ({f.largeParadetaLiters.toFixed(1)} L)
+                    </LocationDetail>
+                  )}
+                  {containerFilter !== 'large' && (
+                    <LocationDetail>
+                      Petits: {f.smallParadetaCount}
+                    </LocationDetail>
+                  )}
                 </LocationBlock>
               </LocationRow>
 
@@ -1813,6 +1841,63 @@ export const IceCreamDashboardTab: React.FC<IceCreamDashboardTabProps> = ({
           isLoading={isLoading}
         />
       )}
+
+      {/* ── Advanced actions (collapsible) ────────────────────────── */}
+      <AdvancedSection>
+        <AdvancedToggle onClick={() => setShowAdvancedResets(s => !s)}>
+          {showAdvancedResets ? '▼ ' : '▶ '}Accions avançades de restabliment
+        </AdvancedToggle>
+        {showAdvancedResets && (
+          <ResetGroup>
+            <SecondaryButton
+              onClick={() =>
+                setResetModal({
+                  title: 'Restablir mix a 0',
+                  message:
+                    'Això posarà iceCreamMixKg a 0 per a TOTS els gustos. Esteu segurs?',
+                  onConfirm: () => resetMixMutation.mutate(),
+                  isPending: resetMixMutation.isPending,
+                })
+              }
+              disabled={isAnyResetPending}
+              title="Restablir tot el mix a 0"
+            >
+              🔄 Restablir Mix
+            </SecondaryButton>
+            <SecondaryButton
+              onClick={() =>
+                setResetModal({
+                  title: 'Restablir envasos a 0',
+                  message:
+                    'Això posarà TOTS els envasos (grans, petits, magatzem, paradeta) a 0 per a TOTS els gustos. Esteu segurs?',
+                  onConfirm: () => resetContainersMutation.mutate(),
+                  isPending: resetContainersMutation.isPending,
+                })
+              }
+              disabled={isAnyResetPending}
+              title="Restablir tots els envasos a 0"
+            >
+              🔄 Restablir Envasos
+            </SecondaryButton>
+            <DangerButton
+              style={{ padding: 'var(--space-sm) var(--space-md)', fontSize: 'var(--font-size-sm)' }}
+              onClick={() =>
+                setResetModal({
+                  title: '⚠️ Restablir TOT a 0',
+                  message:
+                    'Això posarà mix + envasos + històric de overrun a 0 per a TOTS els gustos. Aquesta acció no es pot desfer. Esteu absolutament segurs?',
+                  onConfirm: () => resetAllMutation.mutate(),
+                  isPending: resetAllMutation.isPending,
+                })
+              }
+              disabled={isAnyResetPending}
+              title="Restablir tot (mix + envasos + overrun) a 0"
+            >
+              ⚠️ Restablir TOT
+            </DangerButton>
+          </ResetGroup>
+        )}
+      </AdvancedSection>
 
       {/* Modals */}
       {convertFlavor && (
