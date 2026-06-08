@@ -47,27 +47,28 @@ const TabsWrapper = styled.div`
 
 const CloseIcon = styled.button`
   flex-shrink: 0;
-  width: 26px;
-  height: 26px;
+  width: 24px;
+  height: 24px;
   padding: 0;
   border: none;
   border-radius: 50%;
   background: transparent;
   cursor: pointer;
-  font-size: 17px;
-  font-weight: 300;
+  font-size: 16px;
+  font-weight: 600;
   line-height: 1;
   color: var(--text-color-light);
-  opacity: 0.4;
+  opacity: 0.55;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   transition: opacity 0.15s ease, background-color 0.15s ease, color 0.15s ease;
+  z-index: 1;
 
   &:hover,
   &:focus-visible {
     opacity: 1;
-    background: var(--border-color-light);
+    background: var(--border-color);
     color: var(--text-color-strong);
     outline: none;
   }
