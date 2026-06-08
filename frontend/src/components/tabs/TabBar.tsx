@@ -47,18 +47,17 @@ const TabsWrapper = styled.div`
 
 const CloseIcon = styled.button`
   flex-shrink: 0;
-  padding: var(--space-xs);
+  padding: 2px;
+  margin: 0;
   border: none;
   background: transparent;
   cursor: pointer;
-  font-size: 0.85em;
-  color: var(--text-color);
-  opacity: 0.7;
+  font-size: 0.75em;
+  color: var(--text-color-light);
+  opacity: 0.6;
   border-radius: 50%;
-  min-width: 44px;
-  min-height: 44px;
-  width: auto;
-  height: auto;
+  width: 22px;
+  height: 22px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -67,21 +66,15 @@ const CloseIcon = styled.button`
 
   button:hover & {
     opacity: 1;
-    color: var(--text-color-strong);
+    color: var(--text-color);
   }
 
   &:hover,
   &:focus {
     opacity: 1;
     background-color: var(--danger-color);
-    color: var(--text-on-primary);
+    color: white;
     outline: none;
-  }
-
-  @media (max-width: 640px) {
-    min-width: 36px;
-    min-height: 36px;
-    font-size: 0.75em;
   }
 `;
 
@@ -89,14 +82,16 @@ const TabTitleSpan = styled.span`
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  flex: 0 1 auto;
+  flex: 1 1 auto;
   min-width: 0;
 `;
 
 const TabButton = styled.button<{ isActive: boolean }>`
-  padding: 0 var(--space-sm);
+  padding: 0 var(--space-md);
   border: none;
-  border-bottom: 3px solid transparent;
+  border-right: 1px solid var(--tab-border-color);
+  border-bottom: 3px solid ${({ isActive }) =>
+    isActive ? 'var(--tab-active-border-color)' : 'transparent'};
   background-color: ${({ isActive }) =>
     isActive ? 'var(--tab-active-bg)' : 'var(--tab-inactive-bg)'};
   color: ${({ isActive }) =>
@@ -104,10 +99,9 @@ const TabButton = styled.button<{ isActive: boolean }>`
   cursor: pointer;
   font-size: var(--font-size-sm);
   font-weight: ${({ isActive }) => (isActive ? '600' : '500')};
-  position: relative;
   display: inline-flex;
   align-items: center;
-  justify-content: flex-start;
+  justify-content: space-between;
   white-space: nowrap;
   transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
   min-height: 52px;
@@ -116,17 +110,8 @@ const TabButton = styled.button<{ isActive: boolean }>`
   touch-action: manipulation;
   flex: 1 1 0;
   min-width: 100px;
-  max-width: 200px;
-  overflow: hidden;
-  gap: var(--space-xs);
-
-  ${({ isActive }) =>
-    isActive
-      ? `
-    border-bottom-color: var(--tab-active-border-color);
-    color: var(--primary-color);
-  `
-      : ''}
+  max-width: 220px;
+  gap: var(--space-sm);
 
   &:hover:not(:disabled) {
     background-color: var(--tab-hover-bg);
@@ -145,11 +130,11 @@ const TabButton = styled.button<{ isActive: boolean }>`
   }
 
   @media (max-width: 640px) {
-    padding: 0 var(--space-xs);
+    padding: 0 var(--space-sm);
     font-size: var(--font-size-xs);
     min-height: 48px;
     min-width: 80px;
-    max-width: 140px;
+    max-width: 150px;
   }
 `;
 

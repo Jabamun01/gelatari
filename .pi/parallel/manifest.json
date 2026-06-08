@@ -4,23 +4,9 @@
   "base_branch": "main",
   "coordinator": {
     "session_id": "019e9e5b-03a8-7791-8184-c7b427bc300a",
-    "pid": 10832,
-    "started_at": 1780830915490,
-    "last_seen": 1780830915490
+    "pid": 308344,
+    "started_at": 1780919142772,
+    "last_seen": 1780919142772
   },
-  "workers": [
-    {
-      "id": "worker_1",
-      "worktree": "/home/patata/Repos/gelatari--worker_1",
-      "branch": "piparallel/worker_1",
-      "status": "working",
-      "session_id": "019ea317-301f-7eaa-bb9d-477a1d937ac7",
-      "pid": 175880,
-      "started_at": 1780852666806,
-      "last_seen": 1780852666806,
-      "changed_files": {},
-      "summary": "",
-      "merge_status": null
-    }
-  ]
+  "workers": []
 }
