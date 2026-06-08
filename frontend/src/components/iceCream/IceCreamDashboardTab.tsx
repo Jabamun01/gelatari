@@ -1273,6 +1273,9 @@ export const IceCreamDashboardTab: React.FC<IceCreamDashboardTabProps> = ({
   // Container type filter
   const [containerFilter, setContainerFilter] = useState<'all' | 'large' | 'small'>('all');
 
+  // Alert filter
+  const [alertFilter, setAlertFilter] = useState<'all' | 'alerts'>('all');
+
   // Show/hide advanced (reset) actions
   const [showAdvancedResets, setShowAdvancedResets] = useState(false);
 
@@ -1335,11 +1338,16 @@ export const IceCreamDashboardTab: React.FC<IceCreamDashboardTabProps> = ({
     const list = typedFlavors || [];
 
     // Filter by debounced search term
-    const filtered = debouncedSearchTerm
+    let filtered = debouncedSearchTerm
       ? list.filter((f) =>
           normalizeText(f.name).toLowerCase().includes(normalizeText(debouncedSearchTerm).toLowerCase())
         )
       : list;
+
+    // Filter by alert status
+    if (alertFilter === 'alerts') {
+      filtered = filtered.filter((f) => f.alerts.overallLow || f.alerts.paradetaLow);
+    }
 
     // Sort
     return [...filtered].sort((a, b) => {
@@ -1399,7 +1407,7 @@ export const IceCreamDashboardTab: React.FC<IceCreamDashboardTabProps> = ({
           return 0;
       }
     });
-  }, [typedFlavors, debouncedSearchTerm, sortBy, viewMode, tableSort]);
+  }, [typedFlavors, debouncedSearchTerm, sortBy, viewMode, tableSort, alertFilter]);
 
   // ── Pagination derived values ─────────────────────────────────────
   const totalPages = Math.max(1, Math.ceil((filteredAndSortedFlavors?.length || 0) / PAGE_SIZE));
@@ -1456,12 +1464,16 @@ export const IceCreamDashboardTab: React.FC<IceCreamDashboardTabProps> = ({
             </SummaryCard>
             <SummaryCard
               variant={
-                summaryData.criticalAlerts > 0
+                alertFilter === 'alerts'
                   ? 'danger'
-                  : summaryData.warningAlerts > 0
-                    ? 'warning'
-                    : 'success'
+                  : summaryData.criticalAlerts > 0
+                    ? 'danger'
+                    : summaryData.warningAlerts > 0
+                      ? 'warning'
+                      : 'success'
               }
+              onClick={() => setAlertFilter(prev => prev === 'alerts' ? 'all' : 'alerts')}
+              style={{ cursor: 'pointer' }}
             >
               <SummaryValue>
                 {summaryData.criticalAlerts > 0
@@ -1471,6 +1483,11 @@ export const IceCreamDashboardTab: React.FC<IceCreamDashboardTabProps> = ({
                     : '✅ 0'}
               </SummaryValue>
               <SummaryLabel>Alertes</SummaryLabel>
+              {alertFilter === 'alerts' && (
+                <SummaryLabel style={{ fontSize: '10px', color: 'var(--danger-color)' }}>
+                  ▼ Filtrant
+                </SummaryLabel>
+              )}
             </SummaryCard>
             <SummaryCard
               variant={containerFilter === 'large' ? 'success' : 'info'}
