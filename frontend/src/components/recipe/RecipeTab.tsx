@@ -249,8 +249,8 @@ export const RecipeTab = ({
   }, [itemDeletionHook.error]);
 
   const finalizeProductionMutation = useMutation({
-    mutationFn: (recipeId: string) =>
-      finalizeRecipeProductionApi(recipeId),
+    mutationFn: ({ recipeId, scaleFactor }: { recipeId: string; scaleFactor: number }) =>
+      finalizeRecipeProductionApi(recipeId, scaleFactor),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['ingredients'] });
       queryClient.invalidateQueries({ queryKey: ['iceCreamDashboard'] });
@@ -352,7 +352,7 @@ export const RecipeTab = ({
             {isProductionMode && (
               <PrimaryButton
                 onClick={() =>
-                  finalizeProductionMutation.mutate(recipeId)
+                  finalizeProductionMutation.mutate({ recipeId, scaleFactor })
                 }
                 disabled={
                   finalizeProductionMutation.isPending ||

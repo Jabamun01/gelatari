@@ -351,13 +351,14 @@ export const deleteRecipeHandler = async (req: Request<{ id: string }>, res: Res
 export const finalizeRecipeProductionHandler = async (req: Request<{ recipeId: string }>, res: Response): Promise<void> => {
   try {
     const { recipeId } = req.params;
+    const scaleFactor = typeof req.body.scaleFactor === 'number' ? req.body.scaleFactor : 1;
 
     if (!recipeId) {
       res.status(400).json({ message: 'Recipe ID parameter is required.' });
       return;
     }
 
-    const finalizedRecipe = await recipeService.finalizeRecipeProduction(recipeId);
+    const finalizedRecipe = await recipeService.finalizeRecipeProduction(recipeId, scaleFactor);
 
     if (!finalizedRecipe) {
       res.status(404).json({ message: `Recipe with ID ${recipeId} not found or could not be finalized.` });

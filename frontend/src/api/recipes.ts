@@ -202,13 +202,16 @@ export const getRecipeDependencies = async (recipeId: string): Promise<RecipeDet
  * Finalizes the production of a recipe, spending ingredients.
  * For ice cream recipes, mix stock is auto-incremented on the linked flavor.
  * @param recipeId The ID of the recipe to finalize.
+ * @param scaleFactor The scale factor used in the UI (default 1).
  * @returns A promise that resolves when the finalization is successful.
  */
 export const finalizeRecipeProductionApi = async (
   recipeId: string,
+  scaleFactor: number = 1,
 ): Promise<void> => {
   await apiFetch<void>(`${API_BASE_URL}/recipes/${recipeId}/finalize-production`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ scaleFactor }),
   });
 };

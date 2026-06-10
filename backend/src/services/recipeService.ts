@@ -381,6 +381,7 @@ export const deleteRecipe = async (
  */
 export const finalizeRecipeProduction = async (
   recipeId: string,
+  scaleFactor: number = 1,
 ): Promise<IRecipe | null> => {
   try {
     const recipe = await getRecipeById(recipeId);
@@ -420,7 +421,7 @@ export const finalizeRecipeProduction = async (
           );
         }
 
-        const adjustedAmount = recipeIngredient.amountGrams * mermaMultiplier;
+        const adjustedAmount = recipeIngredient.amountGrams * scaleFactor * mermaMultiplier;
         const changeInQuantity = -adjustedAmount;
 
         try {
@@ -506,7 +507,7 @@ export const finalizeRecipeProduction = async (
           );
         }
 
-        const deductionAmount = linked.amountGrams * productMermaMultiplier;
+        const deductionAmount = linked.amountGrams * scaleFactor * productMermaMultiplier;
 
         try {
           const updatedProduct = await updateIngredientStock(
@@ -541,7 +542,7 @@ export const finalizeRecipeProduction = async (
     if (recipe.type !== 'ice cream recipe') {
       // Apply production loss: what's lost to evaporation, sticking to equipment, etc.
       const productionLossMultiplier = 1 - (recipe.productionLossPercent || 0) / 100;
-      const netYieldGrams = recipe.baseYieldGrams * productionLossMultiplier;
+      const netYieldGrams = recipe.baseYieldGrams * scaleFactor * productionLossMultiplier;
 
       if (netYieldGrams > 0) {
         try {
@@ -602,7 +603,7 @@ export const finalizeRecipeProduction = async (
     // Production loss applies uniformly.
     if (recipe.type === 'ice cream recipe') {
       const productionLossMultiplier = 1 - (recipe.productionLossPercent || 0) / 100;
-      const netYieldGrams = recipe.baseYieldGrams * productionLossMultiplier;
+      const netYieldGrams = recipe.baseYieldGrams * scaleFactor * productionLossMultiplier;
       const mixKg = netYieldGrams / 1000;
 
       if (mixKg > 0 && recipe.baseFlavorId) {
