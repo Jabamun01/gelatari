@@ -482,7 +482,7 @@ const ConvertMixModal: React.FC<ConvertModalProps> = ({
   onConfirm,
   isPending,
 }) => {
-  const [mixKg, setMixKg] = useState(flavor.iceCreamMixKg > 0 ? Math.min(flavor.iceCreamMixKg, 10) : 0);
+  const [mixKg, setMixKg] = useState(flavor.iceCreamMixKg > 0 ? flavor.iceCreamMixKg : 0);
   const [frozenLiters, setFrozenLiters] = useState(0);
   const [largeContainers, setLargeContainers] = useState(0);
   const [smallContainers, setSmallContainers] = useState(0);
