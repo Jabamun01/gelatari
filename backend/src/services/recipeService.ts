@@ -650,6 +650,53 @@ export const finalizeRecipeProduction = async (
  * @returns A promise resolving to an array of parent recipe documents.
  * @throws Throws an error if the query fails.
  */
+export const duplicateRecipe = async (recipeId: string): Promise<IRecipe | null> => {
+  try {
+    const original = await Recipe.findById(recipeId);
+    if (!original) {
+      throw new Error(`Recipe not found with ID: ${recipeId}`);
+    }
+
+    // Build a name with suffix, avoid stacking (còpia) (còpia)
+    const baseName = original.name.replace(/\s*\(còpia\)\s*$/, '').trim();
+    const newName = `${baseName} (còpia)`;
+
+    // Duplicate the recipe data, stripping unique fields
+    const duplicateData = {
+      name: newName,
+      type: original.type,
+      category: original.category,
+      ingredients: original.ingredients.map((ing) => ({
+        ingredient: ing.ingredient,
+        amountGrams: ing.amountGrams,
+      })),
+      steps: [...original.steps],
+      baseYieldGrams: original.baseYieldGrams,
+      linkedRecipes: original.linkedRecipes.map((lr) => ({
+        recipe: lr.recipe,
+        amountGrams: lr.amountGrams,
+      })),
+      productionLossPercent: original.productionLossPercent,
+      // Skip productIngredientId, baseFlavorId, and mix tracking — these are specific to the original
+    };
+
+    const newRecipeInstance = new Recipe(duplicateData);
+    const savedRecipe = await newRecipeInstance.save();
+
+    // Auto-create flavor for ice cream recipes (same as createRecipe)
+    if (savedRecipe.type === 'ice cream recipe') {
+      await autoCreateFlavorForRecipe(savedRecipe);
+    }
+
+    await savedRecipe.populate('ingredients.ingredient', 'name isAllergen mermaPercent');
+    await savedRecipe.populate('linkedRecipes.recipe', 'name mermaPercent');
+    return savedRecipe;
+  } catch (error) {
+    console.error(`Error duplicating recipe ${recipeId}:`, error);
+    throw error;
+  }
+};
+
 export const getDependentParentRecipes = async (recipeId: string): Promise<IRecipe[]> => {
   try {
     if (!Types.ObjectId.isValid(recipeId)) {

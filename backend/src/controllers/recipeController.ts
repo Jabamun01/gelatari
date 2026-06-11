@@ -345,6 +345,36 @@ export const deleteRecipeHandler = async (req: Request<{ id: string }>, res: Res
 };
 
 /**
+ * Handles duplicating a recipe.
+ */
+export const duplicateRecipeHandler = async (req: Request<{ recipeId: string }>, res: Response): Promise<void> => {
+  try {
+    const { recipeId } = req.params;
+
+    if (!recipeId) {
+      res.status(400).json({ message: 'Recipe ID parameter is required.' });
+      return;
+    }
+
+    const newRecipe = await recipeService.duplicateRecipe(recipeId);
+
+    if (!newRecipe) {
+      res.status(404).json({ message: `Recipe with ID ${recipeId} not found.` });
+      return;
+    }
+
+    res.status(201).json(newRecipe);
+  } catch (error: unknown) {
+    console.error(`Error duplicating recipe ${req.params.recipeId}:`, error);
+    if (error instanceof Error && error.message.includes('not found')) {
+      res.status(404).json({ message: error.message });
+      return;
+    }
+    res.status(500).json({ message: 'Failed to duplicate recipe.' });
+  }
+};
+
+/**
  * Handles finalizing the production of a recipe, triggering ingredient stock deduction.
  * For ice cream recipes, mix stock is auto-incremented on the linked flavor.
  */

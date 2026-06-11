@@ -5,6 +5,7 @@ import {
   getRecipeByIdHandler,
   updateRecipeHandler,
   deleteRecipeHandler,
+  duplicateRecipeHandler,
   finalizeRecipeProductionHandler,
   getRecipeDependenciesHandler,
 } from '../controllers/recipeController';
@@ -17,6 +18,9 @@ router.get('/', getAllRecipesHandler);
 router.get('/:id', getRecipeByIdHandler);
 router.put('/:id', updateRecipeHandler);
 router.delete('/:id', deleteRecipeHandler);
+
+// Route for duplicating a recipe
+router.post('/:recipeId/duplicate', duplicateRecipeHandler);
 
 // Route for finalizing recipe production
 router.post('/:recipeId/finalize-production', finalizeRecipeProductionHandler);

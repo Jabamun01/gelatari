@@ -2,7 +2,7 @@ import { styled } from '@linaria/react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useCallback } from 'react';
 import { PrimaryButton, SecondaryButton, DangerButton, ActionButton } from '../common/Button';
-import { fetchRecipeById, finalizeRecipeProductionApi } from '../../api/recipes';
+import { fetchRecipeById, finalizeRecipeProductionApi, duplicateRecipe } from '../../api/recipes';
 import { RecipeDetails } from '../../types/recipe';
 import { TabData } from '../../types/tabs';
 import { IngredientList } from './IngredientList';
@@ -248,6 +248,18 @@ export const RecipeTab = ({
     }
   }, [itemDeletionHook.error]);
 
+  const duplicateMutation = useMutation({
+    mutationFn: (recipeId: string) => duplicateRecipe(recipeId),
+    onSuccess: (newRecipe) => {
+      queryClient.invalidateQueries({ queryKey: ['recipes'] });
+      onOpenEditor(newRecipe._id, newRecipe.name);
+    },
+    onError: (err: Error) => {
+      console.error('Error duplicating recipe:', err);
+      alert(`Error en duplicar la recepta: ${err.message || 'Error desconegut'}.`);
+    },
+  });
+
   const finalizeProductionMutation = useMutation({
     mutationFn: ({ recipeId, scaleFactor }: { recipeId: string; scaleFactor: number }) =>
       finalizeRecipeProductionApi(recipeId, scaleFactor),
@@ -321,6 +333,16 @@ export const RecipeTab = ({
             >
               Editar
             </ActionButton>
+            <SecondaryButton
+              onClick={() => duplicateMutation.mutate(recipeId)}
+              disabled={
+                duplicateMutation.isPending ||
+                itemDeletionHook.isProcessingDelete ||
+                itemDeletionHook.isLoadingDependencies
+              }
+            >
+              {duplicateMutation.isPending ? 'Duplicant...' : 'Duplicar'}
+            </SecondaryButton>
             <DangerButton
               onClick={handleDeleteRecipe}
               disabled={

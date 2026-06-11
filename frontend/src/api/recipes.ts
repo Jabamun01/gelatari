@@ -199,6 +199,20 @@ export const getRecipeDependencies = async (recipeId: string): Promise<RecipeDet
 };
 
 /**
+ * Duplicates a recipe with all its ingredients, steps, and settings.
+ * The copy gets " (còpia)" appended to its name. For ice cream recipes,
+ * a new linked flavor is auto-created.
+ * @param recipeId The ID of the recipe to duplicate.
+ * @returns A promise resolving to the created RecipeDetails.
+ */
+export const duplicateRecipe = async (recipeId: string): Promise<RecipeDetails> => {
+  return apiFetch<RecipeDetails>(`${API_BASE_URL}/recipes/${recipeId}/duplicate`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+  });
+};
+
+/**
  * Finalizes the production of a recipe, spending ingredients.
  * For ice cream recipes, mix stock is auto-incremented on the linked flavor.
  * @param recipeId The ID of the recipe to finalize.
