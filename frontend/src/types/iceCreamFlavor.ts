@@ -105,7 +105,7 @@ export interface MoveContainersDto {
   to: 'warehouse' | 'paradeta';
 }
 
-/** DTO for directly setting stock values on a flavor (containers only; mix is on the recipe). */
+/** DTO for directly setting stock values on a flavor (containers and optionally mix). */
 export interface SetFlavorStockDto {
   largeWarehouseContainers?: number;
   largeWarehouseLiters?: number;
@@ -113,6 +113,8 @@ export interface SetFlavorStockDto {
   largeParadetaLiters?: number;
   smallWarehouseCount?: number;
   smallParadetaCount?: number;
+  /** Optional: set the recipe's mix stock (kg). */
+  mixKg?: number;
 }
 
 /** Response from a reset endpoint. */

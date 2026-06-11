@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import * as iceCreamService from '../services/iceCreamFlavorService';
 import * as eventService from '../services/iceCreamEventService';
+import Recipe from '../models/Recipe';
 
 // ---------------------------------------------------------------------------
 // CRUD handlers
@@ -281,19 +282,54 @@ export const setFlavorStockHandler = async (
       }
     }
 
-    if (Object.keys(data).length === 0) {
+    // If only mixKg was provided (no container fields), allow the request
+    const hasContainerFields = Object.keys(data).length > 0;
+    const hasMixKg = req.body.mixKg !== undefined;
+
+    if (!hasContainerFields && !hasMixKg) {
       res.status(400).json({
         message:
-          'No valid fields provided. Allowed: ' + allowedFields.join(', '),
+          'No valid fields provided. Allowed: ' + allowedFields.join(', ') + ', mixKg',
       });
       return;
     }
 
-    const flavor = await iceCreamService.setFlavorStock(id, data);
-    if (!flavor) {
-      res.status(404).json({ message: 'Flavor not found.' });
-      return;
+    let flavor = null;
+    if (hasContainerFields) {
+      flavor = await iceCreamService.setFlavorStock(id, data);
+      if (!flavor) {
+        res.status(404).json({ message: 'Flavor not found.' });
+        return;
+      }
+    } else {
+      flavor = await iceCreamService.getFlavorById(id);
+      if (!flavor) {
+        res.status(404).json({ message: 'Flavor not found.' });
+        return;
+      }
     }
+
+    // If mixKg is provided, update the recipe's iceCreamMixKg
+    if (hasMixKg) {
+      const mixKg = req.body.mixKg;
+      if (typeof mixKg !== 'number' || isNaN(mixKg) || mixKg < 0) {
+        res.status(400).json({ message: 'mixKg must be a non-negative number.' });
+        return;
+      }
+
+      const sourceRecipeId = flavor.sourceRecipeId
+        ? (typeof flavor.sourceRecipeId === 'object' && (flavor.sourceRecipeId as any)._id
+            ? (flavor.sourceRecipeId as any)._id.toString()
+            : flavor.sourceRecipeId.toString())
+        : null;
+
+      if (sourceRecipeId) {
+        await Recipe.findByIdAndUpdate(sourceRecipeId, {
+          $set: { iceCreamMixKg: mixKg },
+        });
+      }
+    }
+
     res.status(200).json(flavor);
   } catch (error: any) {
     if (error.statusCode) {

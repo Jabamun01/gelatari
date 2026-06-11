@@ -792,6 +792,7 @@ const EditStockModal: React.FC<EditStockModalProps> = ({
   isPending,
 }) => {
   // Use string state so users can clear and retype values in number inputs
+  const [mixKg, setMixKg] = useState(() => String(flavor.iceCreamMixKg));
   const [largeWH, setLargeWH] = useState(() => String(flavor.largeWarehouseContainers));
   const [largeWHL, setLargeWHL] = useState(() => String(flavor.largeWarehouseLiters));
   const [largePar, setLargePar] = useState(() => String(flavor.largeParadetaContainers));
@@ -806,6 +807,7 @@ const EditStockModal: React.FC<EditStockModalProps> = ({
 
   const handleSubmit = () => {
     onConfirm(flavor._id, {
+      mixKg: parseNum(mixKg),
       largeWarehouseContainers: parseNum(largeWH),
       largeWarehouseLiters: parseNum(largeWHL),
       largeParadetaContainers: parseNum(largePar),
@@ -820,8 +822,15 @@ const EditStockModal: React.FC<EditStockModalProps> = ({
       <ModalBox onClick={(e) => e.stopPropagation()}>
         <ModalTitle>Editar estoc directe — {flavor.name}</ModalTitle>
         <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--text-color-light)', marginBottom: 'var(--space-md)' }}>
-          Edita els valors dels envasos directament. El mix es gestiona des de la recepta.
+        Ajusta manualment els valors d'estoc de gelat i de mix.
         </p>
+
+        <FieldGroup>
+          <FieldLabel>🥣 Mix disponible (kg)</FieldLabel>
+          <FieldInput type="number" min={0} step={0.1} value={mixKg} onChange={(e) => setMixKg(e.target.value)} />
+        </FieldGroup>
+
+        <hr style={{ border: 'none', borderTop: '1px solid var(--border-color-light)', margin: 'var(--space-md) 0' }} />
 
         <FieldGroup>
           <FieldLabel>📍 Magatzem — Envasos grans (comptador)</FieldLabel>
