@@ -251,13 +251,54 @@ const LocationDetail = styled.div`
   color: var(--text-color);
 `;
 
-const ActionRow = styled.div`
-  display: flex;
+const ActionRow = styled.div<{ $show?: boolean }>`
   gap: var(--space-sm);
   flex-wrap: wrap;
   margin-top: var(--space-sm);
   padding-top: var(--space-sm);
   border-top: var(--border-width) solid var(--border-color-light);
+
+  @media (min-width: 641px) {
+    display: flex;
+  }
+
+  @media (max-width: 640px) {
+    display: ${({ $show }) => ($show ? 'flex' : 'none')};
+    flex-direction: column;
+  }
+`;
+
+const MobileMoreButton = styled.button`
+  display: none;
+  @media (max-width: 640px) {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--text-color-light);
+    font-size: 20px;
+    font-weight: 700;
+    line-height: 1;
+    cursor: pointer;
+    transition: background-color 0.15s ease, color 0.15s ease;
+
+    &:hover,
+    &:focus-visible {
+      background: var(--surface-color-light);
+      color: var(--text-color);
+      outline: none;
+    }
+
+    &[data-active="true"] {
+      background: var(--primary-color-light);
+      color: var(--primary-color);
+    }
+  }
 `;
 
 // ---------------------------------------------------------------------------
@@ -1280,6 +1321,16 @@ export const IceCreamDashboardTab: React.FC<IceCreamDashboardTabProps> = ({
   // Show/hide advanced (reset) actions
   const [showAdvancedResets, setShowAdvancedResets] = useState(false);
 
+  // Mobile: which flavor has its action buttons expanded
+  const [mobileActionsId, setMobileActionsId] = useState<string | null>(null);
+
+  // Close mobile actions when any modal opens
+  useEffect(() => {
+    if (convertFlavor || sellFlavor || moveFlavor || editStockFlavor) {
+      setMobileActionsId(null);
+    }
+  }, [convertFlavor, sellFlavor, moveFlavor, editStockFlavor]);
+
   // Overview table click-to-sort state
   const [tableSort, setTableSort] = useState<{ col: string; dir: 'asc' | 'desc' }>({ col: 'name', dir: 'asc' });
 
@@ -1714,6 +1765,17 @@ export const IceCreamDashboardTab: React.FC<IceCreamDashboardTabProps> = ({
                     <Badge variant="info">Overrun: {f.overrunPercent.toFixed(1)}%</Badge>
                   )}
                 </BadgeGroup>
+                <MobileMoreButton
+                  data-active={mobileActionsId === f._id}
+                  onClick={() =>
+                    setMobileActionsId(
+                      mobileActionsId === f._id ? null : f._id
+                    )
+                  }
+                  aria-label="Accions"
+                >
+                  ⋮
+                </MobileMoreButton>
               </CardHeader>
 
               {/* Main stats */}
@@ -1771,7 +1833,7 @@ export const IceCreamDashboardTab: React.FC<IceCreamDashboardTabProps> = ({
               </LocationRow>
 
               {/* Actions */}
-              <ActionRow>
+              <ActionRow $show={mobileActionsId === f._id}>
                 <SmallButton
                   onClick={() => setEditStockFlavor(f)}
                   title="Editar estoc directament"
