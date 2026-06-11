@@ -1274,6 +1274,9 @@ export const IceCreamDashboardTab: React.FC<IceCreamDashboardTabProps> = ({
   // Alert filter
   const [alertFilter, setAlertFilter] = useState<'all' | 'alerts'>('all');
 
+  // Mix filter
+  const [mixFilter, setMixFilter] = useState<'all' | 'mix'>('all');
+
   // Show/hide advanced (reset) actions
   const [showAdvancedResets, setShowAdvancedResets] = useState(false);
 
@@ -1345,6 +1348,11 @@ export const IceCreamDashboardTab: React.FC<IceCreamDashboardTabProps> = ({
       filtered = filtered.filter((f) => f.alerts.overallLow || f.alerts.paradetaLow);
     }
 
+    // Filter by mix availability
+    if (mixFilter === 'mix') {
+      filtered = filtered.filter((f) => f.iceCreamMixKg > 0);
+    }
+
     // Sort
     return [...filtered].sort((a, b) => {
       // Overview table: click-to-sort overrides the dropdown
@@ -1386,7 +1394,7 @@ export const IceCreamDashboardTab: React.FC<IceCreamDashboardTabProps> = ({
       if (!aEss && bEss) return 1;
       return a.name.localeCompare(b.name, 'ca');
     });
-  }, [typedFlavors, debouncedSearchTerm, viewMode, tableSort, alertFilter]);
+  }, [typedFlavors, debouncedSearchTerm, viewMode, tableSort, alertFilter, mixFilter]);
 
   // ── Pagination derived values ─────────────────────────────────────
   const totalPages = Math.max(1, Math.ceil((filteredAndSortedFlavors?.length || 0) / PAGE_SIZE));
@@ -1429,9 +1437,20 @@ export const IceCreamDashboardTab: React.FC<IceCreamDashboardTabProps> = ({
       {typedFlavors && typedFlavors.length > 0 && (
         <>
           <SummaryCardsRow>
-            <SummaryCard variant="info">
+            <SummaryCard
+              variant={mixFilter === 'mix' ? 'success' : 'info'}
+              onClick={() =>
+                setMixFilter((prev) => (prev === 'mix' ? 'all' : 'mix'))
+              }
+              style={{ cursor: 'pointer' }}
+            >
               <SummaryValue>{summaryData.totalMix.toFixed(1)}</SummaryValue>
               <SummaryLabel>🧊 Mix total (kg)</SummaryLabel>
+              {mixFilter === 'mix' && (
+                <SummaryLabel style={{ fontSize: '10px', color: 'var(--primary-color)' }}>
+                  ▼ Filtrant
+                </SummaryLabel>
+              )}
             </SummaryCard>
             <SummaryCard variant="info">
               <SummaryValue>{summaryData.totalFrozen.toFixed(1)}</SummaryValue>
