@@ -5,6 +5,8 @@ import { fetchFlavorCosts } from '../../api/costs';
 import { updateFlavor } from '../../api/iceCreamFlavors';
 import { FlavorCostRow } from '../../types/costs';
 import { ConversionHistoryModal } from './ConversionHistoryModal';
+import { useDebounce } from '../../utils/hooks';
+import { normalizeText } from '../../utils/formatting';
 
 // ---------------------------------------------------------------------------
 // Styled components
@@ -210,6 +212,15 @@ const HistoryButton = styled.button`
   }
 `;
 
+const SearchInput = styled.input`
+  flex: 1;
+  min-width: 200px;
+  max-width: 400px;
+  font-size: var(--font-size-base);
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--border-radius-lg);
+`;
+
 const EmptyMessage = styled.div`
   text-align: center;
   padding: var(--space-2xl);
@@ -251,6 +262,8 @@ export const CostosTab = ({ onOpenIceCreamFlavorEditTab }: CostosTabProps) => {
     column: '',
     dir: 'asc',
   });
+  const [searchTerm, setSearchTerm] = useState('');
+  const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
   const { data: costs, isLoading, isError, error } = useQuery<FlavorCostRow[]>({
     queryKey: ['flavorCosts'],
@@ -269,25 +282,36 @@ export const CostosTab = ({ onOpenIceCreamFlavorEditTab }: CostosTabProps) => {
   }, []);
 
   const sortedCosts = useMemo(() => {
-    if (!costs || !sort.column) return costs ?? [];
-    return [...costs].sort((a, b) => {
-      let aVal: any, bVal: any;
-      switch (sort.column) {
-        case 'name': aVal = a.name.toLowerCase(); bVal = b.name.toLowerCase(); break;
-        case 'feina': aVal = a.feina || ''; bVal = b.feina || ''; break;
-        case 'baseMix': aVal = a.baseMixCostPerKg; bVal = b.baseMixCostPerKg; break;
-        case 'mixIns': aVal = a.mixInsCostPerKg; bVal = b.mixInsCostPerKg; break;
-        case 'total': aVal = a.totalCostPerKg; bVal = b.totalCostPerKg; break;
-        case 'overrun': aVal = a.overrunPercent; bVal = b.overrunPercent; break;
-        case 'costPerLiter': aVal = a.costPerLiter; bVal = b.costPerLiter; break;
-        case 'salePrice': aVal = a.salePriceSmall ?? -1; bVal = b.salePriceSmall ?? -1; break;
-        default: return 0;
-      }
-      if (aVal < bVal) return sort.dir === 'asc' ? -1 : 1;
-      if (aVal > bVal) return sort.dir === 'asc' ? 1 : -1;
-      return 0;
-    });
-  }, [costs, sort.column, sort.dir]);
+    let list = costs ?? [];
+    // Search filter (shared utilities, no duplication)
+    if (debouncedSearchTerm) {
+      const normalizedTerm = normalizeText(debouncedSearchTerm).toLowerCase();
+      list = list.filter((f) =>
+        normalizeText(f.name).toLowerCase().includes(normalizedTerm),
+      );
+    }
+    // Sort
+    if (sort.column) {
+      list = [...list].sort((a, b) => {
+        let aVal: any, bVal: any;
+        switch (sort.column) {
+          case 'name': aVal = a.name.toLowerCase(); bVal = b.name.toLowerCase(); break;
+          case 'feina': aVal = a.feina || ''; bVal = b.feina || ''; break;
+          case 'baseMix': aVal = a.baseMixCostPerKg; bVal = b.baseMixCostPerKg; break;
+          case 'mixIns': aVal = a.mixInsCostPerKg; bVal = b.mixInsCostPerKg; break;
+          case 'total': aVal = a.totalCostPerKg; bVal = b.totalCostPerKg; break;
+          case 'overrun': aVal = a.overrunPercent; bVal = b.overrunPercent; break;
+          case 'costPerLiter': aVal = a.costPerLiter; bVal = b.costPerLiter; break;
+          case 'salePrice': aVal = a.salePriceSmall ?? -1; bVal = b.salePriceSmall ?? -1; break;
+          default: return 0;
+        }
+        if (aVal < bVal) return sort.dir === 'asc' ? -1 : 1;
+        if (aVal > bVal) return sort.dir === 'asc' ? 1 : -1;
+        return 0;
+      });
+    }
+    return list;
+  }, [costs, sort.column, sort.dir, debouncedSearchTerm]);
 
   // Mutation for updating sale price, feina, and overrun override
   const updatePriceMutation = useMutation({
@@ -361,6 +385,14 @@ export const CostosTab = ({ onOpenIceCreamFlavorEditTab }: CostosTabProps) => {
   return (
     <Container>
       <PageTitle>Costos</PageTitle>
+
+      <SearchInput
+        type="search"
+        placeholder="Cerca per sabor..."
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+        aria-label="Cerca per sabor"
+      />
 
       <TableWrapper>
         <Table>
