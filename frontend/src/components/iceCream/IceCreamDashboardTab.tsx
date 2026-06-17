@@ -1362,7 +1362,14 @@ export const IceCreamDashboardTab: React.FC<IceCreamDashboardTabProps> = ({
   // ── Summary statistics (computed from all flavors) ────────────────────
   const summaryData = useMemo(() => {
     const list = typedFlavors || [];
-    const totalMix = list.reduce((s, f) => s + f.iceCreamMixKg, 0);
+    // iceCreamMixKg is stored on the Recipe (shared across flavor variants).
+    // Deduplicate by sourceRecipeId to avoid double-counting.
+    const seenRecipeIds = new Set<string | undefined>();
+    const totalMix = list.reduce((s, f) => {
+      if (seenRecipeIds.has(f.sourceRecipeId)) return s;
+      seenRecipeIds.add(f.sourceRecipeId);
+      return s + f.iceCreamMixKg;
+    }, 0);
     const totalFrozen = list.reduce((s, f) => s + f.totalFrozenLiters, 0);
     const totalLarge = list.reduce((s, f) => s + f.totalLargeContainers, 0);
     const totalSmall = list.reduce((s, f) => s + f.totalSmallCount, 0);
