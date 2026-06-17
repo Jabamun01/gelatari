@@ -106,3 +106,19 @@ export function getBracketColor(totalIncome: number, brackets: IncomeBracket[]):
   }
   return sorted[sorted.length - 1]?.color || '#e8f0e8';
 }
+
+/**
+ * Determine if a hex color is light, returning the appropriate text color.
+ * Returns 'var(--text-color-strong)' for light backgrounds, 'white' for dark ones.
+ */
+export function getTextColorForBg(hex: string): string {
+  // Remove # if present
+  const h = hex.replace('#', '');
+  if (h.length < 6) return 'var(--text-color-strong)';
+  const r = parseInt(h.substring(0, 2), 16);
+  const g = parseInt(h.substring(2, 4), 16);
+  const b = parseInt(h.substring(4, 6), 16);
+  // Relative luminance (per WCAG)
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  return luminance > 0.55 ? 'var(--text-color-strong)' : 'white';
+}

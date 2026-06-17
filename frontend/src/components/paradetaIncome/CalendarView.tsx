@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { styled } from '@linaria/react';
-import { DailyIncomeRecord, IncomeBracket, getBracketColor } from '../../types/paradetaIncome';
+import { DailyIncomeRecord, IncomeBracket, getBracketColor, getTextColorForBg } from '../../types/paradetaIncome';
 import { DayCard } from './DayCard';
 
 // ---------------------------------------------------------------------------
@@ -129,24 +129,31 @@ const MobileList = styled.div`
   }
 `;
 
-const MobileDayCard = styled.div<{ $color: string }>`
+const MobileDayCard = styled.div<{ $color: string; $textColor: string }>`
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: var(--space-sm) var(--space-md);
   background: ${({ $color }) => $color};
+  color: ${({ $textColor }) => $textColor};
   border-radius: var(--border-radius);
-  border: var(--border-width) solid var(--border-color);
+  border: none;
   cursor: pointer;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.06);
 
   &:hover {
-    border-color: var(--primary-color);
+    filter: brightness(0.95);
+  }
+
+  & + & {
+    margin-top: 1px;
   }
 `;
 
 const MobileDayInfo = styled.div`
   display: flex;
   flex-direction: column;
+  gap: 1px;
 `;
 
 const MobileDateLabel = styled.div`
@@ -155,14 +162,26 @@ const MobileDateLabel = styled.div`
 `;
 
 const MobileDayName = styled.div`
-  font-size: var(--font-size-xs);
-  color: var(--text-color-light);
+  font-size: 10px;
+  opacity: 0.75;
+`;
+
+const MobileRight = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 1px;
 `;
 
 const MobileIncome = styled.div`
   font-weight: 700;
   font-size: var(--font-size-base);
-  color: var(--text-color-strong);
+`;
+
+const MobileSubInfo = styled.div`
+  font-size: 10px;
+  opacity: 0.8;
+  line-height: 1.2;
 `;
 
 const NoDataText = styled.div`
@@ -391,18 +410,26 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
           const color = record
             ? getBracketColor(record.totalIncome, brackets)
             : brackets[0]?.color || '#e8f0e8';
+          const textColor = getTextColorForBg(color);
           return (
-            <MobileDayCard key={day} $color={color} onClick={() => onDayClick(dateStr)}>
+            <MobileDayCard key={day} $color={color} $textColor={textColor} onClick={() => onDayClick(dateStr)}>
               <MobileDayInfo>
                 <MobileDateLabel>{day} {MONTH_NAMES[currentMonth]}</MobileDateLabel>
                 <MobileDayName>{getDayName(day)}</MobileDayName>
               </MobileDayInfo>
               {record ? (
-                <MobileIncome>€{record.totalIncome.toFixed(2)}</MobileIncome>
+                <MobileRight>
+                  <MobileIncome>€{record.totalIncome.toFixed(0)}</MobileIncome>
+                  <MobileSubInfo>
+                    💳{record.cardAmount.toFixed(0)} · 💵{record.cashIncome.toFixed(0)}
+                  </MobileSubInfo>
+                </MobileRight>
               ) : (
-                <MobileIncome style={{ color: 'var(--text-color-light)', fontWeight: 400 }}>
-                  — €0.00
-                </MobileIncome>
+                <MobileRight>
+                  <MobileIncome style={{ fontWeight: 400, opacity: 0.6 }}>
+                    — €0.00
+                  </MobileIncome>
+                </MobileRight>
               )}
             </MobileDayCard>
           );
