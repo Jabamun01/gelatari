@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { styled } from '@linaria/react';
-import { DailyIncomeRecord, IncomeBracket } from '../../types/paradetaIncome';
+import { DailyIncomeRecord, IncomeBracket, getBracketColor } from '../../types/paradetaIncome';
 import { DayCard } from './DayCard';
 
 // ---------------------------------------------------------------------------
@@ -129,12 +129,12 @@ const MobileList = styled.div`
   }
 `;
 
-const MobileDayCard = styled.div`
+const MobileDayCard = styled.div<{ $color: string }>`
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: var(--space-sm) var(--space-md);
-  background: var(--surface-color);
+  background: ${({ $color }) => $color};
   border-radius: var(--border-radius);
   border: var(--border-width) solid var(--border-color);
   cursor: pointer;
@@ -389,7 +389,11 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
           const dateStr = formatDate(currentYear, currentMonth, day);
           const record = recordsByDate.get(dateStr);
           return (
-            <MobileDayCard key={day} onClick={() => onDayClick(dateStr)}>
+            const color = record
+              ? getBracketColor(record.totalIncome, brackets)
+              : brackets[0]?.color || '#e8f0e8';
+          return (
+            <MobileDayCard key={day} $color={color} onClick={() => onDayClick(dateStr)}>
               <MobileDayInfo>
                 <MobileDateLabel>{day} {MONTH_NAMES[currentMonth]}</MobileDateLabel>
                 <MobileDayName>{getDayName(day)}</MobileDayName>

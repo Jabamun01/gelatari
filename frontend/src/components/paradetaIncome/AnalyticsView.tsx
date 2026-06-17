@@ -146,7 +146,11 @@ const WeekdayBarVisual = styled.div<{ $height: number; $color: string }>`
   border-radius: 4px 4px 0 0;
   min-height: 4px;
   transition: height 0.3s ease;
-`;
+
+  @media (max-width: 640px) {
+    width: 28px;
+  }
+`;}]}
 
 const WeekdayChart = styled.div`
   display: flex;
@@ -154,6 +158,14 @@ const WeekdayChart = styled.div`
   gap: var(--space-lg);
   padding: var(--space-md) 0;
   align-items: flex-end;
+
+  @media (max-width: 640px) {
+    gap: var(--space-xs);
+    justify-content: space-between;
+    padding: var(--space-sm) 0;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
 `;
 
 // ---------------------------------------------------------------------------
