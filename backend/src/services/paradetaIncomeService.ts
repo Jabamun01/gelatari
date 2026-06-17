@@ -19,6 +19,7 @@ export interface UpdateIncomeDto {
   endCash?: number;
   cashRetired?: number;
   notes?: string;
+  startCash?: number;
 }
 
 export interface IncomeRecord {
@@ -84,11 +85,14 @@ function computeDerived(
   previous: IDailyParadetaIncome | null,
   startCashOverride?: number,
 ): IncomeRecord {
+  // Precedence: explicit override > stored override > previous day end-cashRetired > 0
   const startCash = startCashOverride !== undefined
     ? startCashOverride
-    : previous !== null
-      ? previous.endCash - previous.cashRetired
-      : 0;
+    : record.startCashOverride !== undefined
+      ? record.startCashOverride
+      : previous !== null
+        ? previous.endCash - previous.cashRetired
+        : 0;
 
   const cashIncome = record.endCash - startCash;
   const totalIncome = record.cardAmount + cashIncome;
@@ -153,6 +157,11 @@ export async function createIncome(dto: CreateIncomeDto): Promise<IncomeRecord> 
   const previous = await getPreviousRecord(date);
   const isFirst = !previous && dto.startCash !== undefined;
 
+  if (isFirst) {
+    record.startCashOverride = dto.startCash;
+    await record.save();
+  }
+
   return computeDerived(record, previous, isFirst ? dto.startCash : undefined);
 }
 
@@ -174,6 +183,7 @@ export async function updateIncome(
   if (dto.endCash !== undefined) record.endCash = dto.endCash;
   if (dto.cashRetired !== undefined) record.cashRetired = dto.cashRetired;
   if (dto.notes !== undefined) record.notes = dto.notes || undefined;
+  if (dto.startCash !== undefined) record.startCashOverride = dto.startCash;
 
   await record.save();
 

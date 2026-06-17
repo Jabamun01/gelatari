@@ -6,6 +6,7 @@ export interface IDailyParadetaIncome extends Document {
   endCash: number;       // cash counted at day end (€)
   cashRetired: number;   // cash removed from register during the day (€)
   notes?: string;        // optional free-text notes
+  startCashOverride?: number; // persisted start cash (for first day of season)
 }
 
 const dailyParadetaIncomeSchema = new Schema<IDailyParadetaIncome>(
@@ -38,6 +39,11 @@ const dailyParadetaIncomeSchema = new Schema<IDailyParadetaIncome>(
       type: String,
       default: undefined,
       trim: true,
+    },
+    startCashOverride: {
+      type: Number,
+      default: undefined,
+      min: 0,
     },
   },
   {

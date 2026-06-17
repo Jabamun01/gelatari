@@ -458,6 +458,7 @@ export const ParadetaIncomeTab: React.FC = () => {
             endCash: data.endCash,
             cashRetired: data.cashRetired,
             notes: data.notes,
+            ...(data.startCash !== undefined ? { startCash: data.startCash } : {}),
           },
         });
       } else {

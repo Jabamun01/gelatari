@@ -30,6 +30,7 @@ export interface UpdateIncomeDto {
   endCash?: number;
   cashRetired?: number;
   notes?: string;
+  startCash?: number;
 }
 
 /** Aggregated statistics. */
