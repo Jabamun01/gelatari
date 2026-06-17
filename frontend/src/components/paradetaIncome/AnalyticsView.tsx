@@ -514,8 +514,8 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({ currentYear }) => 
                 />
                 <YAxis tick={{ fontSize: 12 }} tickFormatter={(v) => `€${v}`} />
                 <Tooltip
-                  formatter={(v: number, name: string) => [formatEurDec(v), name === 'total' ? 'Total' : name === 'card' ? 'Targeta' : 'Cash']}
-                  labelFormatter={(label: string) => `Data: ${label}`}
+                  formatter={(v, name: string) => [formatEurDec(v as number), name === 'total' ? 'Total' : name === 'card' ? 'Targeta' : 'Cash']}
+                  labelFormatter={(label) => `Data: ${label}`}
                 />
                 <Legend />
                 <Line type="monotone" dataKey="total" name="Total" stroke={CHART_COLORS.total} strokeWidth={2} dot={false} />
