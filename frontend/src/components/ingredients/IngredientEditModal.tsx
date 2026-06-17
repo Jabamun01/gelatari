@@ -181,7 +181,7 @@ export const IngredientEditModal: React.FC<IngredientEditModalProps> = ({
       mermaPercent: mermaPercent,
     };
 
-    if (!commonData.name) {
+    if (!baseData.name) {
       setError("El nom de l'ingredient no pot estar buit.");
       setIsSaving(false);
       return;
