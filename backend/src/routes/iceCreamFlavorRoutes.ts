@@ -23,17 +23,17 @@ const router = Router();
 // Dashboard – must be before /:id routes
 router.get('/dashboard', getDashboardHandler as RequestHandler);
 
+// Events (must be before /:id routes to avoid shadowing)
+router.get('/events', getEventsHandler as RequestHandler);
+router.put('/events/:id', updateEventHandler as RequestHandler);
+router.delete('/events/:id', deleteEventHandler as RequestHandler);
+
 // CRUD
 router.post('/', createFlavorHandler as RequestHandler);
 router.get('/', getAllFlavorsHandler as RequestHandler);
 router.get('/:id', getFlavorByIdHandler as RequestHandler);
 router.put('/:id', updateFlavorHandler as RequestHandler);
 router.delete('/:id', deleteFlavorHandler as RequestHandler);
-
-// Events
-router.get('/events', getEventsHandler as RequestHandler);
-router.put('/events/:id', updateEventHandler as RequestHandler);
-router.delete('/events/:id', deleteEventHandler as RequestHandler);
 
 // Business operations
 router.patch(
