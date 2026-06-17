@@ -241,7 +241,7 @@ export const fetchEvents = async (params: {
   limit?: number;
   offset?: number;
 }): Promise<EventsResponse> => {
-  const url = new URL(`${BASE}/events`);
+  const url = new URL(`${BASE}/events`, window.location.origin);
   if (params.flavorId) url.searchParams.set('flavorId', params.flavorId);
   if (params.type) url.searchParams.set('type', params.type);
   if (params.fromDate) url.searchParams.set('fromDate', params.fromDate);
