@@ -38,6 +38,11 @@ export interface CostosTabData extends BaseTabConfig {
   type: 'costos';
 }
 
+// Paradeta income management tab
+export interface ParadetaIncomeTabData extends BaseTabConfig {
+  type: 'paradetaIncome';
+}
+
 // Union type for all possible tab data structures
 export type TabData =
   | SearchTabData
@@ -45,6 +50,7 @@ export type TabData =
   | RecipeTabData
   | RecipeEditorTabData
   | IceCreamDashboardTabData
-  | CostosTabData;
+  | CostosTabData
+  | ParadetaIncomeTabData;
 
 

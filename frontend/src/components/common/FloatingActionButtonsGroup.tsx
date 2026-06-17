@@ -17,6 +17,7 @@ interface FloatingActionButtonsGroupProps {
   onOpenNewRecipeEditor: () => void;
   onOpenIceCreamDashboardTab: () => void;
   onOpenCostosTab: () => void;
+  onOpenParadetaIncomeTab: () => void;
 }
 
 const ActionButtonsContainer = styled.div`
@@ -96,6 +97,7 @@ export const FloatingActionButtonsGroup: React.FC<FloatingActionButtonsGroupProp
   onOpenNewRecipeEditor,
   onOpenIceCreamDashboardTab,
   onOpenCostosTab,
+  onOpenParadetaIncomeTab,
 }) => {
   const { state: timerState } = useTimers();
   const [isTimerPanelOpen, setIsTimerPanelOpen] = useState(false);
@@ -137,6 +139,14 @@ export const FloatingActionButtonsGroup: React.FC<FloatingActionButtonsGroupProp
         >
           <ButtonEmoji>💰</ButtonEmoji>
           <span>Costos</span>
+        </ActionButton>
+        <ActionButton
+          onClick={onOpenParadetaIncomeTab}
+          title="Ingressos Paradeta"
+          aria-label="Ingressos Paradeta"
+        >
+          <ButtonEmoji>📊</ButtonEmoji>
+          <span>Ingressos paradeta</span>
         </ActionButton>
         <ActionButton
           onClick={onOpenNewRecipeEditor}

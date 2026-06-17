@@ -7,6 +7,7 @@ import { IngredientsTab } from '../ingredients/IngredientsTab';
 import { RecipeEditorTab } from '../recipe/RecipeEditorTab';
 import { IceCreamDashboardTab } from '../iceCream/IceCreamDashboardTab';
 import { CostosTab } from '../costs/CostosTab';
+import { ParadetaIncomeTab } from '../paradetaIncome/ParadetaIncomeTab';
 
 interface TabContentProps {
   activeTab: TabData | undefined;
@@ -128,6 +129,8 @@ export const TabContent = ({
             }
           />
         );
+      case 'paradetaIncome':
+        return <ParadetaIncomeTab />;
       default:
         console.warn('Unhandled tab type in TabContent renderContent:', activeTab);
         return (
