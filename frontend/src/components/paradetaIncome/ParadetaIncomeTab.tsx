@@ -488,9 +488,9 @@ export const ParadetaIncomeTab: React.FC = () => {
         ...(monthData?.records || []),
       ].sort((a, b) => a.date.localeCompare(b.date));
 
-      const idx = all.findIndex((r) => r.date === date);
-      if (idx > 0) {
-        const prev = all[idx - 1];
+      // Find the most recent record BEFORE the given date
+      const prev = [...all].reverse().find((r) => r.date < date);
+      if (prev) {
         return prev.endCash - prev.cashRetired;
       }
       // No previous record found in fetched data
