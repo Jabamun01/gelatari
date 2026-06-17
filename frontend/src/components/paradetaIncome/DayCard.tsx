@@ -7,7 +7,7 @@ import { DailyIncomeRecord, IncomeBracket, getBracketColor } from '../../types/p
 
 const Card = styled.div<{ $color: string; $hasData: boolean }>`
   background: ${({ $color }) => $color};
-  border: 1px solid ${({ $color, $hasData }) =>
+  border: 1px solid ${({ $hasData }) =>
     $hasData ? 'var(--border-color)' : 'var(--border-color-light)'};
   border-radius: var(--border-radius);
   padding: var(--space-xs) var(--space-sm);

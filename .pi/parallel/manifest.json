@@ -8,5 +8,32 @@
     "started_at": 1781696217947,
     "last_seen": 1781696217947
   },
-  "workers": []
+  "workers": [
+    {
+      "id": "worker_1",
+      "worktree": "/home/patata/Repos/gelatari--worker_1",
+      "branch": "piparallel/worker_1",
+      "status": "working",
+      "session_id": "019ed65c-3c5b-7be7-96c7-ed90b7fee764",
+      "pid": 137676,
+      "started_at": 1781712829800,
+      "last_seen": 1781712829800,
+      "changed_files": {},
+      "summary": "",
+      "merge_status": null
+    },
+    {
+      "id": "worker_3",
+      "worktree": "/home/patata/Repos/gelatari--worker_3",
+      "branch": "piparallel/worker_3",
+      "status": "working",
+      "session_id": "019ed66b-e0d5-76ab-bd54-c4d401527591",
+      "pid": 137676,
+      "started_at": 1781713854793,
+      "last_seen": 1781713854793,
+      "changed_files": {},
+      "summary": "",
+      "merge_status": null
+    }
+  ]
 }

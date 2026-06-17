@@ -1,0 +1,784 @@
+URL: https://gelatari.megatzem.org/
+Title: 🍦 El Gelatari
+
+ARIA snapshot:
+- navigation "Navegació principal":
+  - tablist:
+    - tab "Gelatari"
+    - tab "Costos Tanca Costos" [selected]:
+      - text: Costos
+      - button "Tanca Costos": ×
+  - button "👤 tresxalats"
+- tabpanel "Costos Tanca Costos":
+  - heading "Costos" [level=2]
+  - table:
+    - rowgroup:
+      - row "Sabor Feina Base €/kg +Mix-ins €/kg Total €/kg Overrun €/L Preu venda 1L":
+        - columnheader "Sabor"
+        - columnheader "Feina"
+        - columnheader "Base €/kg"
+        - columnheader "+Mix-ins €/kg"
+        - columnheader "Total €/kg"
+        - columnheader "Overrun"
+        - columnheader "€/L"
+        - columnheader "Preu venda 1L"
+        - columnheader
+    - rowgroup:
+      - row "Gelat d'avellana Gelat d'avellana — 4,97 € 0,00 € 4,97 € 0.0% — 4,97 € 📜 Hist.":
+        - cell "Gelat d'avellana Gelat d'avellana"
+        - cell "—":
+          - combobox:
+            - option "—" [selected]
+            - option "Baix"
+            - option "Mitjà"
+            - option "Alt"
+            - option "Molt alt"
+        - cell "4,97 €"
+        - cell "0,00 €"
+        - cell "4,97 €":
+          - strong: 4,97 €
+        - cell "0.0% —"
+        - cell "4,97 €":
+          - strong: 4,97 €
+        - cell:
+          - spinbutton
+        - cell "📜 Hist.":
+          - button "📜 Hist."
+      - row "Gelat d'avellana i xocolata Gelat d'avellana i xocolata — 3,58 € 0,00 € 3,58 € 20.8% H 2,96 € 📜 Hist.":
+        - cell "Gelat d'avellana i xocolata Gelat d'avellana i xocolata"
+        - cell "—":
+          - combobox:
+            - option "—" [selected]
+            - option "Baix"
+            - option "Mitjà"
+            - option "Alt"
+            - option "Molt alt"
+        - cell "3,58 €"
+        - cell "0,00 €"
+        - cell "3,58 €":
+          - strong: 3,58 €
+        - cell "20.8% H"
+        - cell "2,96 €":
+          - strong: 2,96 €
+        - cell:
+          - spinbutton
+        - cell "📜 Hist.":
+          - button "📜 Hist."
+      - row "Gelat d'ulleres del Bonpreu Gelat d'ulleres del Bonpreu — 1,57 € 0,00 € 1,57 € 0.0% — 1,57 € 📜 Hist.":
+        - cell "Gelat d'ulleres del Bonpreu Gelat d'ulleres del Bonpreu"
+        - cell "—":
+          - combobox:
+            - option "—" [selected]
+            - option "Baix"
+            - option "Mitjà"
+            - option "Alt"
+            - option "Molt alt"
+        - cell "1,57 €"
+        - cell "0,00 €"
+        - cell "1,57 €":
+          - strong: 1,57 €
+        - cell "0.0% —"
+        - cell "1,57 €":
+          - strong: 1,57 €
+        - cell:
+          - spinbutton
+        - cell "📜 Hist.":
+          - button "📜 Hist."
+      - row "Gelat de Carquinyoli Gelat de Carquinyoli — 2,07 € 0,00 € 2,07 € 0.0% — 2,07 € 📜 Hist.":
+        - cell "Gelat de Carquinyoli Gelat de Carquinyoli"
+        - cell "—":
+          - combobox:
+            - option "—" [selected]
+            - option "Baix"
+            - option "Mitjà"
+            - option "Alt"
+            - option "Molt alt"
+        - cell "2,07 €"
+        - cell "0,00 €"
+        - cell "2,07 €":
+          - strong: 2,07 €
+        - cell "0.0% —"
+        - cell "2,07 €":
+          - strong: 2,07 €
+        - cell:
+          - spinbutton
+        - cell "📜 Hist.":
+          - button "📜 Hist."
+      - row "Gelat de Cheesecake Gelat de Cheesecake — 5,24 € 0,00 € 5,24 € 37.5% H 3,81 € 📜 Hist.":
+        - cell "Gelat de Cheesecake Gelat de Cheesecake"
+        - cell "—":
+          - combobox:
+            - option "—" [selected]
+            - option "Baix"
+            - option "Mitjà"
+            - option "Alt"
+            - option "Molt alt"
+        - cell "5,24 €"
+        - cell "0,00 €"
+        - cell "5,24 €":
+          - strong: 5,24 €
+        - cell "37.5% H"
+        - cell "3,81 €":
+          - strong: 3,81 €
+        - cell:
+          - spinbutton
+        - cell "📜 Hist.":
+          - button "📜 Hist."
+      - row "Gelat de Plàtan Gelat de Plàtan — 2,42 € 0,00 € 2,42 € 0.0% — 2,42 € 📜 Hist.":
+        - cell "Gelat de Plàtan Gelat de Plàtan"
+        - cell "—":
+          - combobox:
+            - option "—" [selected]
+            - option "Baix"
+            - option "Mitjà"
+            - option "Alt"
+            - option "Molt alt"
+        - cell "2,42 €"
+        - cell "0,00 €"
+        - cell "2,42 €":
+          - strong: 2,42 €
+        - cell "0.0% —"
+        - cell "2,42 €":
+          - strong: 2,42 €
+        - cell:
+          - spinbutton
+        - cell "📜 Hist.":
+          - button "📜 Hist."
+      - row "Gelat de Préssec Gelat de Préssec — 1,90 € 0,00 € 1,90 € 0.0% — 1,90 € 📜 Hist.":
+        - cell "Gelat de Préssec Gelat de Préssec"
+        - cell "—":
+          - combobox:
+            - option "—" [selected]
+            - option "Baix"
+            - option "Mitjà"
+            - option "Alt"
+            - option "Molt alt"
+        - cell "1,90 €"
+        - cell "0,00 €"
+        - cell "1,90 €":
+          - strong: 1,90 €
+        - cell "0.0% —"
+        - cell "1,90 €":
+          - strong: 1,90 €
+        - cell:
+          - spinbutton
+        - cell "📜 Hist.":
+          - button "📜 Hist."
+      - row "Gelat de Ratafia Gelat de Ratafia — 3,48 € 0,00 € 3,48 € 0.0% — 3,48 € 📜 Hist.":
+        - cell "Gelat de Ratafia Gelat de Ratafia"
+        - cell "—":
+          - combobox:
+            - option "—" [selected]
+            - option "Baix"
+            - option "Mitjà"
+            - option "Alt"
+            - option "Molt alt"
+        - cell "3,48 €"
+        - cell "0,00 €"
+        - cell "3,48 €":
+          - strong: 3,48 €
+        - cell "0.0% —"
+        - cell "3,48 €":
+          - strong: 3,48 €
+        - cell:
+          - spinbutton
+        - cell "📜 Hist.":
+          - button "📜 Hist."
+      - row "Gelat de carrot cake Gelat de carrot cake — 1,98 € 0,00 € 1,98 € 0.0% — 1,98 € 📜 Hist.":
+        - cell "Gelat de carrot cake Gelat de carrot cake"
+        - cell "—":
+          - combobox:
+            - option "—" [selected]
+            - option "Baix"
+            - option "Mitjà"
+            - option "Alt"
+            - option "Molt alt"
+        - cell "1,98 €"
+        - cell "0,00 €"
+        - cell "1,98 €":
+          - strong: 1,98 €
+        - cell "0.0% —"
+        - cell "1,98 €":
+          - strong: 1,98 €
+        - cell:
+          - spinbutton
+        - cell "📜 Hist.":
+          - button "📜 Hist."
+      - row "Gelat de cheesecake (amb cheesecake) Gelat de cheesecake (amb cheesecake) — 1,43 € 0,00 € 1,43 € 0.0% — 1,43 € 📜 Hist.":
+        - cell "Gelat de cheesecake (amb cheesecake) Gelat de cheesecake (amb cheesecake)"
+        - cell "—":
+          - combobox:
+            - option "—" [selected]
+            - option "Baix"
+            - option "Mitjà"
+            - option "Alt"
+            - option "Molt alt"
+        - cell "1,43 €"
+        - cell "0,00 €"
+        - cell "1,43 €":
+          - strong: 1,43 €
+        - cell "0.0% —"
+        - cell "1,43 €":
+          - strong: 1,43 €
+        - cell:
+          - spinbutton
+        - cell "📜 Hist.":
+          - button "📜 Hist."
+      - row "Gelat de cookie dough Gelat de cookie dough — 3,06 € 0,00 € 3,06 € 0.0% — 3,06 € 📜 Hist.":
+        - cell "Gelat de cookie dough Gelat de cookie dough"
+        - cell "—":
+          - combobox:
+            - option "—" [selected]
+            - option "Baix"
+            - option "Mitjà"
+            - option "Alt"
+            - option "Molt alt"
+        - cell "3,06 €"
+        - cell "0,00 €"
+        - cell "3,06 €":
+          - strong: 3,06 €
+        - cell "0.0% —"
+        - cell "3,06 €":
+          - strong: 3,06 €
+        - cell:
+          - spinbutton
+        - cell "📜 Hist.":
+          - button "📜 Hist."
+      - row "Gelat de crema catalana Gelat de crema catalana — 3,65 € 0,00 € 3,65 € 0.0% — 3,65 € 📜 Hist.":
+        - cell "Gelat de crema catalana Gelat de crema catalana"
+        - cell "—":
+          - combobox:
+            - option "—" [selected]
+            - option "Baix"
+            - option "Mitjà"
+            - option "Alt"
+            - option "Molt alt"
+        - cell "3,65 €"
+        - cell "0,00 €"
+        - cell "3,65 €":
+          - strong: 3,65 €
+        - cell "0.0% —"
+        - cell "3,65 €":
+          - strong: 3,65 €
+        - cell:
+          - spinbutton
+        - cell "📜 Hist.":
+          - button "📜 Hist."
+      - row "Gelat de iogurt Gelat de iogurt — 3,39 € 0,00 € 3,39 € 15.5% H 2,94 € 📜 Hist.":
+        - cell "Gelat de iogurt Gelat de iogurt"
+        - cell "—":
+          - combobox:
+            - option "—" [selected]
+            - option "Baix"
+            - option "Mitjà"
+            - option "Alt"
+            - option "Molt alt"
+        - cell "3,39 €"
+        - cell "0,00 €"
+        - cell "3,39 €":
+          - strong: 3,39 €
+        - cell "15.5% H"
+        - cell "2,94 €":
+          - strong: 2,94 €
+        - cell:
+          - spinbutton
+        - cell "📜 Hist.":
+          - button "📜 Hist."
+      - row "Gelat de llimona Gelat de llimona — 2,50 € 0,00 € 2,50 € 0.0% — 2,50 € 📜 Hist.":
+        - cell "Gelat de llimona Gelat de llimona"
+        - cell "—":
+          - combobox:
+            - option "—" [selected]
+            - option "Baix"
+            - option "Mitjà"
+            - option "Alt"
+            - option "Molt alt"
+        - cell "2,50 €"
+        - cell "0,00 €"
+        - cell "2,50 €":
+          - strong: 2,50 €
+        - cell "0.0% —"
+        - cell "2,50 €":
+          - strong: 2,50 €
+        - cell:
+          - spinbutton
+        - cell "📜 Hist.":
+          - button "📜 Hist."
+      - row "Gelat de peres al vi Gelat de peres al vi — 4,30 € 0,00 € 4,30 € 0.0% — 4,30 € 📜 Hist.":
+        - cell "Gelat de peres al vi Gelat de peres al vi"
+        - cell "—":
+          - combobox:
+            - option "—" [selected]
+            - option "Baix"
+            - option "Mitjà"
+            - option "Alt"
+            - option "Molt alt"
+        - cell "4,30 €"
+        - cell "0,00 €"
+        - cell "4,30 €":
+          - strong: 4,30 €
+        - cell "0.0% —"
+        - cell "4,30 €":
+          - strong: 4,30 €
+        - cell:
+          - spinbutton
+        - cell "📜 Hist.":
+          - button "📜 Hist."
+      - row "Gelat de torró Gelat de torró — 4,58 € 0,00 € 4,58 € 0.0% — 4,58 € 📜 Hist.":
+        - cell "Gelat de torró Gelat de torró"
+        - cell "—":
+          - combobox:
+            - option "—" [selected]
+            - option "Baix"
+            - option "Mitjà"
+            - option "Alt"
+            - option "Molt alt"
+        - cell "4,58 €"
+        - cell "0,00 €"
+        - cell "4,58 €":
+          - strong: 4,58 €
+        - cell "0.0% —"
+        - cell "4,58 €":
+          - strong: 4,58 €
+        - cell:
+          - spinbutton
+        - cell "📜 Hist.":
+          - button "📜 Hist."
+      - row "Gelat de vainilla Gelat de vainilla — 5,58 € 0,00 € 5,58 € 0.0% — 5,58 € 📜 Hist.":
+        - cell "Gelat de vainilla Gelat de vainilla"
+        - cell "—":
+          - combobox:
+            - option "—" [selected]
+            - option "Baix"
+            - option "Mitjà"
+            - option "Alt"
+            - option "Molt alt"
+        - cell "5,58 €"
+        - cell "0,00 €"
+        - cell "5,58 €":
+          - strong: 5,58 €
+        - cell "0.0% —"
+        - cell "5,58 €":
+          - strong: 5,58 €
+        - cell:
+          - spinbutton
+        - cell "📜 Hist.":
+          - button "📜 Hist."
+      - row "Gelat de xocolata blanca Gelat de xocolata blanca — 1,57 € 0,00 € 1,57 € 0.0% — 1,57 € 📜 Hist.":
+        - cell "Gelat de xocolata blanca Gelat de xocolata blanca"
+        - cell "—":
+          - combobox:
+            - option "—" [selected]
+            - option "Baix"
+            - option "Mitjà"
+            - option "Alt"
+            - option "Molt alt"
+        - cell "1,57 €"
+        - cell "0,00 €"
+        - cell "1,57 €":
+          - strong: 1,57 €
+        - cell "0.0% —"
+        - cell "1,57 €":
+          - strong: 1,57 €
+        - cell:
+          - spinbutton
+        - cell "📜 Hist.":
+          - button "📜 Hist."
+      - row "Gelat de xuixo Gelat de xuixo — 2,46 € 0,00 € 2,46 € 0.0% — 2,46 € 📜 Hist.":
+        - cell "Gelat de xuixo Gelat de xuixo"
+        - cell "—":
+          - combobox:
+            - option "—" [selected]
+            - option "Baix"
+            - option "Mitjà"
+            - option "Alt"
+            - option "Molt alt"
+        - cell "2,46 €"
+        - cell "0,00 €"
+        - cell "2,46 €":
+          - strong: 2,46 €
+        - cell "0.0% —"
+        - cell "2,46 €":
+          - strong: 2,46 €
+        - cell:
+          - spinbutton
+        - cell "📜 Hist.":
+          - button "📜 Hist."
+      - row "Lotus Lotus — 3,31 € 0,00 € 3,31 € 0.0% — 3,31 € 📜 Hist.":
+        - cell "Lotus Lotus"
+        - cell "—":
+          - combobox:
+            - option "—" [selected]
+            - option "Baix"
+            - option "Mitjà"
+            - option "Alt"
+            - option "Molt alt"
+        - cell "3,31 €"
+        - cell "0,00 €"
+        - cell "3,31 €":
+          - strong: 3,31 €
+        - cell "0.0% —"
+        - cell "3,31 €":
+          - strong: 3,31 €
+        - cell:
+          - spinbutton
+        - cell "📜 Hist.":
+          - button "📜 Hist."
+      - row "Nata Nata — 2,33 € 0,00 € 2,33 € 0.0% — 2,33 € 📜 Hist.":
+        - cell "Nata Nata"
+        - cell "—":
+          - combobox:
+            - option "—" [selected]
+            - option "Baix"
+            - option "Mitjà"
+            - option "Alt"
+            - option "Molt alt"
+        - cell "2,33 €"
+        - cell "0,00 €"
+        - cell "2,33 €":
+          - strong: 2,33 €
+        - cell "0.0% —"
+        - cell "2,33 €":
+          - strong: 2,33 €
+        - cell:
+          - spinbutton
+        - cell "📜 Hist.":
+          - button "📜 Hist."
+      - row "Sorbet de cogombre Sorbet de cogombre — 1,13 € 0,00 € 1,13 € 0.0% — 1,13 € 📜 Hist.":
+        - cell "Sorbet de cogombre Sorbet de cogombre"
+        - cell "—":
+          - combobox:
+            - option "—" [selected]
+            - option "Baix"
+            - option "Mitjà"
+            - option "Alt"
+            - option "Molt alt"
+        - cell "1,13 €"
+        - cell "0,00 €"
+        - cell "1,13 €":
+          - strong: 1,13 €
+        - cell "0.0% —"
+        - cell "1,13 €":
+          - strong: 1,13 €
+        - cell:
+          - spinbutton
+        - cell "📜 Hist.":
+          - button "📜 Hist."
+      - row "Sorbet de llimona Sorbet de llimona — 4,06 € 0,00 € 4,06 € 0.0% — 4,06 € 📜 Hist.":
+        - cell "Sorbet de llimona Sorbet de llimona"
+        - cell "—":
+          - combobox:
+            - option "—" [selected]
+            - option "Baix"
+            - option "Mitjà"
+            - option "Alt"
+            - option "Molt alt"
+        - cell "4,06 €"
+        - cell "0,00 €"
+        - cell "4,06 €":
+          - strong: 4,06 €
+        - cell "0.0% —"
+        - cell "4,06 €":
+          - strong: 4,06 €
+        - cell:
+          - spinbutton
+        - cell "📜 Hist.":
+          - button "📜 Hist."
+      - row "Sorbet de llimona amb alfàbrega Sorbet de llimona amb alfàbrega — 4,59 € 0,00 € 4,59 € 50.0% H 3,06 € 📜 Hist.":
+        - cell "Sorbet de llimona amb alfàbrega Sorbet de llimona amb alfàbrega"
+        - cell "—":
+          - combobox:
+            - option "—" [selected]
+            - option "Baix"
+            - option "Mitjà"
+            - option "Alt"
+            - option "Molt alt"
+        - cell "4,59 €"
+        - cell "0,00 €"
+        - cell "4,59 €":
+          - strong: 4,59 €
+        - cell "50.0% H"
+        - cell "3,06 €":
+          - strong: 3,06 €
+        - cell:
+          - spinbutton
+        - cell "📜 Hist.":
+          - button "📜 Hist."
+      - row "Sorbet de mango Sorbet de mango — 4,52 € 0,00 € 4,52 € 0.0% — 4,52 € 📜 Hist.":
+        - cell "Sorbet de mango Sorbet de mango"
+        - cell "—":
+          - combobox:
+            - option "—" [selected]
+            - option "Baix"
+            - option "Mitjà"
+            - option "Alt"
+            - option "Molt alt"
+        - cell "4,52 €"
+        - cell "0,00 €"
+        - cell "4,52 €":
+          - strong: 4,52 €
+        - cell "0.0% —"
+        - cell "4,52 €":
+          - strong: 4,52 €
+        - cell:
+          - spinbutton
+        - cell "📜 Hist.":
+          - button "📜 Hist."
+      - row "Sorbet de meló Sorbet de meló — 1,06 € 0,00 € 1,06 € 0.0% — 1,06 € 📜 Hist.":
+        - cell "Sorbet de meló Sorbet de meló"
+        - cell "—":
+          - combobox:
+            - option "—" [selected]
+            - option "Baix"
+            - option "Mitjà"
+            - option "Alt"
+            - option "Molt alt"
+        - cell "1,06 €"
+        - cell "0,00 €"
+        - cell "1,06 €":
+          - strong: 1,06 €
+        - cell "0.0% —"
+        - cell "1,06 €":
+          - strong: 1,06 €
+        - cell:
+          - spinbutton
+        - cell "📜 Hist.":
+          - button "📜 Hist."
+      - row "Sorbet de poma Sorbet de poma — 0,64 € 0,00 € 0,64 € 0.0% — 0,64 € 📜 Hist.":
+        - cell "Sorbet de poma Sorbet de poma"
+        - cell "—":
+          - combobox:
+            - option "—" [selected]
+            - option "Baix"
+            - option "Mitjà"
+            - option "Alt"
+            - option "Molt alt"
+        - cell "0,64 €"
+        - cell "0,00 €"
+        - cell "0,64 €":
+          - strong: 0,64 €
+        - cell "0.0% —"
+        - cell "0,64 €":
+          - strong: 0,64 €
+        - cell:
+          - spinbutton
+        - cell "📜 Hist.":
+          - button "📜 Hist."
+      - row "Sorbet de taronja Sorbet de taronja — 1,02 € 0,00 € 1,02 € 0.0% — 1,02 € 📜 Hist.":
+        - cell "Sorbet de taronja Sorbet de taronja"
+        - cell "—":
+          - combobox:
+            - option "—" [selected]
+            - option "Baix"
+            - option "Mitjà"
+            - option "Alt"
+            - option "Molt alt"
+        - cell "1,02 €"
+        - cell "0,00 €"
+        - cell "1,02 €":
+          - strong: 1,02 €
+        - cell "0.0% —"
+        - cell "1,02 €":
+          - strong: 1,02 €
+        - cell:
+          - spinbutton
+        - cell "📜 Hist.":
+          - button "📜 Hist."
+      - row "Sorbet maduixa Sorbet maduixa — 4,05 € 0,00 € 4,05 € 0.0% — 4,05 € 📜 Hist.":
+        - cell "Sorbet maduixa Sorbet maduixa"
+        - cell "—":
+          - combobox:
+            - option "—" [selected]
+            - option "Baix"
+            - option "Mitjà"
+            - option "Alt"
+            - option "Molt alt"
+        - cell "4,05 €"
+        - cell "0,00 €"
+        - cell "4,05 €":
+          - strong: 4,05 €
+        - cell "0.0% —"
+        - cell "4,05 €":
+          - strong: 4,05 €
+        - cell:
+          - spinbutton
+        - cell "📜 Hist.":
+          - button "📜 Hist."
+      - row "Sorbet southside Sorbet southside — 0,77 € 0,00 € 0,77 € 0.0% — 0,77 € 📜 Hist.":
+        - cell "Sorbet southside Sorbet southside"
+        - cell "—":
+          - combobox:
+            - option "—" [selected]
+            - option "Baix"
+            - option "Mitjà"
+            - option "Alt"
+            - option "Molt alt"
+        - cell "0,77 €"
+        - cell "0,00 €"
+        - cell "0,77 €":
+          - strong: 0,77 €
+        - cell "0.0% —"
+        - cell "0,77 €":
+          - strong: 0,77 €
+        - cell:
+          - spinbutton
+        - cell "📜 Hist.":
+          - button "📜 Hist."
+      - row "Xocolata (cacau) Xocolata (cacau) — 4,46 € 0,00 € 4,46 € 0.0% — 4,46 € 📜 Hist.":
+        - cell "Xocolata (cacau) Xocolata (cacau)"
+        - cell "—":
+          - combobox:
+            - option "—" [selected]
+            - option "Baix"
+            - option "Mitjà"
+            - option "Alt"
+            - option "Molt alt"
+        - cell "4,46 €"
+        - cell "0,00 €"
+        - cell "4,46 €":
+          - strong: 4,46 €
+        - cell "0.0% —"
+        - cell "4,46 €":
+          - strong: 4,46 €
+        - cell:
+          - spinbutton
+        - cell "📜 Hist.":
+          - button "📜 Hist."
+      - row "Xocolata amb taronja Xocolata (cacau) — 4,46 € 1,20 € 5,66 € 0.0% — 5,66 € 📜 Hist.":
+        - cell "Xocolata amb taronja Xocolata (cacau)"
+        - cell "—":
+          - combobox:
+            - option "—" [selected]
+            - option "Baix"
+            - option "Mitjà"
+            - option "Alt"
+            - option "Molt alt"
+        - cell "4,46 €"
+        - cell "1,20 €"
+        - cell "5,66 €":
+          - strong: 5,66 €
+        - cell "0.0% —"
+        - cell "5,66 €":
+          - strong: 5,66 €
+        - cell:
+          - spinbutton
+        - cell "📜 Hist.":
+          - button "📜 Hist."
+  - text: H = mitjana històrica O = override manual — = sense dades
+- button "Passos per Defecte": 📜 Passos per defecte
+- button "Ingredients": 🥕 Ingredients
+- button "Estoc de Gelats": 🍨 Estoc de gelats
+- button "Costos": 💰 Costos
+- button "+ Nova recepta": 🍦 Nova recepta
+- button "Nou Temporitzador": ⏱️ Nou temporitzador
+
+Interactive elements:
+- [ref=e1] tab "Gelatari"
+- [ref=e2] tab "Costos"
+- [ref=e3] button "Tanca Costos"
+- [ref=e4] button "Menú d'usuari"
+- [ref=e5] select "— Baix Mitjà Alt Molt alt"
+- [ref=e6] textbox "—"
+- [ref=e7] button "📜 Hist."
+- [ref=e8] select "— Baix Mitjà Alt Molt alt"
+- [ref=e9] textbox "—"
+- [ref=e10] button "📜 Hist."
+- [ref=e11] select "— Baix Mitjà Alt Molt alt"
+- [ref=e12] textbox "—"
+- [ref=e13] button "📜 Hist."
+- [ref=e14] select "— Baix Mitjà Alt Molt alt"
+- [ref=e15] textbox "—"
+- [ref=e16] button "📜 Hist."
+- [ref=e17] select "— Baix Mitjà Alt Molt alt"
+- [ref=e18] textbox "—"
+- [ref=e19] button "📜 Hist."
+- [ref=e20] select "— Baix Mitjà Alt Molt alt"
+- [ref=e21] textbox "—"
+- [ref=e22] button "📜 Hist."
+- [ref=e23] select "— Baix Mitjà Alt Molt alt"
+- [ref=e24] textbox "—"
+- [ref=e25] button "📜 Hist."
+- [ref=e26] select "— Baix Mitjà Alt Molt alt"
+- [ref=e27] textbox "—"
+- [ref=e28] button "📜 Hist."
+- [ref=e29] select "— Baix Mitjà Alt Molt alt"
+- [ref=e30] textbox "—"
+- [ref=e31] button "📜 Hist."
+- [ref=e32] select "— Baix Mitjà Alt Molt alt"
+- [ref=e33] textbox "—"
+- [ref=e34] button "📜 Hist."
+- [ref=e35] select "— Baix Mitjà Alt Molt alt"
+- [ref=e36] textbox "—"
+- [ref=e37] button "📜 Hist."
+- [ref=e38] select "— Baix Mitjà Alt Molt alt"
+- [ref=e39] textbox "—"
+- [ref=e40] button "📜 Hist."
+- [ref=e41] select "— Baix Mitjà Alt Molt alt"
+- [ref=e42] textbox "—"
+- [ref=e43] button "📜 Hist."
+- [ref=e44] select "— Baix Mitjà Alt Molt alt"
+- [ref=e45] textbox "—"
+- [ref=e46] button "📜 Hist."
+- [ref=e47] select "— Baix Mitjà Alt Molt alt"
+- [ref=e48] textbox "—"
+- [ref=e49] button "📜 Hist."
+- [ref=e50] select "— Baix Mitjà Alt Molt alt"
+- [ref=e51] textbox "—"
+- [ref=e52] button "📜 Hist."
+- [ref=e53] select "— Baix Mitjà Alt Molt alt"
+- [ref=e54] textbox "—"
+- [ref=e55] button "📜 Hist."
+- [ref=e56] select "— Baix Mitjà Alt Molt alt"
+- [ref=e57] textbox "—"
+- [ref=e58] button "📜 Hist."
+- [ref=e59] select "— Baix Mitjà Alt Molt alt"
+- [ref=e60] textbox "—"
+- [ref=e61] button "📜 Hist."
+- [ref=e62] select "— Baix Mitjà Alt Molt alt"
+- [ref=e63] textbox "—"
+- [ref=e64] button "📜 Hist."
+- [ref=e65] select "— Baix Mitjà Alt Molt alt"
+- [ref=e66] textbox "—"
+- [ref=e67] button "📜 Hist."
+- [ref=e68] select "— Baix Mitjà Alt Molt alt"
+- [ref=e69] textbox "—"
+- [ref=e70] button "📜 Hist."
+- [ref=e71] select "— Baix Mitjà Alt Molt alt"
+- [ref=e72] textbox "—"
+- [ref=e73] button "📜 Hist."
+- [ref=e74] select "— Baix Mitjà Alt Molt alt"
+- [ref=e75] textbox "—"
+- [ref=e76] button "📜 Hist."
+- [ref=e77] select "— Baix Mitjà Alt Molt alt"
+- [ref=e78] textbox "—"
+- [ref=e79] button "📜 Hist."
+- [ref=e80] select "— Baix Mitjà Alt Molt alt"
+- [ref=e81] textbox "—"
+- [ref=e82] button "📜 Hist."
+- [ref=e83] select "— Baix Mitjà Alt Molt alt"
+- [ref=e84] textbox "—"
+- [ref=e85] button "📜 Hist."
+- [ref=e86] select "— Baix Mitjà Alt Molt alt"
+- [ref=e87] textbox "—"
+- [ref=e88] button "📜 Hist."
+- [ref=e89] select "— Baix Mitjà Alt Molt alt"
+- [ref=e90] textbox "—"
+- [ref=e91] button "📜 Hist."
+- [ref=e92] select "— Baix Mitjà Alt Molt alt"
+- [ref=e93] textbox "—"
+- [ref=e94] button "📜 Hist."
+- [ref=e95] select "— Baix Mitjà Alt Molt alt"
+- [ref=e96] textbox "—"
+- [ref=e97] button "📜 Hist."
+- [ref=e98] select "— Baix Mitjà Alt Molt alt"
+- [ref=e99] textbox "—"
+- [ref=e100] button "📜 Hist."
+- [ref=e101] button "Passos per Defecte"
+- [ref=e102] button "Ingredients"
+- [ref=e103] button "Estoc de Gelats"
+- [ref=e104] button "Costos"
+- [ref=e105] button "+ Nova recepta"
+- [ref=e106] button "Nou Temporitzador"
+
+Visible text:
+- h2: Costos
