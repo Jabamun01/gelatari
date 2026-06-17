@@ -213,6 +213,26 @@ export const DayEditModal: React.FC<DayEditModalProps> = ({
   );
   const [notes, setNotes] = useState(() => record?.notes || '');
 
+  // Evaluate a simple arithmetic expression (e.g. "55.8+612", "450-30")
+  // Only allows digits, +, -, *, /, ., (, ), whitespace.
+  const evaluateExpr = (s: string): string => {
+    const trimmed = s.trim();
+    if (!trimmed) return s;
+    // If it's already just a plain number, return as-is
+    if (/^\d+\.?\d*$/.test(trimmed)) return trimmed;
+    // Only allow safe arithmetic characters
+    if (!/^[\d+\-*/.()\s]+$/.test(trimmed)) return s;
+    try {
+      const result = new Function(`return (${trimmed})`)();
+      if (typeof result === 'number' && isFinite(result)) {
+        return String(Math.round(result * 100) / 100);
+      }
+    } catch {
+      // evaluation failed, keep original
+    }
+    return s;
+  };
+
   // Parse numbers safely
   const parseNum = (s: string) => {
     const n = parseFloat(s);
@@ -271,11 +291,11 @@ export const DayEditModal: React.FC<DayEditModalProps> = ({
           </FieldLabel>
           {isFirstRecord ? (
             <FieldInput
-              type="number"
-              step="0.01"
-              min="0"
+              type="text"
+              inputMode="decimal"
               value={startCashOverride}
               onChange={(e) => setStartCashOverride(e.target.value)}
+              onBlur={(e) => setStartCashOverride(evaluateExpr(e.target.value))}
               placeholder="0.00"
             />
           ) : (
@@ -290,11 +310,11 @@ export const DayEditModal: React.FC<DayEditModalProps> = ({
         <FieldGroup>
           <FieldLabel>💳 Ingressos targeta</FieldLabel>
           <FieldInput
-            type="number"
-            step="0.01"
-            min="0"
+            type="text"
+            inputMode="decimal"
             value={cardAmount}
             onChange={(e) => setCardAmount(e.target.value)}
+            onBlur={(e) => setCardAmount(evaluateExpr(e.target.value))}
             placeholder="0.00"
           />
         </FieldGroup>
@@ -302,11 +322,11 @@ export const DayEditModal: React.FC<DayEditModalProps> = ({
         <FieldGroup>
           <FieldLabel>💵 Cash al final del dia</FieldLabel>
           <FieldInput
-            type="number"
-            step="0.01"
-            min="0"
+            type="text"
+            inputMode="decimal"
             value={endCash}
             onChange={(e) => setEndCash(e.target.value)}
+            onBlur={(e) => setEndCash(evaluateExpr(e.target.value))}
             placeholder="0.00"
           />
         </FieldGroup>
@@ -314,11 +334,11 @@ export const DayEditModal: React.FC<DayEditModalProps> = ({
         <FieldGroup>
           <FieldLabel>💵 Cash retirat del dia</FieldLabel>
           <FieldInput
-            type="number"
-            step="0.01"
-            min="0"
+            type="text"
+            inputMode="decimal"
             value={cashRetired}
             onChange={(e) => setCashRetired(e.target.value)}
+            onBlur={(e) => setCashRetired(evaluateExpr(e.target.value))}
             placeholder="0.00"
           />
         </FieldGroup>
