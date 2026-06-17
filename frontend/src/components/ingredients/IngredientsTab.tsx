@@ -447,7 +447,7 @@ export const IngredientsTab = ({ onOpenIngredientEditTab, onOpenRecipeEditTab }:
                         {ingredient.mermaPercent > 0 && (
                           <MermaBadge>Merma: {ingredient.mermaPercent}%</MermaBadge>
                         )}
-                        {ingredient.costPerKg > 0 && (
+                        {ingredient.costPerKg != null && ingredient.costPerKg > 0 && (
                           <MermaBadge style={{ background: 'var(--info-color-light, #d0e8ff)', color: 'var(--info-color-dark, #0056b3)' }}>
                             €{ingredient.costPerKg.toFixed(2)}/kg
                           </MermaBadge>

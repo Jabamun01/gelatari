@@ -179,7 +179,7 @@ export const IngredientEditModal: React.FC<IngredientEditModalProps> = ({
       aliases: aliases.filter((alias) => alias.trim() !== '').map((alias) => alias.trim()),
       quantityInStock: stockQuantity,
       mermaPercent: mermaPercent,
-      costPerKg: costPerKg, // null = clear the price
+      costPerKg: costPerKg as number | undefined, // null won't be passed for create
     };
 
     if (!commonData.name) {
@@ -190,7 +190,10 @@ export const IngredientEditModal: React.FC<IngredientEditModalProps> = ({
 
     try {
       if (isEditMode && ingredientId) {
-        const payload: UpdateIngredientDto = commonData;
+        const payload: UpdateIngredientDto = {
+          ...commonData,
+          costPerKg: costPerKg, // null = clear price on update
+        };
         await updateIngredient(ingredientId, payload);
         queryClient.invalidateQueries({ queryKey: ['ingredients'] });
         queryClient.invalidateQueries({ queryKey: ['ingredient', ingredientId] });
@@ -198,7 +201,10 @@ export const IngredientEditModal: React.FC<IngredientEditModalProps> = ({
         queryClient.invalidateQueries({ queryKey: ['ingredientDependencies'] });
         onClose();
       } else {
-        const payload: CreateIngredientDto = commonData;
+        const payload: CreateIngredientDto = {
+          ...commonData,
+          costPerKg: costPerKg ?? undefined, // null → undefined for create
+        };
         await createIngredient(payload);
         queryClient.invalidateQueries({ queryKey: ['ingredients'] });
         queryClient.invalidateQueries({ queryKey: ['recipeDependencies'] });
