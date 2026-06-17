@@ -481,7 +481,7 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({ currentYear }) => 
                   innerRadius={60}
                   outerRadius={100}
                   dataKey="value"
-                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                  label={({ name, percent }: { name?: unknown; percent?: number }) => `${name} ${((percent ?? 0) * 100).toFixed(0)}%`}
                 >
                   {PIE_COLORS.map((color, i) => (
                     <Cell key={i} fill={color} />
@@ -514,7 +514,7 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({ currentYear }) => 
                 />
                 <YAxis tick={{ fontSize: 12 }} tickFormatter={(v) => `€${v}`} />
                 <Tooltip
-                  formatter={(v, name: string) => [formatEurDec(v as number), name === 'total' ? 'Total' : name === 'card' ? 'Targeta' : 'Cash']}
+                  formatter={(v, name) => [formatEurDec(v as number), name === 'total' ? 'Total' : name === 'card' ? 'Targeta' : 'Cash']}
                   labelFormatter={(label) => `Data: ${label}`}
                 />
                 <Legend />
