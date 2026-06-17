@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { styled } from '@linaria/react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { fetchFlavorCosts } from '../../api/costs';
@@ -120,6 +120,70 @@ const InlineEdit = styled.input`
   }
 `;
 
+const ThSortable = styled.th<{ $active?: boolean; $dir?: 'asc' | 'desc' }>`
+  cursor: pointer;
+  user-select: none;
+  background: ${({ $active }) =>
+    $active ? 'var(--primary-color-light, #e8f0fe)' : 'var(--surface-color-light)'};
+  color: ${({ $active }) =>
+    $active ? 'var(--primary-color, #1a73e8)' : 'inherit'};
+
+  &:hover {
+    background: var(--primary-color-light, #e8f0fe);
+  }
+
+  &::after {
+    content: ${({ $active, $dir }) =>
+      $active
+        ? $dir === 'asc'
+          ? "' ▲'"
+          : "' ▼'"
+        : "' \u2003'"};
+    font-size: var(--font-size-xs);
+    opacity: 0.7;
+  }
+`;
+
+/** Cell that shows cost in red when ingredient prices are missing */
+const CostCell = styled.td<{ $missing?: boolean }>`
+  color: ${({ $missing }) => ($missing ? 'var(--danger-color, #dc3545)' : 'inherit')};
+  font-weight: ${({ $missing }) => ($missing ? '600' : 'inherit')};
+  position: relative;
+  cursor: ${({ $missing }) => ($missing ? 'help' : 'default')};
+
+  &:hover .missing-tooltip {
+    display: block;
+  }
+`;
+
+const MissingTooltip = styled.div`
+  display: none;
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #333;
+  color: #fff;
+  padding: 6px 10px;
+  border-radius: var(--border-radius-sm);
+  font-size: var(--font-size-xs);
+  white-space: nowrap;
+  z-index: 10;
+  pointer-events: none;
+  box-shadow: var(--shadow-lg);
+  line-height: 1.4;
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-left: -4px;
+    border: 4px solid transparent;
+    border-top-color: #333;
+  }
+`;
+
 const FeinaSelect = styled.select`
   padding: 2px 4px;
   border: var(--border-width) solid var(--border-color);
@@ -183,11 +247,47 @@ export const CostosTab = ({ onOpenIceCreamFlavorEditTab }: CostosTabProps) => {
   const [historyRecipeId, setHistoryRecipeId] = useState<string | undefined>(undefined);
   const [editingPrice, setEditingPrice] = useState<Record<string, string>>({});
   const [_editingFeina, setEditingFeina] = useState<Record<string, string>>({});
+  const [sort, setSort] = useState<{ column: string; dir: 'asc' | 'desc' }>({
+    column: '',
+    dir: 'asc',
+  });
 
   const { data: costs, isLoading, isError, error } = useQuery<FlavorCostRow[]>({
     queryKey: ['flavorCosts'],
     queryFn: fetchFlavorCosts,
   });
+
+  // Sorting — click once = asc, twice = desc, three times = clear
+  const handleSort = useCallback((column: string) => {
+    setSort((prev) => {
+      if (prev.column === column) {
+        if (prev.dir === 'asc') return { column, dir: 'desc' };
+        return { column: '', dir: 'asc' }; // third click clears sort
+      }
+      return { column, dir: 'asc' };
+    });
+  }, []);
+
+  const sortedCosts = useMemo(() => {
+    if (!costs || !sort.column) return costs ?? [];
+    return [...costs].sort((a, b) => {
+      let aVal: any, bVal: any;
+      switch (sort.column) {
+        case 'name': aVal = a.name.toLowerCase(); bVal = b.name.toLowerCase(); break;
+        case 'feina': aVal = a.feina || ''; bVal = b.feina || ''; break;
+        case 'baseMix': aVal = a.baseMixCostPerKg; bVal = b.baseMixCostPerKg; break;
+        case 'mixIns': aVal = a.mixInsCostPerKg; bVal = b.mixInsCostPerKg; break;
+        case 'total': aVal = a.totalCostPerKg; bVal = b.totalCostPerKg; break;
+        case 'overrun': aVal = a.overrunPercent; bVal = b.overrunPercent; break;
+        case 'costPerLiter': aVal = a.costPerLiter; bVal = b.costPerLiter; break;
+        case 'salePrice': aVal = a.salePriceSmall ?? -1; bVal = b.salePriceSmall ?? -1; break;
+        default: return 0;
+      }
+      if (aVal < bVal) return sort.dir === 'asc' ? -1 : 1;
+      if (aVal > bVal) return sort.dir === 'asc' ? 1 : -1;
+      return 0;
+    });
+  }, [costs, sort.column, sort.dir]);
 
   // Mutation for updating sale price, feina, and overrun override
   const updatePriceMutation = useMutation({
@@ -266,19 +366,51 @@ export const CostosTab = ({ onOpenIceCreamFlavorEditTab }: CostosTabProps) => {
         <Table>
           <thead>
             <tr>
-              <th>Sabor</th>
-              <th>Feina</th>
-              <th>Base €/kg</th>
-              <th>+Mix-ins €/kg</th>
-              <th>Total €/kg</th>
-              <th>Overrun</th>
-              <th>€/L</th>
-              <th>Preu venda 1L</th>
+              <ThSortable
+                $active={sort.column === 'name'}
+                $dir={sort.column === 'name' ? sort.dir : undefined}
+                onClick={() => handleSort('name')}
+              >Sabor</ThSortable>
+              <ThSortable
+                $active={sort.column === 'feina'}
+                $dir={sort.column === 'feina' ? sort.dir : undefined}
+                onClick={() => handleSort('feina')}
+              >Feina</ThSortable>
+              <ThSortable
+                $active={sort.column === 'baseMix'}
+                $dir={sort.column === 'baseMix' ? sort.dir : undefined}
+                onClick={() => handleSort('baseMix')}
+              >Base €/kg</ThSortable>
+              <ThSortable
+                $active={sort.column === 'mixIns'}
+                $dir={sort.column === 'mixIns' ? sort.dir : undefined}
+                onClick={() => handleSort('mixIns')}
+              >+Mix-ins €/kg</ThSortable>
+              <ThSortable
+                $active={sort.column === 'total'}
+                $dir={sort.column === 'total' ? sort.dir : undefined}
+                onClick={() => handleSort('total')}
+              >Total €/kg</ThSortable>
+              <ThSortable
+                $active={sort.column === 'overrun'}
+                $dir={sort.column === 'overrun' ? sort.dir : undefined}
+                onClick={() => handleSort('overrun')}
+              >Overrun</ThSortable>
+              <ThSortable
+                $active={sort.column === 'costPerLiter'}
+                $dir={sort.column === 'costPerLiter' ? sort.dir : undefined}
+                onClick={() => handleSort('costPerLiter')}
+              >€/L</ThSortable>
+              <ThSortable
+                $active={sort.column === 'salePrice'}
+                $dir={sort.column === 'salePrice' ? sort.dir : undefined}
+                onClick={() => handleSort('salePrice')}
+              >Preu venda 1L</ThSortable>
               <th></th>
             </tr>
           </thead>
           <tbody>
-            {costs.map((row) => (
+            {sortedCosts.map((row) => (
               <tr key={row._id}>
                 <td>
                   <FlavorName
@@ -319,16 +451,52 @@ export const CostosTab = ({ onOpenIceCreamFlavorEditTab }: CostosTabProps) => {
                     <option value="Molt alt">Molt alt</option>
                   </FeinaSelect>
                 </td>
-                <td>{formatEur(row.baseMixCostPerKg)}</td>
-                <td>{formatEur(row.mixInsCostPerKg)}</td>
-                <td><strong>{formatEur(row.totalCostPerKg)}</strong></td>
+                <CostCell $missing={row.missingBaseIngredientNames.length > 0}>
+                  {formatEur(row.baseMixCostPerKg)}
+                  {row.missingBaseIngredientNames.length > 0 && (
+                    <MissingTooltip className="missing-tooltip">
+                      Falta preu: {row.missingBaseIngredientNames.join(', ')}
+                    </MissingTooltip>
+                  )}
+                </CostCell>
+                <CostCell $missing={row.missingMixInIngredientNames.length > 0}>
+                  {formatEur(row.mixInsCostPerKg)}
+                  {row.missingMixInIngredientNames.length > 0 && (
+                    <MissingTooltip className="missing-tooltip">
+                      Falta preu: {row.missingMixInIngredientNames.join(', ')}
+                    </MissingTooltip>
+                  )}
+                </CostCell>
+                <CostCell $missing={row.missingBaseIngredientNames.length > 0 || row.missingMixInIngredientNames.length > 0}>
+                  <strong>{formatEur(row.totalCostPerKg)}</strong>
+                  {(row.missingBaseIngredientNames.length > 0 || row.missingMixInIngredientNames.length > 0) && (
+                    <MissingTooltip className="missing-tooltip">
+                      Falta preu:{' '}
+                      {[
+                        ...row.missingBaseIngredientNames,
+                        ...row.missingMixInIngredientNames,
+                      ].join(', ')}
+                    </MissingTooltip>
+                  )}
+                </CostCell>
                 <td>
                   {formatPercent(row.overrunPercent)}
                   <OverrunBadge source={row.overrunSource}>
                     {row.overrunSource === 'override' ? 'O' : row.overrunSource === 'historical' ? 'H' : '—'}
                   </OverrunBadge>
                 </td>
-                <td><strong>{formatEur(row.costPerLiter)}</strong></td>
+                <CostCell $missing={row.missingBaseIngredientNames.length > 0 || row.missingMixInIngredientNames.length > 0}>
+                  <strong>{formatEur(row.costPerLiter)}</strong>
+                  {(row.missingBaseIngredientNames.length > 0 || row.missingMixInIngredientNames.length > 0) && (
+                    <MissingTooltip className="missing-tooltip">
+                      Falta preu:{' '}
+                      {[
+                        ...row.missingBaseIngredientNames,
+                        ...row.missingMixInIngredientNames,
+                      ].join(', ')}
+                    </MissingTooltip>
+                  )}
+                </CostCell>
                 <td>
                   <InlineEdit
                     type="number"

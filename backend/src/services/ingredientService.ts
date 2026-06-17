@@ -309,8 +309,13 @@ export const updateIngredientById = async (
     if (updateData.hasOwnProperty('mermaPercent')) {
       updatesToApply.mermaPercent = updateData.mermaPercent;
     }
+    let needsCostPerKgUnset = false;
     if (updateData.hasOwnProperty('costPerKg')) {
-      updatesToApply.costPerKg = updateData.costPerKg;
+      if (updateData.costPerKg === null) {
+        needsCostPerKgUnset = true;
+      } else {
+        updatesToApply.costPerKg = updateData.costPerKg;
+      }
     }
 
     if (Object.keys(updatesToApply).length === 0) {
@@ -331,9 +336,14 @@ export const updateIngredientById = async (
       }
     }
 
+    const updateQuery: Record<string, any> = { $set: updatesToApply };
+    if (needsCostPerKgUnset) {
+      updateQuery.$unset = { costPerKg: '' };
+    }
+
     const updatedIngredient = await Ingredient.findByIdAndUpdate(
       id,
-      { $set: updatesToApply },
+      updateQuery,
       { new: true, runValidators: true }
     );
 

@@ -7,7 +7,7 @@ export interface Ingredient {
   aliases: string[];
   quantityInStock: number;
   mermaPercent: number;
-  costPerKg: number;
+  costPerKg?: number;
 }
 
 /**

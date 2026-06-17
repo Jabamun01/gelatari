@@ -28,7 +28,7 @@ export const createIngredientHandler = async (req: Request, res: Response) => {
     const finalAliases = aliases ? aliases.map((a: string) => a.trim()).filter((a: string) => a) : []; // Trim and filter empty aliases
     const finalQuantityInStock = quantityInStock !== undefined ? Number(quantityInStock) : undefined;
     const finalMermaPercent = mermaPercent !== undefined ? Number(mermaPercent) : undefined;
-    const finalCostPerKg = costPerKg !== undefined ? Number(costPerKg) : undefined;
+    const finalCostPerKg = costPerKg !== undefined && costPerKg !== null ? Number(costPerKg) : undefined;
 
     // Check if name or any alias conflicts with existing names or aliases (case-insensitive)
     const potentialConflicts = [trimmedName, ...finalAliases];
@@ -180,11 +180,16 @@ export const updateIngredientHandler = async (req: Request, res: Response, next:
     }
 
     if (costPerKg !== undefined) {
-      if (typeof costPerKg !== 'number' || isNaN(costPerKg) || costPerKg < 0) {
+      if (costPerKg === null) {
+        // null means unset / clear the price
+        updateData.costPerKg = null as any;
+        hasValidUpdateField = true;
+      } else if (typeof costPerKg !== 'number' || isNaN(costPerKg) || costPerKg < 0) {
         return res.status(400).json({ message: 'CostPerKg must be a non-negative number if provided.' });
+      } else {
+        updateData.costPerKg = costPerKg;
+        hasValidUpdateField = true;
       }
-      updateData.costPerKg = costPerKg;
-      hasValidUpdateField = true;
     }
 
     if (!hasValidUpdateField && Object.keys(req.body).length > 0) {

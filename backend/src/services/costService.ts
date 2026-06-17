@@ -30,6 +30,10 @@ export interface FlavorCostRow {
 
   // Sale price
   salePriceSmall?: number;
+
+  // Missing price tracking
+  missingBaseIngredientNames: string[];
+  missingMixInIngredientNames: string[];
 }
 
 // ---------------------------------------------------------------------------
@@ -37,6 +41,11 @@ export interface FlavorCostRow {
 // ---------------------------------------------------------------------------
 
 const MAX_RECURSION_DEPTH = 100;
+
+interface CostResult {
+  cost: number;
+  missingIngredientNames: string[];
+}
 
 /**
  * Recursively compute the cost per kg (1000g) of a recipe.
@@ -51,15 +60,15 @@ async function computeRecipeCostPerKg(
   recipeId: string,
   visited: Set<string>,
   depth: number = 0,
-): Promise<number> {
+): Promise<CostResult> {
   if (depth > MAX_RECURSION_DEPTH) {
     console.warn(`[costService] Max recursion depth (${MAX_RECURSION_DEPTH}) reached for recipe ${recipeId}`);
-    return 0;
+    return { cost: 0, missingIngredientNames: [] };
   }
 
   if (visited.has(recipeId)) {
     console.warn(`[costService] Circular recipe dependency detected: ${recipeId}`);
-    return 0;
+    return { cost: 0, missingIngredientNames: [] };
   }
 
   visited.add(recipeId);
@@ -72,29 +81,37 @@ async function computeRecipeCostPerKg(
   if (!recipe) {
     console.warn(`[costService] Recipe not found: ${recipeId}`);
     visited.delete(recipeId);
-    return 0;
+    return { cost: 0, missingIngredientNames: [] };
   }
 
+  const missing = new Set<string>();
+
   // Direct ingredients
-  const directTotal = recipe.ingredients.reduce((sum, ing) => {
-    const costPerKg = (ing.ingredient as any)?.costPerKg ?? 0;
+  let directTotal = 0;
+  for (const ing of recipe.ingredients) {
+    const ingData = ing.ingredient as any;
+    const costPerKg = ingData?.costPerKg;
+    if (costPerKg == null && ingData?.name) {
+      missing.add(ingData.name);
+    }
     const grams = ing.amountGrams || 0;
-    return sum + (grams / 1000) * costPerKg;
-  }, 0);
+    directTotal += (grams / 1000) * (costPerKg ?? 0);
+  }
 
   // Linked recipes (recursive)
   let linkedTotal = 0;
   for (const linked of recipe.linkedRecipes) {
     const linkedRecipeId = (linked.recipe as any)?._id?.toString();
     if (linkedRecipeId) {
-      const linkedCost = await computeRecipeCostPerKg(linkedRecipeId, visited, depth + 1);
+      const linkedResult = await computeRecipeCostPerKg(linkedRecipeId, visited, depth + 1);
       const grams = linked.amountGrams || 0;
-      linkedTotal += (grams / 1000) * linkedCost;
+      linkedTotal += (grams / 1000) * linkedResult.cost;
+      linkedResult.missingIngredientNames.forEach(name => missing.add(name));
     }
   }
 
   visited.delete(recipeId);
-  return directTotal + linkedTotal;
+  return { cost: directTotal + linkedTotal, missingIngredientNames: [...missing] };
 }
 
 /**
@@ -165,9 +182,14 @@ export async function computeFlavorCosts(): Promise<FlavorCostRow[]> {
     let overrunPercent = 0;
     let overrunSource: FlavorCostRow['overrunSource'] = 'none';
 
+    let missingBaseIngredientNames: string[] = [];
+    let missingMixInIngredientNames: string[] = [];
+
     if (recipe && recipeId) {
       // Compute base mix cost (recursive)
-      baseMixCostPerKg = await computeRecipeCostPerKg(recipeId, new Set());
+      const costResult = await computeRecipeCostPerKg(recipeId, new Set());
+      baseMixCostPerKg = costResult.cost;
+      missingBaseIngredientNames = costResult.missingIngredientNames;
 
       // Overrun
       const overrunInfo = getEffectiveOverrun(recipe);
@@ -181,8 +203,12 @@ export async function computeFlavorCosts(): Promise<FlavorCostRow[]> {
     // Mix-in costs
     let mixInsCostPerKg = 0;
     for (const mixIn of flavor.mixIns || []) {
-      const ingCostPerKg = (mixIn.ingredient as any)?.costPerKg ?? 0;
-      mixInsCostPerKg += (mixIn.amountPerKg / 1000) * ingCostPerKg;
+      const ingData = mixIn.ingredient as any;
+      const costPerKg = ingData?.costPerKg;
+      if (costPerKg == null && ingData?.name) {
+        missingMixInIngredientNames.push(ingData.name);
+      }
+      mixInsCostPerKg += (mixIn.amountPerKg / 1000) * (costPerKg ?? 0);
     }
 
     const totalCostPerKg = baseMixCostPerKg + mixInsCostPerKg;
@@ -202,6 +228,8 @@ export async function computeFlavorCosts(): Promise<FlavorCostRow[]> {
       costPerLiter: round2(costPerLiter),
       feina,
       salePriceSmall: flavor.salePriceSmall ?? undefined,
+      missingBaseIngredientNames,
+      missingMixInIngredientNames,
     });
   }
 

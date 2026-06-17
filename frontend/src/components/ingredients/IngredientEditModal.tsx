@@ -105,7 +105,7 @@ export const IngredientEditModal: React.FC<IngredientEditModalProps> = ({
   const [aliases, setAliases] = useState<string[]>(['']);
   const [stockQuantity, setStockQuantity] = useState<number>(0);
   const [mermaPercent, setMermaPercent] = useState<number>(0);
-  const [costPerKg, setCostPerKg] = useState<number>(0);
+  const [costPerKg, setCostPerKg] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(isEditMode);
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -117,7 +117,7 @@ export const IngredientEditModal: React.FC<IngredientEditModalProps> = ({
       setAliases(['']);
       setStockQuantity(0);
       setMermaPercent(0);
-      setCostPerKg(0);
+      setCostPerKg(null);
       setError(null);
       setIsLoading(false);
       setIsSaving(false);
@@ -134,7 +134,7 @@ export const IngredientEditModal: React.FC<IngredientEditModalProps> = ({
           setAliases(data.aliases && data.aliases.length > 0 ? data.aliases : ['']);
           setStockQuantity(data.quantityInStock || 0);
           setMermaPercent(data.mermaPercent || 0);
-          setCostPerKg(data.costPerKg ?? 0);
+          setCostPerKg(data.costPerKg ?? null);
           setIsLoading(false);
         })
         .catch((err) => {
@@ -150,7 +150,7 @@ export const IngredientEditModal: React.FC<IngredientEditModalProps> = ({
       setAliases(['']);
       setStockQuantity(0);
       setMermaPercent(0);
-      setCostPerKg(0);
+      setCostPerKg(null);
       setIsLoading(false);
       setError(null);
     }
@@ -179,7 +179,7 @@ export const IngredientEditModal: React.FC<IngredientEditModalProps> = ({
       aliases: aliases.filter((alias) => alias.trim() !== '').map((alias) => alias.trim()),
       quantityInStock: stockQuantity,
       mermaPercent: mermaPercent,
-      costPerKg: costPerKg,
+      costPerKg: costPerKg, // null = clear the price
     };
 
     if (!commonData.name) {
@@ -321,11 +321,19 @@ export const IngredientEditModal: React.FC<IngredientEditModalProps> = ({
           <FormInput
             type="number"
             id="costPerKg"
-            value={costPerKg}
-            onChange={(e) => setCostPerKg(Math.max(0, Number(e.target.value)))}
+            value={costPerKg === null ? '' : costPerKg}
+            onChange={(e) => {
+              const raw = e.target.value;
+              if (raw === '') {
+                setCostPerKg(null);
+              } else {
+                setCostPerKg(Math.max(0, Number(raw)));
+              }
+            }}
             min="0"
             step="0.01"
             disabled={isSaving}
+            placeholder="—"
           />
         </FormGroup>
 

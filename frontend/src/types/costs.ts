@@ -22,4 +22,8 @@ export interface FlavorCostRow {
 
   // Sale price (set manually by user)
   salePriceSmall?: number;
+
+  // Missing price tracking
+  missingBaseIngredientNames: string[];
+  missingMixInIngredientNames: string[];
 }
