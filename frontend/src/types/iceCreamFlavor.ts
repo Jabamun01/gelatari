@@ -25,6 +25,9 @@ export interface IceCreamFlavor {
   essentialLarge: boolean;
   essentialSmall: boolean;
 
+  // Sale price
+  salePriceSmall?: number;
+
   // Virtuals (included in JSON by Mongoose)
   totalLargeContainers?: number;
   totalLargeLiters?: number;
@@ -81,6 +84,7 @@ export interface UpdateFlavorDto {
   essentialLarge?: boolean;
   essentialSmall?: boolean;
   mixIns?: Array<{ ingredient: string; amountPerKg: number }>;
+  salePriceSmall?: number;
 }
 
 /** DTO for converting mix to frozen containers. */

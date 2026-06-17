@@ -14,6 +14,8 @@ import {
   resetAllMixHandler,
   resetAllContainersHandler,
   resetAllFlavorsHandler,
+  updateEventHandler,
+  deleteEventHandler,
 } from '../controllers/iceCreamFlavorController';
 
 const router = Router();
@@ -30,6 +32,8 @@ router.delete('/:id', deleteFlavorHandler as RequestHandler);
 
 // Events
 router.get('/events', getEventsHandler as RequestHandler);
+router.put('/events/:id', updateEventHandler as RequestHandler);
+router.delete('/events/:id', deleteEventHandler as RequestHandler);
 
 // Business operations
 router.patch(

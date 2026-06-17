@@ -9,6 +9,7 @@ import recipeRoutes from './routes/recipeRoutes';
 import defaultStepsRoutes from './routes/defaultStepsRoutes';
 import authRoutes from './routes/authRoutes';
 import iceCreamFlavorRoutes from './routes/iceCreamFlavorRoutes';
+import costRoutes from './routes/costRoutes';
 import { authMiddleware } from './middleware/authMiddleware';
 import { errorHandler } from './middleware/errorHandler';
 import { seedDefaultUser } from './services/authService';
@@ -74,6 +75,7 @@ app.use('/api/ingredients', ingredientRoutes);
 app.use('/api/recipes', recipeRoutes);
 app.use('/api/ice-cream', iceCreamFlavorRoutes);
 app.use('/api/default-steps', defaultStepsRoutes);
+app.use('/api/costs', costRoutes);
 
 // Centralized error handler (must be after all routes)
 app.use(errorHandler);

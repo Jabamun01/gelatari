@@ -36,6 +36,9 @@ export interface IIceCreamFlavor extends Document {
   essentialLarge: boolean;
   essentialSmall: boolean;
 
+  // --- Sale price ---
+  salePriceSmall?: number; // manual sell price for a 1L container
+
   // --- Computed virtuals ---
   totalLargeContainers: number;
   totalLargeLiters: number;
@@ -114,6 +117,11 @@ const iceCreamFlavorSchema = new Schema<IIceCreamFlavor>(
     essentialSmall: {
       type: Boolean,
       default: false,
+    },
+    salePriceSmall: {
+      type: Number,
+      default: undefined,
+      min: 0,
     },
   },
   {

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { styled } from '@linaria/react';
-import { TabData, RecipeTabData, RecipeEditorTabData, IngredientsTabData, SearchTabData, IceCreamDashboardTabData } from './types/tabs';
+import { TabData, RecipeTabData, RecipeEditorTabData, IngredientsTabData, SearchTabData, IceCreamDashboardTabData, CostosTabData } from './types/tabs';
 import { TabBar } from './components/tabs/TabBar';
 import { TabContent } from './components/tabs/TabContent';
 import { FloatingActionButtonsGroup } from './components/common/FloatingActionButtonsGroup';
@@ -95,6 +95,16 @@ const loadAppState = (): { tabs: TabData[]; activeTabId: string } | null => {
                 title: (loadedTab as IceCreamDashboardTabData).title || 'Estoc Gelats',
                 isCloseable: (loadedTab as IceCreamDashboardTabData).isCloseable ?? true,
               } as IceCreamDashboardTabData;
+              break;
+            }
+            case 'costos': {
+              processedTab = {
+                ...loadedTab,
+                type: 'costos',
+                id: (loadedTab as CostosTabData).id || 'costos',
+                title: (loadedTab as CostosTabData).title || 'Costos',
+                isCloseable: (loadedTab as CostosTabData).isCloseable ?? true,
+              } as CostosTabData;
               break;
             }
             default:
@@ -366,6 +376,24 @@ const App = () => {
     setActiveTabId(tabId);
   };
 
+  // Costos tab
+  const handleOpenCostosTab = () => {
+    const tabId = 'costos';
+    const existing = tabs.find(t => t.id === tabId);
+    if (existing) {
+      setActiveTabId(tabId);
+      return;
+    }
+    const newTab: CostosTabData = {
+      id: tabId,
+      title: 'Costos',
+      type: 'costos',
+      isCloseable: true,
+    };
+    setTabs(prev => [...prev, newTab]);
+    setActiveTabId(tabId);
+  };
+
 
 // Calculate activeTab based on the current state *after* potential updates
 const activeTab: TabData | undefined = tabs.find(tab => tab.id === activeTabId);
@@ -405,6 +433,7 @@ const activeTab: TabData | undefined = tabs.find(tab => tab.id === activeTabId);
         onOpenIngredientsTab={handleOpenIngredientsTab}
         onOpenNewRecipeEditor={handleOpenNewRecipeEditor}
         onOpenIceCreamDashboardTab={handleOpenIceCreamDashboardTab}
+        onOpenCostosTab={handleOpenCostosTab}
       />
       <FloatingTimersDisplay />
       <AlarmSoundHandler />

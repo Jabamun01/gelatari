@@ -79,13 +79,14 @@ export const updateFlavorHandler = async (
 ): Promise<void> => {
   try {
     const { id } = req.params;
-    const { name, essentialLarge, essentialSmall, mixIns } = req.body;
+    const { name, essentialLarge, essentialSmall, mixIns, salePriceSmall } = req.body;
 
     const updates: any = {};
     if (name !== undefined) updates.name = name;
     if (essentialLarge !== undefined) updates.essentialLarge = essentialLarge;
     if (essentialSmall !== undefined) updates.essentialSmall = essentialSmall;
     if (mixIns !== undefined) updates.mixIns = mixIns;
+    if (salePriceSmall !== undefined) updates.salePriceSmall = salePriceSmall;
 
     if (Object.keys(updates).length === 0) {
       res.status(400).json({ message: 'No valid fields to update.' });
@@ -433,5 +434,62 @@ export const getEventsHandler = async (
   } catch (error) {
     console.error('Error fetching events:', error);
     res.status(500).json({ message: 'Failed to fetch events.' });
+  }
+};
+
+/**
+ * PUT /api/ice-cream/events/:id
+ * Update a conversion event (mix kg, frozen L, containers) and replay.
+ */
+export const updateEventHandler = async (
+  req: Request,
+  res: Response,
+): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const { mixKgConverted, frozenLitersProduced, largeContainersAdded, smallContainersAdded } = req.body;
+
+    const updateData: any = {};
+    if (mixKgConverted !== undefined) updateData.mixKgConverted = mixKgConverted;
+    if (frozenLitersProduced !== undefined) updateData.frozenLitersProduced = frozenLitersProduced;
+    if (largeContainersAdded !== undefined) updateData.largeContainersAdded = largeContainersAdded;
+    if (smallContainersAdded !== undefined) updateData.smallContainersAdded = smallContainersAdded;
+
+    if (Object.keys(updateData).length === 0) {
+      res.status(400).json({ message: 'No valid fields to update.' });
+      return;
+    }
+
+    const updated = await eventService.updateEvent(id, updateData);
+    res.status(200).json(updated);
+  } catch (error: any) {
+    if (error.statusCode) {
+      res.status(error.statusCode).json({ message: error.message });
+      return;
+    }
+    console.error('Error updating event:', error);
+    res.status(500).json({ message: 'Failed to update event.' });
+  }
+};
+
+/**
+ * DELETE /api/ice-cream/events/:id
+ * Delete a conversion event and replay remaining events.
+ */
+export const deleteEventHandler = async (
+  req: Request,
+  res: Response,
+): Promise<void> => {
+  try {
+    const { id } = req.params;
+    await eventService.deleteEvent(id);
+    res.status(200).json({ message: 'Event deleted and state rebuilt.' });
+  } catch (error: any) {
+    if (error.statusCode) {
+      res.status(error.statusCode).json({ message: error.message });
+      return;
+    }
+    console.error('Error deleting event:', error);
+    res.status(500).json({ message: 'Failed to delete event.' });
   }
 };

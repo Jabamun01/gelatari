@@ -42,6 +42,18 @@ export const createRecipeHandler = async (req: Request<{}, {}, CreateRecipeReque
       return; // Explicit return void
     }
 
+    // Validate feina if provided (only for ice cream recipes)
+    if (recipeData.feina !== undefined && !['Baix', 'Mitjà', 'Alt', 'Molt alt'].includes(recipeData.feina)) {
+      res.status(400).json({ message: 'Feina must be one of Baix, Mitjà, Alt, Molt alt if provided.' });
+      return; // Explicit return void
+    }
+
+    // Validate overrunOverridePercent if provided
+    if (recipeData.overrunOverridePercent !== undefined && (typeof recipeData.overrunOverridePercent !== 'number' || isNaN(recipeData.overrunOverridePercent) || recipeData.overrunOverridePercent < 0)) {
+      res.status(400).json({ message: 'OverrunOverridePercent must be a non-negative number if provided.' });
+      return; // Explicit return void
+    }
+
     // --- Type/Category Validation ---
     if (recipeData.type === 'ice cream recipe') {
         if (!recipeData.category || (recipeData.category !== 'ice cream' && recipeData.category !== 'sorbet')) {
@@ -230,6 +242,18 @@ export const updateRecipeHandler = async (req: Request<{ id: string }, {}, Updat
     // Validate productionLossPercent if provided
     if (updates.productionLossPercent !== undefined && (typeof updates.productionLossPercent !== 'number' || updates.productionLossPercent < 0 || updates.productionLossPercent > 100)) {
       res.status(400).json({ message: 'ProductionLossPercent must be a number between 0 and 100 if provided.' });
+      return; // Explicit return void
+    }
+
+    // Validate feina if provided
+    if (updates.feina !== undefined && !['Baix', 'Mitjà', 'Alt', 'Molt alt'].includes(updates.feina)) {
+      res.status(400).json({ message: 'Feina must be one of Baix, Mitjà, Alt, Molt alt if provided.' });
+      return; // Explicit return void
+    }
+
+    // Validate overrunOverridePercent if provided
+    if (updates.overrunOverridePercent !== undefined && (typeof updates.overrunOverridePercent !== 'number' || isNaN(updates.overrunOverridePercent) || updates.overrunOverridePercent < 0)) {
+      res.status(400).json({ message: 'OverrunOverridePercent must be a non-negative number if provided.' });
       return; // Explicit return void
     }
 

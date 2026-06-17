@@ -253,3 +253,46 @@ export const fetchEvents = async (params: {
   if (!res.ok) throw new Error('Failed to fetch events.');
   return res.json();
 };
+
+// ---------------------------------------------------------------------------
+// Event update / delete
+// ---------------------------------------------------------------------------
+
+export interface UpdateEventDto {
+  mixKgConverted?: number;
+  frozenLitersProduced?: number;
+  largeContainersAdded?: number;
+  smallContainersAdded?: number;
+}
+
+/**
+ * Update a conversion event and replay subsequent events.
+ */
+export const updateEvent = async (
+  eventId: string,
+  dto: UpdateEventDto,
+): Promise<IceCreamEventItem> => {
+  const res = await authFetch(`${BASE}/events/${eventId}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(dto),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.message || 'Failed to update event.');
+  }
+  return res.json();
+};
+
+/**
+ * Delete a conversion event and replay remaining events.
+ */
+export const deleteEvent = async (eventId: string): Promise<void> => {
+  const res = await authFetch(`${BASE}/events/${eventId}`, {
+    method: 'DELETE',
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.message || 'Failed to delete event.');
+  }
+};

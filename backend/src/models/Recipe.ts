@@ -26,6 +26,10 @@ export interface IRecipe extends Document {
   productIngredientId?: Types.ObjectId; // Reference to Ingredient for sub-recipe stock tracking
   baseFlavorId?: Types.ObjectId; // Reference to the auto-created base IceCreamFlavor (no mix-ins)
 
+  // --- Cost / feina fields ---
+  feina?: 'Baix' | 'Mitjà' | 'Alt' | 'Molt alt';
+  overrunOverridePercent?: number;  // manual override for overrun %, undefined = use historical avg
+
   // --- Mix tracking (shared across all flavors of this recipe) ---
   iceCreamMixKg: number;           // kg of mix currently available
   totalMixConvertedKg: number;     // cumulative kg of mix ever converted to frozen
@@ -115,6 +119,18 @@ const recipeSchema = new Schema<IRecipe>(
       type: Schema.Types.ObjectId,
       ref: 'IceCreamFlavor',
       default: undefined,
+    },
+
+    // --- Cost / feina fields ---
+    feina: {
+      type: String,
+      enum: ['Baix', 'Mitjà', 'Alt', 'Molt alt'],
+      default: undefined,
+    },
+    overrunOverridePercent: {
+      type: Number,
+      default: undefined,
+      min: 0,
     },
 
     // --- Mix tracking (shared per recipe, across all flavor variants) ---

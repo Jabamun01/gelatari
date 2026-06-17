@@ -30,6 +30,8 @@ export interface RecipeDetails {
   productionLossPercent: number;
   productIngredientId?: string; // Reference to Ingredient for sub-recipe stock tracking
   flavorId?: string; // Reference to IceCreamFlavor for 1:1 link
+  feina?: 'Baix' | 'Mitjà' | 'Alt' | 'Molt alt';
+  overrunOverridePercent?: number;
 }
 
 // Structure matching backend API expectations for POST /api/recipes
@@ -42,6 +44,8 @@ export interface CreateRecipeDto {
     baseYieldGrams: number;
     linkedRecipes: { recipe: string; amountGrams: number }[]; // recipe is ID string
     productionLossPercent?: number;
+    feina?: 'Baix' | 'Mitjà' | 'Alt' | 'Molt alt';
+    overrunOverridePercent?: number;
 }
 // Structure matching backend API expectations for PUT /api/recipes/:id
 export type UpdateRecipeDto = Partial<CreateRecipeDto>; // Allow partial updates

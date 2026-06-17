@@ -105,6 +105,7 @@ export const IngredientEditModal: React.FC<IngredientEditModalProps> = ({
   const [aliases, setAliases] = useState<string[]>(['']);
   const [stockQuantity, setStockQuantity] = useState<number>(0);
   const [mermaPercent, setMermaPercent] = useState<number>(0);
+  const [costPerKg, setCostPerKg] = useState<number>(0);
   const [isLoading, setIsLoading] = useState<boolean>(isEditMode);
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -115,6 +116,8 @@ export const IngredientEditModal: React.FC<IngredientEditModalProps> = ({
       setName('');
       setAliases(['']);
       setStockQuantity(0);
+      setMermaPercent(0);
+      setCostPerKg(0);
       setError(null);
       setIsLoading(false);
       setIsSaving(false);
@@ -131,6 +134,7 @@ export const IngredientEditModal: React.FC<IngredientEditModalProps> = ({
           setAliases(data.aliases && data.aliases.length > 0 ? data.aliases : ['']);
           setStockQuantity(data.quantityInStock || 0);
           setMermaPercent(data.mermaPercent || 0);
+          setCostPerKg(data.costPerKg ?? 0);
           setIsLoading(false);
         })
         .catch((err) => {
@@ -146,6 +150,7 @@ export const IngredientEditModal: React.FC<IngredientEditModalProps> = ({
       setAliases(['']);
       setStockQuantity(0);
       setMermaPercent(0);
+      setCostPerKg(0);
       setIsLoading(false);
       setError(null);
     }
@@ -174,6 +179,7 @@ export const IngredientEditModal: React.FC<IngredientEditModalProps> = ({
       aliases: aliases.filter((alias) => alias.trim() !== '').map((alias) => alias.trim()),
       quantityInStock: stockQuantity,
       mermaPercent: mermaPercent,
+      costPerKg: costPerKg,
     };
 
     if (!commonData.name) {
@@ -306,6 +312,19 @@ export const IngredientEditModal: React.FC<IngredientEditModalProps> = ({
             min="0"
             max="100"
             step="0.1"
+            disabled={isSaving}
+          />
+        </FormGroup>
+
+        <FormGroup>
+          <FormLabel htmlFor="costPerKg">Cost per kg (€):</FormLabel>
+          <FormInput
+            type="number"
+            id="costPerKg"
+            value={costPerKg}
+            onChange={(e) => setCostPerKg(Math.max(0, Number(e.target.value)))}
+            min="0"
+            step="0.01"
             disabled={isSaving}
           />
         </FormGroup>

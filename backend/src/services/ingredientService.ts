@@ -104,8 +104,9 @@ const findConflictingTermInDB = async (
 export const createIngredient = async (
   name: string,
   aliases?: string[],
-  quantityInStock?: number, // Added for clarity, though model defaults
-  mermaPercent?: number
+  quantityInStock?: number,
+  mermaPercent?: number,
+  costPerKg?: number,
 ): Promise<IIngredient> => {
   try {
     const checkName = name ? name.trim() : "";
@@ -130,6 +131,9 @@ export const createIngredient = async (
     }
     if (mermaPercent !== undefined) {
       ingredientData.mermaPercent = mermaPercent;
+    }
+    if (costPerKg !== undefined) {
+      ingredientData.costPerKg = costPerKg;
     }
     const newIngredient = new Ingredient(ingredientData);
     await newIngredient.save();
@@ -267,7 +271,7 @@ export const updateIngredient = async (
  */
 export const updateIngredientById = async (
   id: string,
-  updateData: { name?: string; aliases?: string[]; quantityInStock?: number; mermaPercent?: number }
+  updateData: { name?: string; aliases?: string[]; quantityInStock?: number; mermaPercent?: number; costPerKg?: number }
 ): Promise<IIngredient | null> => {
   if (!mongoose.Types.ObjectId.isValid(id)) {
     console.warn(`Invalid ingredient ID format for update: ${id}`);
@@ -304,6 +308,9 @@ export const updateIngredientById = async (
     }
     if (updateData.hasOwnProperty('mermaPercent')) {
       updatesToApply.mermaPercent = updateData.mermaPercent;
+    }
+    if (updateData.hasOwnProperty('costPerKg')) {
+      updatesToApply.costPerKg = updateData.costPerKg;
     }
 
     if (Object.keys(updatesToApply).length === 0) {

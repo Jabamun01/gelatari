@@ -6,6 +6,7 @@ export interface IIngredient extends Document {
   aliases: string[];
   quantityInStock: number;
   mermaPercent: number;
+  costPerKg: number;
 }
 
 // Mongoose schema definition for Ingredient
@@ -31,6 +32,11 @@ const ingredientSchema = new Schema<IIngredient>({
     default: 0,
     min: 0,
     max: 100,
+  },
+  costPerKg: {
+    type: Number,
+    default: 0,
+    min: 0,
   },
 });
 

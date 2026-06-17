@@ -8,7 +8,7 @@ const isValidObjectId = (id: string): boolean => Types.ObjectId.isValid(id);
 
 export const createIngredientHandler = async (req: Request, res: Response) => {
   try {
-    const { name, aliases, quantityInStock, mermaPercent } = req.body;
+    const { name, aliases, quantityInStock, mermaPercent, costPerKg } = req.body;
 
     // Basic input validation
     if (!name || typeof name !== 'string' || name.trim() === '') {
@@ -28,6 +28,7 @@ export const createIngredientHandler = async (req: Request, res: Response) => {
     const finalAliases = aliases ? aliases.map((a: string) => a.trim()).filter((a: string) => a) : []; // Trim and filter empty aliases
     const finalQuantityInStock = quantityInStock !== undefined ? Number(quantityInStock) : undefined;
     const finalMermaPercent = mermaPercent !== undefined ? Number(mermaPercent) : undefined;
+    const finalCostPerKg = costPerKg !== undefined ? Number(costPerKg) : undefined;
 
     // Check if name or any alias conflicts with existing names or aliases (case-insensitive)
     const potentialConflicts = [trimmedName, ...finalAliases];
@@ -56,6 +57,7 @@ export const createIngredientHandler = async (req: Request, res: Response) => {
         aliases: finalAliases,
         quantityInStock: finalQuantityInStock,
         mermaPercent: finalMermaPercent,
+        costPerKg: finalCostPerKg,
     };
 
     // The conflict check above already handles duplicates based on name and aliases.
@@ -66,7 +68,8 @@ export const createIngredientHandler = async (req: Request, res: Response) => {
         ingredientData.name,
         ingredientData.aliases,
         ingredientData.quantityInStock,
-        ingredientData.mermaPercent
+        ingredientData.mermaPercent,
+        ingredientData.costPerKg
     );
     res.status(201).json(newIngredient);
   } catch (error: unknown) {
@@ -134,14 +137,14 @@ export const getIngredientByIdHandler = async (req: Request, res: Response) => {
 export const updateIngredientHandler = async (req: Request, res: Response, next: Function) => {
   try {
     const { id } = req.params;
-    const { name, aliases, quantityInStock, mermaPercent } = req.body;
+    const { name, aliases, quantityInStock, mermaPercent, costPerKg } = req.body;
 
     if (!isValidObjectId(id)) {
       return res.status(400).json({ message: 'Invalid ingredient ID format.' });
     }
 
     // --- Input Validation ---
-    const updateData: { name?: string; aliases?: string[]; quantityInStock?: number; mermaPercent?: number } = {};
+    const updateData: { name?: string; aliases?: string[]; quantityInStock?: number; mermaPercent?: number; costPerKg?: number } = {};
     let hasValidUpdateField = false;
 
     if (name !== undefined) {
@@ -156,8 +159,6 @@ export const updateIngredientHandler = async (req: Request, res: Response, next:
       if (!Array.isArray(aliases) || !aliases.every(a => typeof a === 'string')) {
         return res.status(400).json({ message: 'Aliases must be an array of strings if provided.' });
       }
-      // Allow empty strings in aliases array as per some use cases, or trim and filter:
-      // updateData.aliases = aliases.map(a => a.trim()).filter(a => a);
       updateData.aliases = aliases;
       hasValidUpdateField = true;
     }
@@ -178,9 +179,16 @@ export const updateIngredientHandler = async (req: Request, res: Response, next:
       hasValidUpdateField = true;
     }
 
+    if (costPerKg !== undefined) {
+      if (typeof costPerKg !== 'number' || isNaN(costPerKg) || costPerKg < 0) {
+        return res.status(400).json({ message: 'CostPerKg must be a non-negative number if provided.' });
+      }
+      updateData.costPerKg = costPerKg;
+      hasValidUpdateField = true;
+    }
+
     if (!hasValidUpdateField && Object.keys(req.body).length > 0) {
-        // If body is not empty but no valid fields were extracted (e.g. only extraneous fields sent)
-        return res.status(400).json({ message: 'No valid fields provided for update. Allowed fields are: name, aliases, quantityInStock, mermaPercent.' });
+        return res.status(400).json({ message: 'No valid fields provided for update. Allowed fields are: name, aliases, quantityInStock, mermaPercent, costPerKg.' });
     }
     // If req.body is empty, service layer will handle it by returning current ingredient.
 

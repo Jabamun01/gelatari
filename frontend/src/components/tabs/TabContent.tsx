@@ -6,6 +6,7 @@ import { RecipeTab } from '../recipe/RecipeTab';
 import { IngredientsTab } from '../ingredients/IngredientsTab';
 import { RecipeEditorTab } from '../recipe/RecipeEditorTab';
 import { IceCreamDashboardTab } from '../iceCream/IceCreamDashboardTab';
+import { CostosTab } from '../costs/CostosTab';
 
 interface TabContentProps {
   activeTab: TabData | undefined;
@@ -117,6 +118,14 @@ export const TabContent = ({
               onOpenIceCreamFlavorEditTab?.(flavorName, flavorId, sourceRecipeId, sourceRecipeName)
             }
             onOpenRecipeTab={onOpenRecipeTab}
+          />
+        );
+      case 'costos':
+        return (
+          <CostosTab
+            onOpenIceCreamFlavorEditTab={(flavorName, flavorId, sourceRecipeId, sourceRecipeName) =>
+              onOpenIceCreamFlavorEditTab?.(flavorName, flavorId, sourceRecipeId, sourceRecipeName)
+            }
           />
         );
       default:

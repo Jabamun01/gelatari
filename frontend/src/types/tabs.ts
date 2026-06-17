@@ -33,12 +33,18 @@ export interface IceCreamDashboardTabData extends BaseTabConfig {
   type: 'iceCreamDashboard';
 }
 
+// Cost analysis tab
+export interface CostosTabData extends BaseTabConfig {
+  type: 'costos';
+}
+
 // Union type for all possible tab data structures
 export type TabData =
   | SearchTabData
   | IngredientsTabData
   | RecipeTabData
   | RecipeEditorTabData
-  | IceCreamDashboardTabData;
+  | IceCreamDashboardTabData
+  | CostosTabData;
 
 

@@ -7,6 +7,7 @@ export interface Ingredient {
   aliases: string[];
   quantityInStock: number;
   mermaPercent: number;
+  costPerKg: number;
 }
 
 /**
@@ -18,6 +19,7 @@ export interface CreateIngredientDto {
   aliases?: string[]; // Optional when creating
   quantityInStock?: number; // Optional when creating
   mermaPercent?: number;
+  costPerKg?: number;
 }
 
 /**
@@ -30,4 +32,5 @@ export interface UpdateIngredientDto {
   aliases?: string[];
   quantityInStock?: number;
   mermaPercent?: number;
+  costPerKg?: number;
 }

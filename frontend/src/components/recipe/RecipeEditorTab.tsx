@@ -270,6 +270,8 @@ const initialRecipeState: Omit<RecipeDetails, '_id' | 'baseYieldGrams'> = {
   steps: [],
   linkedRecipes: [],
   productionLossPercent: 0,
+  feina: undefined,
+  overrunOverridePercent: undefined,
 };
 
 export const RecipeEditorTab = ({ recipeId, onClose, onOpenRecipeTab }: RecipeEditorTabProps) => {
@@ -742,6 +744,47 @@ export const RecipeEditorTab = ({ recipeId, onClose, onOpenRecipeTab }: RecipeEd
               disabled={isLoading}
             />
           </FormGroup>
+
+          {recipeData.type === 'ice cream recipe' && (
+            <>
+              <FormGroup>
+                <FormLabel htmlFor="recipe-feina">Feina</FormLabel>
+                <FormSelect
+                  id="recipe-feina"
+                  name="feina"
+                  value={recipeData.feina || ''}
+                  onChange={handleInputChange}
+                  disabled={isLoading}
+                >
+                  <option value="">—</option>
+                  <option value="Baix">Baix</option>
+                  <option value="Mitjà">Mitjà</option>
+                  <option value="Alt">Alt</option>
+                  <option value="Molt alt">Molt alt</option>
+                </FormSelect>
+              </FormGroup>
+
+              <FormGroup>
+                <FormLabel htmlFor="recipe-overrun">Override Overrun (%)</FormLabel>
+                <FormInput
+                  type="number"
+                  id="recipe-overrun"
+                  name="overrunOverridePercent"
+                  value={recipeData.overrunOverridePercent ?? ''}
+                  onChange={(e) =>
+                    setRecipeData((prev) => ({
+                      ...prev,
+                      overrunOverridePercent: e.target.value === '' ? undefined : Math.max(0, Number(e.target.value)),
+                    }))
+                  }
+                  min="0"
+                  step="0.1"
+                  placeholder="Usa mitjana històrica"
+                  disabled={isLoading}
+                />
+              </FormGroup>
+            </>
+          )}
         </div>
 
         <div>
