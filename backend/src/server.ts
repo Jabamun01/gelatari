@@ -10,6 +10,7 @@ import defaultStepsRoutes from './routes/defaultStepsRoutes';
 import authRoutes from './routes/authRoutes';
 import iceCreamFlavorRoutes from './routes/iceCreamFlavorRoutes';
 import costRoutes from './routes/costRoutes';
+import paradetaIncomeRoutes from './routes/paradetaIncomeRoutes';
 import { authMiddleware } from './middleware/authMiddleware';
 import { errorHandler } from './middleware/errorHandler';
 import { seedDefaultUser } from './services/authService';
@@ -76,6 +77,7 @@ app.use('/api/recipes', recipeRoutes);
 app.use('/api/ice-cream', iceCreamFlavorRoutes);
 app.use('/api/default-steps', defaultStepsRoutes);
 app.use('/api/costs', costRoutes);
+app.use('/api/paradeta-income', paradetaIncomeRoutes);
 
 // Centralized error handler (must be after all routes)
 app.use(errorHandler);

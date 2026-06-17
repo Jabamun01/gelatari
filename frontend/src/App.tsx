@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { styled } from '@linaria/react';
-import { TabData, RecipeTabData, RecipeEditorTabData, IngredientsTabData, SearchTabData, IceCreamDashboardTabData, CostosTabData } from './types/tabs';
+import { TabData, RecipeTabData, RecipeEditorTabData, IngredientsTabData, SearchTabData, IceCreamDashboardTabData, CostosTabData, ParadetaIncomeTabData } from './types/tabs';
 import { TabBar } from './components/tabs/TabBar';
 import { TabContent } from './components/tabs/TabContent';
 import { FloatingActionButtonsGroup } from './components/common/FloatingActionButtonsGroup';
@@ -110,6 +110,16 @@ const loadAppState = (): { tabs: TabData[]; activeTabId: string } | null => {
                 title: (loadedTab as CostosTabData).title || 'Costos',
                 isCloseable: (loadedTab as CostosTabData).isCloseable ?? true,
               } as CostosTabData;
+              break;
+            }
+            case 'paradetaIncome': {
+              processedTab = {
+                ...loadedTab,
+                type: 'paradetaIncome',
+                id: (loadedTab as ParadetaIncomeTabData).id || 'paradetaIncome',
+                title: (loadedTab as ParadetaIncomeTabData).title || 'Ingressos Paradeta',
+                isCloseable: (loadedTab as ParadetaIncomeTabData).isCloseable ?? true,
+              } as ParadetaIncomeTabData;
               break;
             }
             default:
@@ -399,6 +409,24 @@ const App = () => {
     setActiveTabId(tabId);
   };
 
+  // Paradeta Income tab
+  const handleOpenParadetaIncomeTab = () => {
+    const tabId = 'paradetaIncome';
+    const existing = tabs.find(t => t.id === tabId);
+    if (existing) {
+      setActiveTabId(tabId);
+      return;
+    }
+    const newTab: ParadetaIncomeTabData = {
+      id: tabId,
+      title: 'Ingressos Paradeta',
+      type: 'paradetaIncome',
+      isCloseable: true,
+    };
+    setTabs(prev => [...prev, newTab]);
+    setActiveTabId(tabId);
+  };
+
 
 // Calculate activeTab based on the current state *after* potential updates
 const activeTab: TabData | undefined = tabs.find(tab => tab.id === activeTabId);
@@ -439,6 +467,7 @@ const activeTab: TabData | undefined = tabs.find(tab => tab.id === activeTabId);
         onOpenNewRecipeEditor={handleOpenNewRecipeEditor}
         onOpenIceCreamDashboardTab={handleOpenIceCreamDashboardTab}
         onOpenCostosTab={handleOpenCostosTab}
+        onOpenParadetaIncomeTab={handleOpenParadetaIncomeTab}
       />
       <FloatingTimersDisplay />
       <AlarmSoundHandler />
