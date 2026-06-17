@@ -150,7 +150,7 @@ const WeekdayBarVisual = styled.div<{ $height: number; $color: string }>`
   @media (max-width: 640px) {
     width: 28px;
   }
-`;}]}
+`;
 
 const WeekdayChart = styled.div`
   display: flex;

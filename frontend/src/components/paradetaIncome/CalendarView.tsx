@@ -388,10 +388,9 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
         {Array.from({ length: days }, (_, i) => i + 1).map((day) => {
           const dateStr = formatDate(currentYear, currentMonth, day);
           const record = recordsByDate.get(dateStr);
-          return (
-            const color = record
-              ? getBracketColor(record.totalIncome, brackets)
-              : brackets[0]?.color || '#e8f0e8';
+          const color = record
+            ? getBracketColor(record.totalIncome, brackets)
+            : brackets[0]?.color || '#e8f0e8';
           return (
             <MobileDayCard key={day} $color={color} onClick={() => onDayClick(dateStr)}>
               <MobileDayInfo>
