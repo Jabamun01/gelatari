@@ -454,7 +454,7 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({ currentYear }) => 
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color-light)" />
                 <XAxis dataKey="name" tick={{ fontSize: 10 }} interval={0} angle={-45} textAnchor="end" height={60} />
                 <YAxis tick={{ fontSize: 12 }} tickFormatter={(v) => `€${v}`} />
-                <Tooltip formatter={(v, name: string) => [formatEurDec(v as number), name === 'card' ? 'Targeta' : name === 'cash' ? 'Cash' : 'Total']} />
+                <Tooltip formatter={(v, name) => [formatEurDec(v as number), name === 'card' ? 'Targeta' : name === 'cash' ? 'Cash' : 'Total']} />
                 <Legend />
                 <Bar dataKey="card" name="Targeta" fill={CHART_COLORS.card} stackId="a" />
                 <Bar dataKey="cash" name="Cash" fill={CHART_COLORS.cash} stackId="a" />
