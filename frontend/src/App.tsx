@@ -25,6 +25,11 @@ const TabContentContainer = styled.div`
   display: flex;
   overflow: hidden;
   background-color: var(--surface-color-light);
+
+  /* Prevent content from being hidden behind the fixed floating buttons */
+  @media (max-width: 640px) {
+    padding-bottom: 60px;
+  }
 `;
 
 
